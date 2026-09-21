@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="gradEmerald" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064E3B" />
+      <stop offset="50%" stop-color="#0D5C3A" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="gradGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="50%" stop-color="#D4AF37" />
+      <stop offset="100%" stop-color="#FCD34D" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#064E3B" flood-opacity="0.3" />
+    </filter>
+  </defs>
+
+  <!-- Outer Rounded Shield -->
+  <rect x="20" y="20" width="360" height="360" rx="72" fill="url(#gradEmerald)" filter="url(#shadow)" />
+  <rect x="28" y="28" width="344" height="344" rx="64" fill="none" stroke="url(#gradGold)" stroke-width="3" stroke-opacity="0.85" />
+  
+  <!-- Star Octagram Motif Center -->
+  <g transform="translate(200, 160)">
+    <!-- Crescent & Star -->
+    <path d="M-10,-48 A 38 38 0 1 1 -38,10 A 30 30 0 1 0 -10,-48 Z" fill="url(#gradGold)" />
+    <polygon points="12,-32 16,-22 26,-22 18,-16 21,-6 12,-12 3,-6 6,-16 -2,-22 8,-22" fill="#FFFFFF" />
+
+    <!-- Open Holy Quran Symbol -->
+    <path d="M-55,20 C-25,12 -5,22 0,35 C5,22 25,12 55,20 C45,45 25,52 0,46 C-25,52 -45,45 -55,20 Z" fill="#FFFFFF" opacity="0.95" />
+    <path d="M-50,23 C-25,16 -5,25 0,36 C5,25 25,16 50,23" fill="none" stroke="url(#gradGold)" stroke-width="2.5" />
+    <line x1="0" y1="36" x2="0" y2="46" stroke="#0D5C3A" stroke-width="2.5" />
+    
+    <!-- Vehicle Silhouette / Road Speed Ring -->
+    <path d="M-70,55 Q0,75 70,55" fill="none" stroke="url(#gradGold)" stroke-width="4" stroke-linecap="round" />
+    <circle cx="0" cy="65" r="4" fill="#FFFFFF" />
+  </g>
+
+  <!-- Typography -->
+  <text x="200" y="275" font-family="'Segoe UI', Roboto, Inter, sans-serif" font-size="28" font-weight="900" fill="#FFFFFF" text-anchor="middle" letter-spacing="3">MAISYA-TRANS</text>
+  <text x="200" y="305" font-family="'Segoe UI', Roboto, Inter, sans-serif" font-size="13" font-weight="700" fill="#FCD34D" text-anchor="middle" letter-spacing="1.5">PP. IMAM SYAFI'I BREBES</text>
+  <text x="200" y="332" font-family="'Segoe UI', Roboto, Inter, sans-serif" font-size="11" font-weight="500" fill="#E2E8F0" text-anchor="middle" letter-spacing="0.5">Mobilitas Aman, Tertib, dan Terdata</text>
+</svg>

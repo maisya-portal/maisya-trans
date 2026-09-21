@@ -1,0 +1,144 @@
+/**
+ * MAISYA-TRANS - Responsive Breakpoints & Mobile Adaptations
+ * Pondok Pesantren Imam Syafi'i Brebes
+ */
+
+/* ==========================================================================
+   MOBILE & TABLET ADAPTATIONS (max-width: 900px)
+   ========================================================================== */
+@media (max-width: 900px) {
+  .app-sidebar {
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-xl);
+  }
+
+  .app-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .app-sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 35;
+    display: none;
+  }
+  .app-sidebar-backdrop.active {
+    display: block;
+  }
+
+  .app-main {
+    margin-left: 0;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .bottom-nav {
+    display: block;
+  }
+
+  .content-viewport {
+    padding: 1rem 0.85rem;
+  }
+
+  .monitoring-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .welcome-banner {
+    padding: 1.15rem;
+  }
+  .welcome-banner::after {
+    display: none;
+  }
+  .banner-greeting {
+    font-size: 1.1rem;
+  }
+
+  .quick-actions-bar {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+  }
+  .quick-action-btn {
+    padding: 0.6rem 0.35rem;
+  }
+  .quick-action-icon {
+    width: 36px;
+    height: 36px;
+  }
+  .quick-action-label {
+    font-size: 0.68rem;
+  }
+
+  .user-meta {
+    display: none;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+  .kpi-card {
+    padding: 0.85rem;
+  }
+  .kpi-value {
+    font-size: 1.25rem;
+  }
+
+  .toast-container {
+    left: 12px;
+    right: 12px;
+    bottom: calc(var(--bottom-nav-height) + 12px);
+    max-width: none;
+  }
+}
+
+/* ==========================================================================
+   EXTRA SMALL MOBILE (max-width: 414px - 360px)
+   ========================================================================== */
+@media (max-width: 414px) {
+  .header-tagline {
+    display: none;
+  }
+  
+  .quick-actions-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .trip-stat-pills {
+    flex-direction: column;
+  }
+
+  .stat-pill {
+    width: 100%;
+  }
+
+  .modal-card {
+    border-radius: var(--border-radius-md);
+  }
+
+  .modal-header, .modal-body, .modal-footer {
+    padding: 1rem;
+  }
+}
+
+/* ==========================================================================
+   DESKTOP EXPANSION (min-width: 1280px)
+   ========================================================================== */
+@media (min-width: 1280px) {
+  .content-viewport {
+    padding: 2rem;
+  }
+  
+  .monitoring-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .vehicle-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

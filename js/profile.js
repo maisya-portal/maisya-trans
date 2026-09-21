@@ -1,0 +1,93 @@
+/**
+ * MAISYA-TRANS - Profile & Account Controller
+ * Pondok Pesantren Imam Syafi'i Brebes
+ */
+
+const ProfileView = {
+  load() {
+    const container = document.getElementById('profileContentContainer');
+    if (!container) return;
+
+    const user = Auth.getUser();
+    if (!user) {
+      container.innerHTML = '<div style="text-align:center; padding:2rem;">Silakan login terlebih dahulu.</div>';
+      return;
+    }
+
+    container.innerHTML = `
+      <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-lg); padding:1.5rem; margin-bottom:1.5rem; box-shadow:var(--shadow-sm);">
+        <div style="display:flex; align-items:center; gap:1.25rem; margin-bottom:1.25rem;">
+          <div style="width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg, var(--primary-700), var(--gold-500)); color:white; display:flex; align-items:center; justify-content:center; font-size:1.6rem; font-weight:800; box-shadow:0 4px 12px rgba(13,92,58,0.25);">
+            ${user.nama ? user.nama.charAt(0) : 'U'}
+          </div>
+          <div>
+            <h3 style="font-size:1.2rem; color:var(--text-primary);">${user.nama}</h3>
+            <div style="font-size:0.85rem; color:var(--primary-700); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">
+              ${user.role === 'ADMIN' ? '👑 Admin Sarpras Pondok' : '👤 Guru / Karyawan Pondok'}
+            </div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">${user.jabatan || 'Pendidik'} • ${user.divisi || 'Pondok'}</div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:0.6rem; background:var(--surface-secondary); padding:1rem; border-radius:var(--border-radius-md); font-size:0.85rem;">
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:var(--text-muted);">Nomor Induk Pegawai (NIP):</span>
+            <strong>${user.nip || '-'}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:var(--text-muted);">Email Akun:</span>
+            <strong>${user.email}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:var(--text-muted);">WhatsApp / HP:</span>
+            <strong>${user.no_hp || '-'}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:var(--text-muted);">Status Akun:</span>
+            <span class="badge badge-available">${user.status || 'ACTIVE'}</span>
+          </div>
+        </div>
+
+        <div style="margin-top:1.5rem; display:flex; flex-direction:column; gap:0.75rem;">
+          <button class="btn btn-outline btn-block" onclick="UI.toggleTheme()">
+            🌓 Ganti Mode Tampilan (Terang / Gelap)
+          </button>
+          <button class="btn btn-danger btn-block" onclick="Auth.logout()">
+            🚪 Keluar dari Aplikasi
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Switcher Akun Demo untuk Pengujian Cepat -->
+      <div style="background:var(--surface); border:1.5px dashed var(--gold-500); border-radius:var(--border-radius-lg); padding:1.25rem;">
+        <h4 style="font-size:0.95rem; margin-bottom:0.4rem; color:var(--gold-700); display:flex; align-items:center; gap:6px;">
+          <span>⚡</span> Pengujian Akun Cepat (Quick Demo Switcher)
+        </h4>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">
+          Ganti akun langsung untuk menguji pengalaman Guru/Karyawan vs Admin Sarpras.
+        </p>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="ProfileView.quickLogin('admin@imamsyafii.ponpes.id', 'admin123')">
+            Masuk sbg Admin Sarpras
+          </button>
+          <button class="btn btn-gold btn-sm" onclick="ProfileView.quickLogin('ahmad@imamsyafii.ponpes.id', 'user123')">
+            Masuk sbg Guru (Ahmad)
+          </button>
+          <button class="btn btn-outline btn-sm" onclick="ProfileView.quickLogin('rizqi@imamsyafii.ponpes.id', 'user123')">
+            Masuk sbg Staf (Rizqi)
+          </button>
+        </div>
+      </div>
+    `;
+  },
+
+  async quickLogin(email, password) {
+    const res = await Auth.login(email, password);
+    if (res.success) {
+      UI.showToast(`Berhasil berganti ke ${res.data.user.nama}!`, 'success');
+      window.location.reload();
+    } else {
+      UI.showToast(res.message, 'error');
+    }
+  }
+};

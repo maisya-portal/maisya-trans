@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064E3B" />
+      <stop offset="50%" stop-color="#0D5C3A" />
+      <stop offset="100%" stop-color="#022C22" />
+    </linearGradient>
+    <linearGradient id="gold512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="50%" stop-color="#D4AF37" />
+      <stop offset="100%" stop-color="#FCD34D" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#bg512)" />
+  <rect x="18" y="18" width="476" height="476" rx="96" fill="none" stroke="url(#gold512)" stroke-width="4" stroke-opacity="0.8" />
+  <g transform="translate(256, 210)">
+    <path d="M-15,-65 A 48 48 0 1 1 -48,15 A 38 38 0 1 0 -15,-65 Z" fill="url(#gold512)" />
+    <polygon points="16,-45 21,-31 35,-31 24,-22 28,-8 16,-16 4,-8 8,-22 -3,-31 11,-31" fill="#FFFFFF" />
+    <path d="M-75,25 C-35,15 -7,28 0,44 C7,28 35,15 75,25 C62,56 35,66 0,58 C-35,66 -62,56 -75,25 Z" fill="#FFFFFF" opacity="0.95" />
+    <path d="M-68,29 C-35,20 -7,32 0,46 C7,32 35,20 68,29" fill="none" stroke="url(#gold512)" stroke-width="3.5" />
+    <path d="M-90,75 Q0,105 90,75" fill="none" stroke="url(#gold512)" stroke-width="6" stroke-linecap="round" />
+    <circle cx="-50" cy="85" r="7" fill="#FCD34D" />
+    <circle cx="50" cy="85" r="7" fill="#FCD34D" />
+    <rect x="-24" y="80" width="48" height="12" rx="4" fill="#FFFFFF" />
+  </g>
+  <text x="256" y="360" font-family="'Segoe UI', Roboto, Inter, sans-serif" font-size="40" font-weight="900" fill="#FFFFFF" text-anchor="middle" letter-spacing="3">MAISYA</text>
+  <text x="256" y="405" font-family="'Segoe UI', Roboto, Inter, sans-serif" font-size="24" font-weight="700" fill="#FCD34D" text-anchor="middle" letter-spacing="6">TRANS</text>
+  <text x="256" y="445" font-family="'Segoe UI', Roboto, Inter, sans-serif" font-size="16" font-weight="500" fill="#E2E8F0" text-anchor="middle" letter-spacing="1">PP. IMAM SYAFI'I BREBES</text>
+</svg>
