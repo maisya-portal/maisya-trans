@@ -1,0 +1,13 @@
+{
+  "name": "maisya-trans",
+  "version": "1.0.0",
+  "description": "Sistem Peminjaman & Monitoring Kendaraan Pondok Pesantren Imam Syafi'i Brebes",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["pwa", "google-apps-script", "vehicle-management", "pondok-pesantren"],
+  "author": "Pondok Pesantren Imam Syafi'i Brebes",
+  "license": "ISC"
+}
