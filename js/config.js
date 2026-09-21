@@ -27,6 +27,8 @@ const APP_CONFIG = {
   STORAGE_KEYS: {
     AUTH_TOKEN: 'maisya_trans_token',
     AUTH_USER: 'maisya_trans_user',
+    REMEMBER_ME: 'maisya_trans_remember_me',
+    REMEMBERED_CREDENTIALS: 'maisya_trans_saved_credentials',
     API_URL: 'maisya_trans_api_url',
     THEME: 'maisya_trans_theme',
     FAVORITES: 'maisya_trans_fav_vehicles',

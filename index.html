@@ -17,9 +17,9 @@
   <link rel="apple-touch-icon" href="./assets/icons/icon-192.png?v=1.0.6">
 
   <!-- Stylesheets with Cache-busting -->
-  <link rel="stylesheet" href="./css/style.css?v=1.0.6">
-  <link rel="stylesheet" href="./css/components.css?v=1.0.6">
-  <link rel="stylesheet" href="./css/responsive.css?v=1.0.6">
+  <link rel="stylesheet" href="./css/style.css?v=1.0.7">
+  <link rel="stylesheet" href="./css/components.css?v=1.0.7">
+  <link rel="stylesheet" href="./css/responsive.css?v=1.0.7">
 
   <!-- Google Identity Services (Google Sign-In) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -440,23 +440,34 @@
 
             <form id="formLogin">
               <div class="form-group">
-                <label class="form-label">Email atau NIP</label>
+                <label class="form-label" for="loginUsername">Email atau NIP</label>
                 <div class="input-with-icon">
                   <span class="input-icon">👤</span>
-                  <input type="text" id="loginUsername" class="form-control" placeholder="admin@imamsyafii.ponpes.id / ahmad..." required>
+                  <input type="text" id="loginUsername" name="username" class="form-control" placeholder="admin@imamsyafii.ponpes.id / ahmad..." required autocomplete="username">
                 </div>
               </div>
 
               <div class="form-group">
-                <label class="form-label">Password</label>
+                <label class="form-label" for="loginPassword">Password</label>
                 <div class="input-with-icon">
                   <span class="input-icon">🔒</span>
-                  <input type="password" id="loginPassword" class="form-control" placeholder="Masukkan password Anda" required>
-                  <button type="button" class="password-toggle-btn">👁️</button>
+                  <input type="password" id="loginPassword" name="password" class="form-control" placeholder="Masukkan password Anda" required autocomplete="current-password">
+                  <button type="button" class="password-toggle-btn" aria-label="Lihat Password">👁️</button>
                 </div>
               </div>
 
-              <button type="submit" id="btnLoginSubmit" class="btn btn-primary btn-block" style="margin-top:1.25rem;">
+              <!-- Checkbox Ingat Sandi & Akun -->
+              <div style="display:flex; justify-content:space-between; align-items:center; margin:0.85rem 0 1.25rem 0; font-size:0.85rem;">
+                <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; color:var(--text-secondary); user-select:none; font-weight:600;">
+                  <input type="checkbox" id="loginRememberMe" checked style="width:17px; height:17px; accent-color:var(--primary-700); cursor:pointer;">
+                  <span>Ingat Sandi Saya</span>
+                </label>
+                <span style="font-size:0.75rem; color:var(--primary-700); font-weight:700; background:rgba(13,92,58,0.08); padding:3px 8px; border-radius:6px; display:flex; align-items:center; gap:4px;">
+                  <span>🔒</span> Tetap Masuk
+                </span>
+              </div>
+
+              <button type="submit" id="btnLoginSubmit" class="btn btn-primary btn-block">
                 Masuk Sekarang
               </button>
             </form>
@@ -993,23 +1004,23 @@
   </div>
 
   <!-- JavaScript Scripts (Modular Execution) -->
-  <script src="./js/config.js?v=1.0.6"></script>
-  <script src="./js/utils.js?v=1.0.6"></script>
-  <script src="./js/store.js?v=1.0.6"></script>
-  <script src="./js/auth.js?v=1.0.6"></script>
-  <script src="./js/api.js?v=1.0.6"></script>
-  <script src="./js/ui.js?v=1.0.6"></script>
-  <script src="./js/dashboard.js?v=1.0.6"></script>
-  <script src="./js/vehicles.js?v=1.0.6"></script>
-  <script src="./js/booking.js?v=1.0.6"></script>
-  <script src="./js/trips.js?v=1.0.6"></script>
-  <script src="./js/history.js?v=1.0.6"></script>
-  <script src="./js/maintenance.js?v=1.0.6"></script>
-  <script src="./js/statistics.js?v=1.0.6"></script>
-  <script src="./js/admin.js?v=1.0.6"></script>
-  <script src="./js/notifications.js?v=1.0.6"></script>
-  <script src="./js/profile.js?v=1.0.6"></script>
-  <script src="./js/app.js?v=1.0.6"></script>
+  <script src="./js/config.js?v=1.0.7"></script>
+  <script src="./js/utils.js?v=1.0.7"></script>
+  <script src="./js/store.js?v=1.0.7"></script>
+  <script src="./js/auth.js?v=1.0.7"></script>
+  <script src="./js/api.js?v=1.0.7"></script>
+  <script src="./js/ui.js?v=1.0.7"></script>
+  <script src="./js/dashboard.js?v=1.0.7"></script>
+  <script src="./js/vehicles.js?v=1.0.7"></script>
+  <script src="./js/booking.js?v=1.0.7"></script>
+  <script src="./js/trips.js?v=1.0.7"></script>
+  <script src="./js/history.js?v=1.0.7"></script>
+  <script src="./js/maintenance.js?v=1.0.7"></script>
+  <script src="./js/statistics.js?v=1.0.7"></script>
+  <script src="./js/admin.js?v=1.0.7"></script>
+  <script src="./js/notifications.js?v=1.0.7"></script>
+  <script src="./js/profile.js?v=1.0.7"></script>
+  <script src="./js/app.js?v=1.0.7"></script>
 
 </body>
 </html>

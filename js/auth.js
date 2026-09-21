@@ -167,6 +167,49 @@ const Auth = {
     }
   },
 
+  /**
+   * Simpan atau bersihkan kredensial login (Ingat Sandi)
+   */
+  saveRememberedCredentials(username, password, remember) {
+    try {
+      if (remember) {
+        const payload = {
+          username: username,
+          password: btoa(unescape(encodeURIComponent(password))),
+          savedAt: Date.now()
+        };
+        localStorage.setItem(APP_CONFIG.STORAGE_KEYS.REMEMBERED_CREDENTIALS, JSON.stringify(payload));
+        localStorage.setItem(APP_CONFIG.STORAGE_KEYS.REMEMBER_ME, 'true');
+      } else {
+        localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.REMEMBERED_CREDENTIALS);
+        localStorage.setItem(APP_CONFIG.STORAGE_KEYS.REMEMBER_ME, 'false');
+      }
+    } catch (e) {
+      console.warn('[Auth] Gagal menyimpan kredensial:', e);
+    }
+  },
+
+  /**
+   * Ambil kredensial tersimpan (Ingat Sandi)
+   */
+  getRememberedCredentials() {
+    try {
+      const isRemember = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.REMEMBER_ME) !== 'false';
+      const raw = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.REMEMBERED_CREDENTIALS);
+      if (raw && isRemember) {
+        const parsed = JSON.parse(raw);
+        return {
+          username: parsed.username || '',
+          password: parsed.password ? decodeURIComponent(escape(atob(parsed.password))) : '',
+          remember: true
+        };
+      }
+    } catch (e) {
+      console.warn('[Auth] Gagal membaca kredensial tersimpan:', e);
+    }
+    return null;
+  },
+
   logout() {
     if (confirm('Apakah Anda yakin ingin keluar dari akun Maisya-Trans?')) {
       this.clearSession();

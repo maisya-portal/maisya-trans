@@ -86,9 +86,9 @@ const CONFIG = {
     USER: 'USER'
   },
   
-  // Security
+  // Security (Token valid for 1 year so sessions persist)
   SALT: 'MAISYA_TRANS_BREBES_SECURE_SALT_2026',
-  SESSION_EXPIRY_HOURS: 72
+  SESSION_EXPIRY_HOURS: 8760
 };
 
 function getSpreadsheet() {

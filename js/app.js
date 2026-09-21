@@ -19,28 +19,35 @@ const App = {
     Auth.init();
     UI.init();
 
-    // 2. Setup Form Events
+    // 2. Setup Form Events & Muat Ingat Sandi
     this.bindAuthForms();
+    this.loadRememberedLogin();
     this.bindNetworkListeners();
     this.setupPWA();
     this.updateUserHeaderUI();
 
-    // 3. Setup Halaman Awal & History
+    // 3. Setup Halaman Awal & Persistensi Sesi (Tidak auto-logout saat aplikasi ditutup)
     if (Auth.isLoggedIn()) {
       let startView = 'dashboard';
       const hash = window.location.hash.replace('#', '');
       if (hash && document.getElementById(`view-${hash}`) && hash !== 'login' && hash !== 'register') {
         startView = hash;
       }
-      UI.switchView(startView);
+      // Ganti hash URL jika sebelumnya masih tertinggal #login
+      if (window.location.hash === '#login' || window.location.hash === '#register') {
+        try {
+          history.replaceState({ view: startView, index: 0 }, '', `#${startView}`);
+        } catch (e) {}
+      }
+      UI.switchView(startView, false);
       this.startPolling();
     } else {
       // Jika belum login, KUNCI akses: hanya form login atau pendaftaran
       const hash = window.location.hash.replace('#', '');
       if (hash === 'register') {
-        UI.switchView('register');
+        UI.switchView('register', false);
       } else {
-        UI.switchView('login');
+        UI.switchView('login', false);
       }
     }
   },
@@ -86,6 +93,32 @@ const App = {
   },
 
   /**
+   * Muat kredensial yang tersimpan (Ingat Sandi)
+   */
+  loadRememberedLogin() {
+    const remembered = Auth.getRememberedCredentials();
+    const usernameInput = document.getElementById('loginUsername');
+    const passwordInput = document.getElementById('loginPassword');
+    const rememberCheckbox = document.getElementById('loginRememberMe');
+
+    if (rememberCheckbox) {
+      rememberCheckbox.checked = true; // Selalu default tercentang untuk kenyamanan guru/karyawan
+    }
+
+    if (remembered) {
+      if (usernameInput && !usernameInput.value) {
+        usernameInput.value = remembered.username;
+      }
+      if (passwordInput && !passwordInput.value) {
+        passwordInput.value = remembered.password;
+      }
+      if (rememberCheckbox) {
+        rememberCheckbox.checked = remembered.remember;
+      }
+    }
+  },
+
+  /**
    * Bind Login & Register Form Handlers
    */
   bindAuthForms() {
@@ -96,6 +129,8 @@ const App = {
         e.preventDefault();
         const username = document.getElementById('loginUsername').value.trim();
         const password = document.getElementById('loginPassword').value;
+        const rememberCheckbox = document.getElementById('loginRememberMe');
+        const isRemember = rememberCheckbox ? rememberCheckbox.checked : true;
         const btnSubmit = document.getElementById('btnLoginSubmit');
 
         if (btnSubmit) {
@@ -106,6 +141,9 @@ const App = {
         try {
           const res = await Auth.login(username, password);
           if (res.success) {
+            // Simpan atau bersihkan kredensial yang diingat
+            Auth.saveRememberedCredentials(username, password, isRemember);
+
             UI.showToast(res.message, 'success');
             this.updateUserHeaderUI();
             UI.switchView('dashboard');

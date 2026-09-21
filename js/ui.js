@@ -34,7 +34,13 @@ const UI = {
    * Router Tampilan Halaman (SPA Switching dengan Riwayat Navigasi)
    */
   switchView(viewName, addToHistory = true) {
-    // Akses terkunci jika belum login: Pengguna WAJIB login, tidak boleh mengakses menu apapun
+    // 1. Jika pengguna SUDAH login dan mencoba mengakses login atau register, langsung arahkan ke dashboard!
+    // Ini memastikan saat aplikasi dibuka kembali, pengguna tidak akan pernah terlempar ke form login.
+    if (Auth.isLoggedIn() && (viewName === 'login' || viewName === 'register')) {
+      viewName = 'dashboard';
+    }
+
+    // 2. Akses terkunci jika belum login: Pengguna WAJIB login, tidak boleh mengakses menu apapun
     if (!Auth.isLoggedIn() && viewName !== 'login' && viewName !== 'register') {
       viewName = 'login';
     }
@@ -391,7 +397,11 @@ const UI = {
       } else if (window.location.hash) {
         const hashView = window.location.hash.replace('#', '');
         if (hashView) {
-          this.switchView(hashView, false);
+          if (Auth.isLoggedIn() && (hashView === 'login' || hashView === 'register')) {
+            this.switchView('dashboard', false);
+          } else {
+            this.switchView(hashView, false);
+          }
         }
       }
     });
