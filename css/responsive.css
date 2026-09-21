@@ -96,11 +96,18 @@
 }
 
 @media (max-width: 580px) {
-  .nav-history-text {
+  .nav-history-text,
+  .logout-header-text {
     display: none;
   }
   .nav-history-btn {
     padding: 0.38rem 0.5rem;
+  }
+  .logout-header-btn {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    justify-content: center;
   }
   .header-page-title {
     font-size: 1.05rem;

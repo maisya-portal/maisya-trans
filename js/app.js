@@ -26,21 +26,21 @@ const App = {
     this.updateUserHeaderUI();
 
     // 3. Setup Halaman Awal & History
-    let startView = 'dashboard';
-    const hash = window.location.hash.replace('#', '');
-    if (hash && document.getElementById(`view-${hash}`)) {
-      startView = hash;
-    }
-
     if (Auth.isLoggedIn()) {
+      let startView = 'dashboard';
+      const hash = window.location.hash.replace('#', '');
+      if (hash && document.getElementById(`view-${hash}`) && hash !== 'login' && hash !== 'register') {
+        startView = hash;
+      }
       UI.switchView(startView);
       this.startPolling();
     } else {
-      // Izinkan tamu menjelajah katalog atau beranda sebelum masuk
-      if (['vehicles', 'statistics', 'register', 'login'].includes(startView)) {
-        UI.switchView(startView);
+      // Jika belum login, KUNCI akses: hanya form login atau pendaftaran
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'register') {
+        UI.switchView('register');
       } else {
-        UI.switchView('dashboard');
+        UI.switchView('login');
       }
     }
   },
@@ -52,11 +52,15 @@ const App = {
     const user = Auth.getUser();
     const profileBtn = document.getElementById('userProfileBtn');
     const loginLink = document.getElementById('headerLoginBtn');
+    const headerLogout = document.getElementById('headerLogoutBtn');
+    const sidebarLogout = document.getElementById('sidebarLogoutBtn');
     const adminNavItems = document.querySelectorAll('.admin-only-nav');
 
     if (user) {
       if (profileBtn) profileBtn.style.display = 'flex';
       if (loginLink) loginLink.style.display = 'none';
+      if (headerLogout) headerLogout.style.display = 'inline-flex';
+      if (sidebarLogout) sidebarLogout.style.display = 'flex';
 
       const nameEl = document.getElementById('headerUserName');
       const roleEl = document.getElementById('headerUserRole');
@@ -73,6 +77,8 @@ const App = {
     } else {
       if (profileBtn) profileBtn.style.display = 'none';
       if (loginLink) loginLink.style.display = 'flex';
+      if (headerLogout) headerLogout.style.display = 'none';
+      if (sidebarLogout) sidebarLogout.style.display = 'none';
       adminNavItems.forEach(el => {
         el.style.display = 'none';
       });
@@ -213,19 +219,31 @@ const App = {
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       this.deferredPrompt = e;
-      const installBtn = document.getElementById('btnInstallPwa');
-      if (installBtn) {
-        installBtn.style.display = 'inline-flex';
-        installBtn.addEventListener('click', () => {
-          installBtn.style.display = 'none';
-          this.deferredPrompt.prompt();
-          this.deferredPrompt.userChoice.then((choice) => {
-            if (choice.outcome === 'accepted') {
-              UI.showToast('Alhamdulillah, MAISYA-TRANS berhasil diinstall!');
-            }
-            this.deferredPrompt = null;
-          });
+      
+      const btnTop = document.getElementById('btnInstallPwaTop');
+      const boxTop = document.getElementById('sidebarInstallTop');
+      const btnBottom = document.getElementById('btnInstallPwaBottom') || document.getElementById('btnInstallPwa');
+
+      const triggerInstall = () => {
+        if (!this.deferredPrompt) return;
+        this.deferredPrompt.prompt();
+        this.deferredPrompt.userChoice.then((choice) => {
+          if (choice.outcome === 'accepted') {
+            UI.showToast('Alhamdulillah, MAISYA-TRANS berhasil dipasang di perangkat!');
+            if (boxTop) boxTop.style.display = 'none';
+            if (btnBottom) btnBottom.style.display = 'none';
+          }
+          this.deferredPrompt = null;
         });
+      };
+
+      if (btnTop && boxTop) {
+        boxTop.style.display = 'block';
+        btnTop.onclick = triggerInstall;
+      }
+      if (btnBottom) {
+        btnBottom.style.display = 'block';
+        btnBottom.onclick = triggerInstall;
       }
     });
   },

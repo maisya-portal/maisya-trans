@@ -52,42 +52,11 @@ const ProfileView = {
           <button class="btn btn-outline btn-block" onclick="UI.toggleTheme()">
             🌓 Ganti Mode Tampilan (Terang / Gelap)
           </button>
-          <button class="btn btn-danger btn-block" onclick="Auth.logout()">
-            🚪 Keluar dari Aplikasi
-          </button>
-        </div>
-      </div>
-
-      <!-- Quick Switcher Akun Demo untuk Pengujian Cepat -->
-      <div style="background:var(--surface); border:1.5px dashed var(--gold-500); border-radius:var(--border-radius-lg); padding:1.25rem;">
-        <h4 style="font-size:0.95rem; margin-bottom:0.4rem; color:var(--gold-700); display:flex; align-items:center; gap:6px;">
-          <span>⚡</span> Pengujian Akun Cepat (Quick Demo Switcher)
-        </h4>
-        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">
-          Ganti akun langsung untuk menguji pengalaman Guru/Karyawan vs Admin Sarpras.
-        </p>
-        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-          <button class="btn btn-primary btn-sm" onclick="ProfileView.quickLogin('admin@imamsyafii.ponpes.id', 'admin123')">
-            Masuk sbg Admin Sarpras
-          </button>
-          <button class="btn btn-gold btn-sm" onclick="ProfileView.quickLogin('ahmad@imamsyafii.ponpes.id', 'user123')">
-            Masuk sbg Guru (Ahmad)
-          </button>
-          <button class="btn btn-outline btn-sm" onclick="ProfileView.quickLogin('rizqi@imamsyafii.ponpes.id', 'user123')">
-            Masuk sbg Staf (Rizqi)
+          <button class="btn btn-danger btn-block" onclick="Auth.logout()" style="font-weight:700; padding:0.75rem;">
+            🚪 Keluar dari Aplikasi (Logout)
           </button>
         </div>
       </div>
     `;
-  },
-
-  async quickLogin(email, password) {
-    const res = await Auth.login(email, password);
-    if (res.success) {
-      UI.showToast(`Berhasil berganti ke ${res.data.user.nama}!`, 'success');
-      window.location.reload();
-    } else {
-      UI.showToast(res.message, 'error');
-    }
   }
 };

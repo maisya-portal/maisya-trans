@@ -296,17 +296,29 @@ button, input, select, textarea {
   margin-left: 0;
 }
 
-/* Mode Halaman Login / Registrasi */
-.app-container.auth-mode .app-main {
+/* Mode Pengguna Belum Login / Sudah Logout (Strict Login Lockdown) */
+.app-container.guest-mode .app-sidebar,
+.app-container.guest-mode .app-header,
+.app-container.guest-mode .bottom-nav {
+  display: none !important;
+}
+
+.app-container.guest-mode .app-main {
+  margin-left: 0 !important;
+  padding-bottom: 0 !important;
+  min-height: 100vh;
+  justify-content: center;
+  align-items: center;
   background: radial-gradient(circle at 50% 20%, rgba(13, 92, 58, 0.08), transparent 70%), var(--bg-app);
 }
 
-.app-container.auth-mode .content-viewport {
+.app-container.guest-mode .content-viewport {
   max-width: 100%;
   padding: 1.5rem 1rem;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
+  min-height: 100vh;
 }
 
 /* App Header / Topbar */
@@ -453,6 +465,36 @@ button, input, select, textarea {
   background: var(--primary-50);
   color: var(--primary-700);
   border-color: var(--primary-100);
+}
+
+.logout-header-btn {
+  color: #DC2626 !important;
+  background: #FEE2E2 !important;
+  border-color: #FECACA !important;
+  gap: 0.35rem;
+  padding: 0 0.65rem;
+  width: auto;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+.logout-header-btn:hover {
+  background: #DC2626 !important;
+  color: white !important;
+  border-color: #DC2626 !important;
+}
+.logout-header-btn svg {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+
+.logout-link-btn:hover {
+  background: #FEE2E2 !important;
+  color: #DC2626 !important;
+}
+
+.sidebar-install-top {
+  border-bottom: 1px solid var(--surface-border-subtle);
 }
 
 .header-btn-badge {

@@ -34,9 +34,8 @@ const UI = {
    * Router Tampilan Halaman (SPA Switching dengan Riwayat Navigasi)
    */
   switchView(viewName, addToHistory = true) {
-    // Validasi login hanya untuk aksi sensitif (booking & admin)
-    if (!Auth.isLoggedIn() && (viewName === 'booking' || viewName === 'admin')) {
-      this.showToast('Silakan masuk terlebih dahulu untuk mengajukan peminjaman atau akses admin.', 'info');
+    // Akses terkunci jika belum login: Pengguna WAJIB login, tidak boleh mengakses menu apapun
+    if (!Auth.isLoggedIn() && viewName !== 'login' && viewName !== 'register') {
       viewName = 'login';
     }
 
@@ -62,14 +61,14 @@ const UI = {
     }
     this.updateNavButtons();
 
-    // Mode login/register
+    // Mode Guest (Sembunyikan sidebar, header, dan bottom nav jika belum login)
     const appContainer = document.querySelector('.app-container');
-    const isAuthPage = (viewName === 'login' || viewName === 'register');
+    const isGuest = !Auth.isLoggedIn() || (viewName === 'login' || viewName === 'register');
     if (appContainer) {
-      if (isAuthPage) {
-        appContainer.classList.add('auth-mode');
+      if (isGuest) {
+        appContainer.classList.add('guest-mode');
       } else {
-        appContainer.classList.remove('auth-mode');
+        appContainer.classList.remove('guest-mode');
       }
     }
 

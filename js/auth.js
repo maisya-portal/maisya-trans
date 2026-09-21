@@ -52,8 +52,11 @@ const Auth = {
   },
 
   logout() {
-    this.clearSession();
-    window.location.reload();
+    if (confirm('Apakah Anda yakin ingin keluar dari akun Maisya-Trans?')) {
+      this.clearSession();
+      window.location.hash = 'login';
+      window.location.reload();
+    }
   },
 
   clearSession() {
