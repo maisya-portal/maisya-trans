@@ -29,6 +29,18 @@ const UI = {
     }
 
     this.currentView = viewName;
+
+    // Toggle mode login/register (sembunyikan sidebar & header jika belum login)
+    const appContainer = document.querySelector('.app-container');
+    const isAuthPage = (viewName === 'login' || viewName === 'register');
+    if (appContainer) {
+      if (isAuthPage) {
+        appContainer.classList.add('auth-mode');
+      } else {
+        appContainer.classList.remove('auth-mode');
+      }
+    }
+
     document.querySelectorAll('.view-section').forEach(sec => {
       sec.style.display = 'none';
     });

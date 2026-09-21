@@ -265,6 +265,37 @@ button, input, select, textarea {
   padding-bottom: calc(var(--bottom-nav-height) + 1.5rem);
 }
 
+/* Mode Halaman Login / Registrasi (Bersih, Tengah, Tanpa Sidebar) */
+.app-container.auth-mode .app-sidebar {
+  display: none !important;
+}
+
+.app-container.auth-mode .app-header {
+  display: none !important;
+}
+
+.app-container.auth-mode .bottom-nav {
+  display: none !important;
+}
+
+.app-container.auth-mode .app-main {
+  margin-left: 0 !important;
+  padding-bottom: 0 !important;
+  min-height: 100vh;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle at 50% 20%, rgba(13, 92, 58, 0.08), transparent 70%), var(--bg-app);
+}
+
+.app-container.auth-mode .content-viewport {
+  max-width: 100%;
+  padding: 1.5rem 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
 /* App Header / Topbar */
 .app-header {
   height: var(--header-height);
