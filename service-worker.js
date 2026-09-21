@@ -3,12 +3,13 @@
  * Pondok Pesantren Imam Syafi'i Brebes
  */
 
-const CACHE_NAME = 'maisya-trans-v1.0.7';
+const CACHE_NAME = 'maisya-trans-v1.0.8';
 
 const STATIC_ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './favicon.ico',
   './css/style.css',
   './css/components.css',
   './css/responsive.css',
@@ -33,12 +34,22 @@ const STATIC_ASSETS = [
   './assets/logo/logo.svg',
   './assets/icons/icon.png',
   './assets/icons/icon.svg',
+  './assets/icons/icon-32.png',
+  './assets/icons/icon-48.png',
+  './assets/icons/icon-72.png',
+  './assets/icons/icon-96.png',
+  './assets/icons/icon-128.png',
+  './assets/icons/icon-144.png',
   './assets/icons/icon-192.png',
   './assets/icons/icon-192.svg',
+  './assets/icons/icon-256.png',
+  './assets/icons/icon-384.png',
   './assets/icons/icon-512.png',
   './assets/icons/icon-512.svg',
+  './assets/icons/icon-maskable-192.png',
   './assets/icons/icon-maskable-512.png',
-  './assets/icons/favicon.png'
+  './assets/icons/favicon.png',
+  './assets/icons/favicon.ico'
 ];
 
 // Install Event - Cache Static App Shell
