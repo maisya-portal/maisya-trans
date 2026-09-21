@@ -28,13 +28,11 @@
   }
 
   .app-main {
-    margin-left: 0;
+    margin-left: 0 !important;
   }
 
-  .mobile-menu-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .sidebar-toggle-label {
+    display: none;
   }
 
   .bottom-nav {
@@ -94,6 +92,18 @@
     right: 12px;
     bottom: calc(var(--bottom-nav-height) + 12px);
     max-width: none;
+  }
+}
+
+@media (max-width: 580px) {
+  .nav-history-text {
+    display: none;
+  }
+  .nav-history-btn {
+    padding: 0.38rem 0.5rem;
+  }
+  .header-page-title {
+    font-size: 1.05rem;
   }
 }
 

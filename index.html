@@ -16,44 +16,16 @@
   <link rel="apple-touch-icon" href="./assets/icons/icon-192.svg">
 
   <!-- Stylesheets with Cache-busting -->
-  <link rel="stylesheet" href="./css/style.css?v=1.0.2">
-  <link rel="stylesheet" href="./css/components.css?v=1.0.2">
-  <link rel="stylesheet" href="./css/responsive.css?v=1.0.2">
-
-  <!-- Critical Auth Mode Style (Bypasses CSS Cache) -->
-  <style>
-    .auth-mode .app-sidebar,
-    .app-container.auth-mode .app-sidebar,
-    .auth-mode .app-header,
-    .app-container.auth-mode .app-header,
-    .auth-mode .bottom-nav,
-    .app-container.auth-mode .bottom-nav {
-      display: none !important;
-    }
-    .auth-mode .app-main,
-    .app-container.auth-mode .app-main {
-      margin-left: 0 !important;
-      padding-bottom: 0 !important;
-      min-height: 100vh !important;
-      width: 100% !important;
-    }
-    .auth-mode .content-viewport,
-    .app-container.auth-mode .content-viewport {
-      max-width: 100% !important;
-      min-height: 100vh !important;
-      display: flex !important;
-      justify-content: center !important;
-      align-items: center !important;
-      padding: 1.5rem 1rem !important;
-    }
-  </style>
+  <link rel="stylesheet" href="./css/style.css?v=1.0.3">
+  <link rel="stylesheet" href="./css/components.css?v=1.0.3">
+  <link rel="stylesheet" href="./css/responsive.css?v=1.0.3">
 </head>
 <body>
 
   <!-- Offline Notice Bar -->
   <div id="offlineNoticeBar" class="offline-notice-bar"></div>
 
-  <div class="app-container auth-mode">
+  <div class="app-container">
     
     <!-- Sidebar Backdrop for Mobile -->
     <div id="sidebarBackdrop" class="app-sidebar-backdrop"></div>
@@ -61,11 +33,16 @@
     <!-- Desktop & Drawer Sidebar -->
     <aside id="appSidebar" class="app-sidebar">
       <div class="sidebar-header">
-        <img src="./assets/logo/logo.svg" alt="Logo PP. Imam Syafi'i Brebes" class="sidebar-logo">
-        <div>
-          <div class="sidebar-brand-title">MAISYA-TRANS</div>
-          <div class="sidebar-brand-sub">PP. IMAM SYAFI'I BREBES</div>
+        <div style="display:flex; align-items:center; gap:0.75rem; flex:1; min-width:0;">
+          <img src="./assets/logo/logo.svg" alt="Logo PP. Imam Syafi'i Brebes" class="sidebar-logo">
+          <div style="min-width:0;">
+            <div class="sidebar-brand-title">MAISYA-TRANS</div>
+            <div class="sidebar-brand-sub">PP. IMAM SYAFI'I BREBES</div>
+          </div>
         </div>
+        <button id="sidebarCloseBtn" class="sidebar-close-btn" title="Sembunyikan Menu" aria-label="Sembunyikan Sidebar">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
       </div>
 
       <nav class="sidebar-nav">
@@ -136,9 +113,26 @@
       <!-- Sticky Top Header -->
       <header class="app-header">
         <div class="header-left">
-          <button id="mobileMenuBtn" class="mobile-menu-btn" aria-label="Buka Menu">
-            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-          </button>
+          <div class="header-nav-controls">
+            <!-- Universal Sidebar Toggle (Hide / Show) -->
+            <button id="sidebarToggleBtn" class="sidebar-toggle-btn" title="Sembunyikan / Tampilkan Sidebar" aria-label="Menu Navigasi">
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+              <span class="sidebar-toggle-label">Menu</span>
+            </button>
+
+            <!-- Nav History (Kembali & Lanjut) -->
+            <div class="nav-history-group" role="navigation" aria-label="Navigasi Halaman">
+              <button id="navBackBtn" class="nav-history-btn" title="Kembali ke halaman sebelumnya" aria-label="Kembali" disabled>
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                <span class="nav-history-text">Kembali</span>
+              </button>
+              <button id="navForwardBtn" class="nav-history-btn" title="Lanjut ke halaman berikutnya" aria-label="Lanjut" disabled>
+                <span class="nav-history-text">Lanjut</span>
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+
           <div class="header-title-group">
             <h1 id="headerPageTitle" class="header-page-title">Beranda Monitoring</h1>
             <span class="header-tagline">Mobilitas Aman, Tertib, dan Terdata</span>
@@ -916,23 +910,23 @@
   </div>
 
   <!-- JavaScript Scripts (Modular Execution) -->
-  <script src="./js/config.js"></script>
-  <script src="./js/utils.js"></script>
-  <script src="./js/store.js"></script>
-  <script src="./js/auth.js"></script>
-  <script src="./js/api.js"></script>
-  <script src="./js/ui.js"></script>
-  <script src="./js/dashboard.js"></script>
-  <script src="./js/vehicles.js"></script>
-  <script src="./js/booking.js"></script>
-  <script src="./js/trips.js"></script>
-  <script src="./js/history.js"></script>
-  <script src="./js/maintenance.js"></script>
-  <script src="./js/statistics.js"></script>
-  <script src="./js/admin.js"></script>
-  <script src="./js/notifications.js"></script>
-  <script src="./js/profile.js"></script>
-  <script src="./js/app.js"></script>
+  <script src="./js/config.js?v=1.0.3"></script>
+  <script src="./js/utils.js?v=1.0.3"></script>
+  <script src="./js/store.js?v=1.0.3"></script>
+  <script src="./js/auth.js?v=1.0.3"></script>
+  <script src="./js/api.js?v=1.0.3"></script>
+  <script src="./js/ui.js?v=1.0.3"></script>
+  <script src="./js/dashboard.js?v=1.0.3"></script>
+  <script src="./js/vehicles.js?v=1.0.3"></script>
+  <script src="./js/booking.js?v=1.0.3"></script>
+  <script src="./js/trips.js?v=1.0.3"></script>
+  <script src="./js/history.js?v=1.0.3"></script>
+  <script src="./js/maintenance.js?v=1.0.3"></script>
+  <script src="./js/statistics.js?v=1.0.3"></script>
+  <script src="./js/admin.js?v=1.0.3"></script>
+  <script src="./js/notifications.js?v=1.0.3"></script>
+  <script src="./js/profile.js?v=1.0.3"></script>
+  <script src="./js/app.js?v=1.0.3"></script>
 
 </body>
 </html>

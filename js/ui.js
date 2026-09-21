@@ -6,19 +6,37 @@
 const UI = {
   currentView: 'dashboard',
   favorites: new Set(),
+  historyStack: [],
+  historyIndex: -1,
+  isNavigatingHistory: false,
 
   init() {
     this.loadFavorites();
     this.initTheme();
+    this.initSidebarState();
     this.bindGlobalEvents();
+    this.bindHistoryEvents();
   },
 
   /**
-   * Router Tampilan Halaman (SPA Switching)
+   * Status Sidebar Awal
    */
-  switchView(viewName) {
-    // Validasi login
-    if (!Auth.isLoggedIn() && viewName !== 'login' && viewName !== 'register') {
+  initSidebarState() {
+    const container = document.querySelector('.app-container');
+    const savedState = localStorage.getItem('maisya_sidebar_collapsed');
+    // Jika user sebelumnya sengaja menutup sidebar pada desktop, terapkan
+    if (savedState === 'true' && window.innerWidth > 900) {
+      container?.classList.add('sidebar-collapsed');
+    }
+  },
+
+  /**
+   * Router Tampilan Halaman (SPA Switching dengan Riwayat Navigasi)
+   */
+  switchView(viewName, addToHistory = true) {
+    // Validasi login hanya untuk aksi sensitif (booking & admin)
+    if (!Auth.isLoggedIn() && (viewName === 'booking' || viewName === 'admin')) {
+      this.showToast('Silakan masuk terlebih dahulu untuk mengajukan peminjaman atau akses admin.', 'info');
       viewName = 'login';
     }
 
@@ -30,7 +48,21 @@ const UI = {
 
     this.currentView = viewName;
 
-    // Toggle mode login/register (sembunyikan sidebar & header jika belum login)
+    // Stack Riwayat Halaman (Kembali & Lanjut)
+    if (addToHistory && !this.isNavigatingHistory) {
+      if (this.historyStack.length === 0 || this.historyStack[this.historyIndex] !== viewName) {
+        // Buang riwayat 'lanjut' jika berpindah ke cabang navigasi baru
+        this.historyStack = this.historyStack.slice(0, this.historyIndex + 1);
+        this.historyStack.push(viewName);
+        this.historyIndex = this.historyStack.length - 1;
+        try {
+          history.pushState({ view: viewName, index: this.historyIndex }, '', `#${viewName}`);
+        } catch (e) {}
+      }
+    }
+    this.updateNavButtons();
+
+    // Mode login/register
     const appContainer = document.querySelector('.app-container');
     const isAuthPage = (viewName === 'login' || viewName === 'register');
     if (appContainer) {
@@ -253,6 +285,134 @@ const UI = {
     this.showToast(`Mode tema diubah ke: ${next === 'dark' ? 'Gelap 🌙' : 'Terang ☀️'}`);
   },
 
+  /**
+   * Navigasi Riwayat: Kembali (Back)
+   */
+  goBack() {
+    if (this.historyIndex > 0) {
+      this.historyIndex--;
+      const prevView = this.historyStack[this.historyIndex];
+      this.isNavigatingHistory = true;
+      this.switchView(prevView, false);
+      this.isNavigatingHistory = false;
+      this.updateNavButtons();
+      try {
+        history.replaceState({ view: prevView, index: this.historyIndex }, '', `#${prevView}`);
+      } catch (e) {}
+    }
+  },
+
+  /**
+   * Navigasi Riwayat: Lanjut (Forward)
+   */
+  goForward() {
+    if (this.historyIndex < this.historyStack.length - 1) {
+      this.historyIndex++;
+      const nextView = this.historyStack[this.historyIndex];
+      this.isNavigatingHistory = true;
+      this.switchView(nextView, false);
+      this.isNavigatingHistory = false;
+      this.updateNavButtons();
+      try {
+        history.replaceState({ view: nextView, index: this.historyIndex }, '', `#${nextView}`);
+      } catch (e) {}
+    }
+  },
+
+  /**
+   * Update Status Tombol Kembali & Lanjut
+   */
+  updateNavButtons() {
+    const btnBack = document.getElementById('navBackBtn');
+    const btnForward = document.getElementById('navForwardBtn');
+    if (btnBack) {
+      btnBack.disabled = (this.historyIndex <= 0);
+    }
+    if (btnForward) {
+      btnForward.disabled = (this.historyIndex >= this.historyStack.length - 1);
+    }
+  },
+
+  /**
+   * Kontrol Sidebar: Sembunyikan atau Tampilkan (Hide / Show)
+   */
+  toggleSidebar(forceState = null) {
+    const container = document.querySelector('.app-container');
+    const sidebar = document.getElementById('appSidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    const isMobile = window.innerWidth <= 900;
+
+    if (isMobile) {
+      // Di Mobile: Buka / Tutup Drawer Off-Canvas
+      const willOpen = forceState !== null ? forceState : !sidebar?.classList.contains('mobile-open');
+      if (willOpen) {
+        sidebar?.classList.add('mobile-open');
+        backdrop?.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      } else {
+        sidebar?.classList.remove('mobile-open');
+        backdrop?.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    } else {
+      // Di Desktop: Collapse / Expand Sidebar
+      const willCollapse = forceState !== null ? !forceState : !container?.classList.contains('sidebar-collapsed');
+      if (willCollapse) {
+        container?.classList.add('sidebar-collapsed');
+        localStorage.setItem('maisya_sidebar_collapsed', 'true');
+        this.showToast('Sidebar disembunyikan. Klik Menu untuk memunculkan kembali.', 'info', 2000);
+      } else {
+        container?.classList.remove('sidebar-collapsed');
+        localStorage.setItem('maisya_sidebar_collapsed', 'false');
+      }
+    }
+  },
+
+  hideSidebar() {
+    this.toggleSidebar(false);
+  },
+
+  showSidebar() {
+    this.toggleSidebar(true);
+  },
+
+  /**
+   * Event Listeners untuk History API
+   */
+  bindHistoryEvents() {
+    window.addEventListener('popstate', (e) => {
+      if (e.state && e.state.view) {
+        this.isNavigatingHistory = true;
+        if (typeof e.state.index === 'number') {
+          this.historyIndex = e.state.index;
+        }
+        this.switchView(e.state.view, false);
+        this.isNavigatingHistory = false;
+        this.updateNavButtons();
+      } else if (window.location.hash) {
+        const hashView = window.location.hash.replace('#', '');
+        if (hashView) {
+          this.switchView(hashView, false);
+        }
+      }
+    });
+
+    const btnBack = document.getElementById('navBackBtn');
+    const btnForward = document.getElementById('navForwardBtn');
+    if (btnBack) {
+      btnBack.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.goBack();
+      });
+    }
+    if (btnForward) {
+      btnForward.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.goForward();
+      });
+    }
+  },
+
   bindGlobalEvents() {
     // Delegasi klik tombol navigasi
     document.addEventListener('click', (e) => {
@@ -261,9 +421,10 @@ const UI = {
         e.preventDefault();
         const view = navTarget.getAttribute('data-view');
         this.switchView(view);
-        // Tutup mobile sidebar jika terbuka
+        // Tutup mobile drawer jika terbuka
         document.getElementById('appSidebar')?.classList.remove('mobile-open');
         document.getElementById('sidebarBackdrop')?.classList.remove('active');
+        document.body.style.overflow = '';
       }
 
       // Close modal button
@@ -274,20 +435,38 @@ const UI = {
       }
     });
 
-    // Mobile hamburger menu toggle
-    const menuBtn = document.getElementById('mobileMenuBtn');
-    const sidebar = document.getElementById('appSidebar');
-    const backdrop = document.getElementById('sidebarBackdrop');
-
-    if (menuBtn && sidebar && backdrop) {
-      menuBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('mobile-open');
-        backdrop.classList.toggle('active');
+    // Universal Sidebar Toggle Button (Desktop & Mobile)
+    const toggleBtn = document.getElementById('sidebarToggleBtn');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.toggleSidebar();
       });
+    }
 
+    // Legacy Mobile Menu Button compatibility
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    if (mobileBtn && mobileBtn !== toggleBtn) {
+      mobileBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.toggleSidebar();
+      });
+    }
+
+    // Sidebar Close Button (inside sidebar header)
+    const closeBtn = document.getElementById('sidebarCloseBtn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.hideSidebar();
+      });
+    }
+
+    // Backdrop click to close sidebar
+    const backdrop = document.getElementById('sidebarBackdrop');
+    if (backdrop) {
       backdrop.addEventListener('click', () => {
-        sidebar.classList.remove('mobile-open');
-        backdrop.classList.remove('active');
+        this.hideSidebar();
       });
     }
 

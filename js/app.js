@@ -25,12 +25,23 @@ const App = {
     this.setupPWA();
     this.updateUserHeaderUI();
 
-    // 3. Setup Halaman Awal
+    // 3. Setup Halaman Awal & History
+    let startView = 'dashboard';
+    const hash = window.location.hash.replace('#', '');
+    if (hash && document.getElementById(`view-${hash}`)) {
+      startView = hash;
+    }
+
     if (Auth.isLoggedIn()) {
-      UI.switchView('dashboard');
+      UI.switchView(startView);
       this.startPolling();
     } else {
-      UI.switchView('login');
+      // Izinkan tamu menjelajah katalog atau beranda sebelum masuk
+      if (['vehicles', 'statistics', 'register', 'login'].includes(startView)) {
+        UI.switchView(startView);
+      } else {
+        UI.switchView('dashboard');
+      }
     }
   },
 
