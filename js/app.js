@@ -190,7 +190,10 @@ const App = {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./service-worker.js')
-          .then(reg => console.log('[PWA] Service Worker aktif:', reg.scope))
+          .then(reg => {
+            reg.update();
+            console.log('[PWA] Service Worker aktif & diperbarui:', reg.scope);
+          })
           .catch(err => console.warn('[PWA] Registrasi SW gagal:', err));
       });
     }

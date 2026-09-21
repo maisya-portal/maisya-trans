@@ -15,10 +15,38 @@
   <link rel="icon" type="image/svg+xml" href="./assets/icons/icon.svg">
   <link rel="apple-touch-icon" href="./assets/icons/icon-192.svg">
 
-  <!-- Stylesheets -->
-  <link rel="stylesheet" href="./css/style.css">
-  <link rel="stylesheet" href="./css/components.css">
-  <link rel="stylesheet" href="./css/responsive.css">
+  <!-- Stylesheets with Cache-busting -->
+  <link rel="stylesheet" href="./css/style.css?v=1.0.2">
+  <link rel="stylesheet" href="./css/components.css?v=1.0.2">
+  <link rel="stylesheet" href="./css/responsive.css?v=1.0.2">
+
+  <!-- Critical Auth Mode Style (Bypasses CSS Cache) -->
+  <style>
+    .auth-mode .app-sidebar,
+    .app-container.auth-mode .app-sidebar,
+    .auth-mode .app-header,
+    .app-container.auth-mode .app-header,
+    .auth-mode .bottom-nav,
+    .app-container.auth-mode .bottom-nav {
+      display: none !important;
+    }
+    .auth-mode .app-main,
+    .app-container.auth-mode .app-main {
+      margin-left: 0 !important;
+      padding-bottom: 0 !important;
+      min-height: 100vh !important;
+      width: 100% !important;
+    }
+    .auth-mode .content-viewport,
+    .app-container.auth-mode .content-viewport {
+      max-width: 100% !important;
+      min-height: 100vh !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      padding: 1.5rem 1rem !important;
+    }
+  </style>
 </head>
 <body>
 
