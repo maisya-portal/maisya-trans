@@ -40,6 +40,7 @@ const App = {
         } catch (e) {}
       }
       UI.switchView(startView, false);
+      Auth.startIdleWatcher();
       this.startPolling();
     } else {
       // 4. Periksa Auto-Login Google: Otomatis masuk jika sebelumnya pernah login dengan Google (kecuali logout manual)
@@ -54,6 +55,7 @@ const App = {
           history.replaceState({ view: startView, index: 0 }, '', `#${startView}`);
         } catch (e) {}
         UI.switchView(startView, false);
+        Auth.startIdleWatcher();
         this.startPolling();
       } else {
         // Jika belum login dan tidak ada auto-login Google, barulah tampilkan form login
@@ -176,6 +178,7 @@ const App = {
             Auth.saveRememberedCredentials(username, password, isRemember);
 
             UI.showToast(res.message, 'success');
+            Auth.startIdleWatcher();
             this.updateUserHeaderUI();
             UI.switchView('dashboard');
             this.startPolling();

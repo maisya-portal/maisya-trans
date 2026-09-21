@@ -17,11 +17,10 @@ function handleStartTrip(params) {
   }
   
   const lock = LockService.getScriptLock();
+  let lockAcquired = false;
   try {
-    const success = lock.waitLock(10000);
-    if (!success) {
-      return { success: false, message: 'Server sedang sibuk. Silakan coba sesaat lagi.' };
-    }
+    lock.waitLock(10000); // GAS: throw exception jika gagal lock, bukan return false
+    lockAcquired = true;
     
     // 1. Dapatkan data kendaraan
     const vehicleSheet = getSheet(CONFIG.SHEETS.VEHICLES);
@@ -125,9 +124,12 @@ function handleStartTrip(params) {
       }
     };
   } catch (err) {
+    if (err.message && err.message.toLowerCase().includes('lock')) {
+      return { success: false, message: 'Server sedang sibuk. Silakan coba sesaat lagi.' };
+    }
     return { success: false, message: 'Gagal memulai pemakaian: ' + err.message };
   } finally {
-    lock.releaseLock();
+    if (lockAcquired) lock.releaseLock();
   }
 }
 
@@ -143,11 +145,10 @@ function handleFinishTrip(params) {
   }
   
   const lock = LockService.getScriptLock();
+  let lockAcquired = false;
   try {
-    const success = lock.waitLock(10000);
-    if (!success) {
-      return { success: false, message: 'Server sedang memproses transaksi lain. Silakan coba lagi.' };
-    }
+    lock.waitLock(10000); // GAS: throw exception jika gagal lock, bukan return false
+    lockAcquired = true;
     
     // 1. Cari trip record
     const tripSheet = getSheet(CONFIG.SHEETS.TRIPS);
@@ -277,9 +278,12 @@ function handleFinishTrip(params) {
       }
     };
   } catch (err) {
+    if (err.message && err.message.toLowerCase().includes('lock')) {
+      return { success: false, message: 'Server sedang sibuk. Silakan coba sesaat lagi.' };
+    }
     return { success: false, message: 'Gagal menyelesaikan pemakaian: ' + err.message };
   } finally {
-    lock.releaseLock();
+    if (lockAcquired) lock.releaseLock();
   }
 }
 

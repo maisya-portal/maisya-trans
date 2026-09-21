@@ -150,6 +150,10 @@ function doPost(e) {
         if (role !== CONFIG.ROLES.ADMIN) return forbiddenResponse();
         return wrapResult(handleUpdateVehicle(body));
         
+      case 'deleteVehicle':
+        if (role !== CONFIG.ROLES.ADMIN) return forbiddenResponse();
+        return wrapResult(handleDeleteVehicle(body));
+        
       case 'setVehicleMaintenance':
         if (role !== CONFIG.ROLES.ADMIN) return forbiddenResponse();
         return wrapResult(handleSetVehicleMaintenance(body));

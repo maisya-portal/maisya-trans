@@ -207,9 +207,10 @@ function handleLogin(params) {
 
 /**
  * Autentikasi & Pendaftaran dengan Akun Google
+ * Sekarang WAJIB verifikasi password untuk keamanan tambahan
  */
 function handleGoogleAuth(params) {
-  const { email, name, picture, googleId } = params;
+  const { email, name, picture, googleId, password } = params;
   
   if (!email) {
     return { success: false, message: 'Alamat email Google tidak terdeteksi.' };
@@ -228,12 +229,31 @@ function handleGoogleAuth(params) {
       const uName = row[1];
       const uRole = row[8];
       const uStatus = row[9];
+      const uPassHash = row[7];
       
       if (uStatus === CONFIG.STATUS.USER.REJECTED) {
         return { success: false, message: 'Mohon maaf, akun Anda berstatus ditolak oleh Admin Sarpras.' };
       }
       if (uStatus === CONFIG.STATUS.USER.INACTIVE) {
         return { success: false, message: 'Akun Anda sedang dinonaktifkan sementara oleh Admin.' };
+      }
+      if (uStatus === CONFIG.STATUS.USER.PENDING) {
+        return { success: false, message: 'Akun Anda masih menunggu persetujuan Admin Sarpras.' };
+      }
+      
+      // Verifikasi password jika akun memiliki password_hash
+      if (uPassHash && uPassHash.trim() !== '') {
+        if (!password) {
+          return { 
+            success: false, 
+            requirePassword: true,
+            message: 'Akun ini memerlukan verifikasi password. Harap masukkan password Maisya-Trans Anda.'
+          };
+        }
+        const inputHash = hashPassword(password);
+        if (inputHash !== uPassHash) {
+          return { success: false, message: 'Password yang Anda masukkan salah. Periksa kembali password Maisya-Trans Anda.' };
+        }
       }
       
       const now = nowISO();
@@ -265,10 +285,20 @@ function handleGoogleAuth(params) {
     }
   }
   
-  // 2. Jika belum terdaftar, otomatis buat akun baru (Pendaftaran via Google)
+  // 2. Jika belum terdaftar, wajib isi password untuk keamanan
+  if (!password || password.trim().length < 6) {
+    return {
+      success: false,
+      requirePassword: true,
+      message: 'Akun baru ditemukan. Harap buat password (min. 6 karakter) untuk keamanan akun Maisya-Trans Anda.'
+    };
+  }
+
+  // Buat akun baru dengan password yang diberikan
   const userId = generateUUID('USR');
   const displayName = name ? String(name).trim() : emailLower.split('@')[0];
   const now = nowISO();
+  const passHash = hashPassword(password);
   
   const newRow = [
     userId,
@@ -278,9 +308,9 @@ function handleGoogleAuth(params) {
     'Pondok', // divisi
     '-', // no_hp
     emailLower,
-    '', // password_hash
+    passHash, // password_hash
     CONFIG.ROLES.USER,
-    CONFIG.STATUS.USER.ACTIVE, // Otomatis aktif karena terverifikasi oleh Google
+    CONFIG.STATUS.USER.ACTIVE,
     now,
     now, // approved_at
     'GOOGLE_AUTO', // approved_by

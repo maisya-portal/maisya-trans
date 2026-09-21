@@ -242,3 +242,44 @@ function handleUpdateVehicle(params) {
   
   return { success: true, message: 'Data kendaraan berhasil diperbarui.' };
 }
+
+/**
+ * Hapus Kendaraan dari Sistem (Khusus Admin)
+ * Tidak bisa menghapus kendaraan yang sedang digunakan
+ */
+function handleDeleteVehicle(params) {
+  const { vehicleId, userId } = params;
+
+  if (!vehicleId) {
+    return { success: false, message: 'ID kendaraan tidak valid.' };
+  }
+
+  const sheet = getSheet(CONFIG.SHEETS.VEHICLES);
+  const data = sheet.getDataRange().getValues();
+
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === vehicleId) {
+      const nopol = data[i][4];
+      const merk  = data[i][2];
+      const model = data[i][3];
+      const status = data[i][14];
+
+      // Tolak penghapusan jika kendaraan sedang dipakai
+      if (status === CONFIG.STATUS.VEHICLE.IN_USE) {
+        return {
+          success: false,
+          message: `Kendaraan ${merk} ${model} (${nopol}) tidak dapat dihapus karena sedang digunakan.`
+        };
+      }
+
+      sheet.deleteRow(i + 1);
+      logAudit(userId || 'ADMIN', 'DELETE_VEHICLE', 'VEHICLES', vehicleId,
+        `Hapus kendaraan: ${nopol} (${merk} ${model})`);
+
+      return { success: true, message: `Kendaraan ${merk} ${model} (${nopol}) berhasil dihapus dari sistem.` };
+    }
+  }
+
+  return { success: false, message: 'Kendaraan tidak ditemukan.' };
+}
+

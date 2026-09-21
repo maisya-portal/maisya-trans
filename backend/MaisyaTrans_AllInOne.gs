@@ -235,6 +235,7 @@ function seedDemoData() {
   // Seed Users jika kosong
   if (userSheet.getLastRow() <= 1) {
     const adminPassHash = hashPassword('admin123');
+    const kesantrianPassHash = hashPassword('99158kesantrian');
     const userPassHash = hashPassword('user123');
     const now = nowISO();
     
@@ -242,6 +243,13 @@ function seedDemoData() {
       'USR-ADMIN-01', 'Ustadz Admin Maisya', '19850101001', 'Kepala Sarpras', 
       'Sarana & Prasarana', '081234567890', 'admin@imamsyafii.ponpes.id', 
       adminPassHash, CONFIG.ROLES.ADMIN, CONFIG.STATUS.USER.ACTIVE, now, now, 'SYSTEM', now
+    ]);
+
+    // Admin Kesantrian PPISB
+    userSheet.appendRow([
+      'USR-ADMIN-KSN', 'Admin Kesantrian PPISB', 'KSN-2026', 'Kepala Kesantrian',
+      'Kesantrian', '081999158001', 'kesantrian.ppisb@gmail.com',
+      kesantrianPassHash, CONFIG.ROLES.ADMIN, CONFIG.STATUS.USER.ACTIVE, now, now, 'SYSTEM', now
     ]);
     
     userSheet.appendRow([
@@ -255,6 +263,8 @@ function seedDemoData() {
       'Tata Usaha & Logistik', '085712345678', 'rizqi@imamsyafii.ponpes.id', 
       userPassHash, CONFIG.ROLES.USER, CONFIG.STATUS.USER.ACTIVE, now, now, 'USR-ADMIN-01', now
     ]);
+  } else {
+    seedAdminKesantrian(userSheet);
   }
   
   // Seed Kendaraan jika kosong
@@ -618,8 +628,11 @@ function handleLogin(params) {
   return { success: false, message: 'Pengguna tidak ditemukan. Silakan periksa kembali email/NIP Anda.' };
 }
 
+/**
+ * Google Auth — WAJIB verifikasi password untuk keamanan tambahan
+ */
 function handleGoogleAuth(params) {
-  const { email, name, picture, googleId } = params;
+  const { email, name, picture, googleId, password } = params;
   if (!email) return { success: false, message: 'Alamat email Google tidak terdeteksi.' };
   
   const emailLower = String(email).toLowerCase().trim();
@@ -634,12 +647,31 @@ function handleGoogleAuth(params) {
       const uName = row[1];
       const uRole = row[8];
       const uStatus = row[9];
+      const uPassHash = row[7];
       
       if (uStatus === CONFIG.STATUS.USER.REJECTED) {
         return { success: false, message: 'Mohon maaf, akun Anda berstatus ditolak oleh Admin Sarpras.' };
       }
       if (uStatus === CONFIG.STATUS.USER.INACTIVE) {
         return { success: false, message: 'Akun Anda sedang dinonaktifkan sementara oleh Admin.' };
+      }
+      if (uStatus === CONFIG.STATUS.USER.PENDING) {
+        return { success: false, message: 'Akun Anda masih menunggu persetujuan Admin Sarpras.' };
+      }
+
+      // Verifikasi password jika akun memiliki password_hash
+      if (uPassHash && uPassHash.trim() !== '') {
+        if (!password) {
+          return { 
+            success: false, 
+            requirePassword: true,
+            message: 'Akun ini memerlukan verifikasi password. Harap masukkan password Maisya-Trans Anda.'
+          };
+        }
+        const inputHash = hashPassword(password);
+        if (inputHash !== uPassHash) {
+          return { success: false, message: 'Password yang Anda masukkan salah. Periksa kembali password Maisya-Trans Anda.' };
+        }
       }
       
       const now = nowISO();
@@ -669,13 +701,23 @@ function handleGoogleAuth(params) {
       };
     }
   }
-  
+
+  // Belum terdaftar — wajib isi password untuk keamanan
+  if (!password || password.trim().length < 6) {
+    return {
+      success: false,
+      requirePassword: true,
+      message: 'Akun baru ditemukan. Harap buat password (min. 6 karakter) untuk keamanan akun Maisya-Trans Anda.'
+    };
+  }
+
   const userId = generateUUID('USR');
   const displayName = name ? String(name).trim() : emailLower.split('@')[0];
   const now = nowISO();
+  const passHash = hashPassword(password);
   
   const newRow = [
-    userId, displayName, '-', 'Guru / Karyawan', 'Pondok', '-', emailLower, '',
+    userId, displayName, '-', 'Guru / Karyawan', 'Pondok', '-', emailLower, passHash,
     CONFIG.ROLES.USER, CONFIG.STATUS.USER.ACTIVE, now, now, 'GOOGLE_AUTO', now
   ];
   userSheet.appendRow(newRow);
@@ -710,6 +752,38 @@ function handleGoogleAuth(params) {
       }
     }
   };
+}
+
+/**
+ * Buat atau perbarui akun Admin Kesantrian PPISB
+ * Jalankan dari Apps Script Editor jika akun belum ada di spreadsheet
+ */
+function seedAdminKesantrian(userSheetArg) {
+  const sheet = userSheetArg || getSheet(CONFIG.SHEETS.USERS);
+  const data = sheet.getDataRange().getValues();
+  const targetEmail = 'kesantrian.ppisb@gmail.com';
+  const passHash = hashPassword('99158kesantrian');
+  const now = nowISO();
+
+  for (let i = 1; i < data.length; i++) {
+    const rowEmail = String(data[i][6]).toLowerCase().trim();
+    if (rowEmail === targetEmail) {
+      const rowIdx = i + 1;
+      sheet.getRange(rowIdx, 8).setValue(passHash);
+      sheet.getRange(rowIdx, 9).setValue(CONFIG.ROLES.ADMIN);
+      sheet.getRange(rowIdx, 10).setValue(CONFIG.STATUS.USER.ACTIVE);
+      Logger.log('[seedAdminKesantrian] Akun diperbarui: ' + targetEmail);
+      return { success: true, message: 'Akun Admin Kesantrian diperbarui.' };
+    }
+  }
+
+  sheet.appendRow([
+    'USR-ADMIN-KSN', 'Admin Kesantrian PPISB', 'KSN-2026', 'Kepala Kesantrian',
+    'Kesantrian', '081999158001', targetEmail,
+    passHash, CONFIG.ROLES.ADMIN, CONFIG.STATUS.USER.ACTIVE, now, now, 'SYSTEM', now
+  ]);
+  Logger.log('[seedAdminKesantrian] Akun baru dibuat: ' + targetEmail);
+  return { success: true, message: 'Akun Admin Kesantrian berhasil dibuat.' };
 }
 
 // ============================================================================
@@ -892,8 +966,70 @@ function handleAddVehicle(params) {
   return { success: true, message: 'Armada berhasil ditambahkan.', data: { vehicleId } };
 }
 
-// ============================================================================
-// BAGIAN 6: PEMINJAMAN & PENCEGAHAN BENTROK (BOOKINGS)
+/**
+ * Update / Edit Data Kendaraan (Khusus Admin)
+ */
+function handleUpdateVehicle(params) {
+  const { vehicleId, merk, model, nomor_polisi, tahun, warna, status, notes, oil_interval_km, tuneup_interval_km, userId } = params;
+
+  const sheet = getSheet(CONFIG.SHEETS.VEHICLES);
+  const data = sheet.getDataRange().getValues();
+  let foundRow = -1;
+
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === vehicleId) { foundRow = i + 1; break; }
+  }
+  if (foundRow === -1) return { success: false, message: 'Kendaraan tidak ditemukan.' };
+
+  if (merk)           sheet.getRange(foundRow, 3).setValue(merk.trim());
+  if (model)          sheet.getRange(foundRow, 4).setValue(model.trim());
+  if (nomor_polisi)   sheet.getRange(foundRow, 5).setValue(nomor_polisi.toUpperCase().trim());
+  if (tahun)          sheet.getRange(foundRow, 6).setValue(tahun);
+  if (warna)          sheet.getRange(foundRow, 7).setValue(warna);
+  if (oil_interval_km)    sheet.getRange(foundRow, 13).setValue(Number(oil_interval_km));
+  if (tuneup_interval_km) sheet.getRange(foundRow, 14).setValue(Number(tuneup_interval_km));
+  if (status)         sheet.getRange(foundRow, 15).setValue(status);
+  if (notes !== undefined) sheet.getRange(foundRow, 16).setValue(notes);
+
+  logAudit(userId || 'ADMIN', 'UPDATE_VEHICLE', 'VEHICLES', vehicleId, `Update kendaraan ID ${vehicleId}`);
+  return { success: true, message: 'Data kendaraan berhasil diperbarui.' };
+}
+
+/**
+ * Hapus Kendaraan dari Sistem (Khusus Admin)
+ * Tidak bisa menghapus kendaraan yang sedang digunakan
+ */
+function handleDeleteVehicle(params) {
+  const { vehicleId, userId } = params;
+  if (!vehicleId) return { success: false, message: 'ID kendaraan tidak valid.' };
+
+  const sheet = getSheet(CONFIG.SHEETS.VEHICLES);
+  const data = sheet.getDataRange().getValues();
+
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === vehicleId) {
+      const nopol  = data[i][4];
+      const merk   = data[i][2];
+      const model  = data[i][3];
+      const status = data[i][14];
+
+      if (status === CONFIG.STATUS.VEHICLE.IN_USE) {
+        return {
+          success: false,
+          message: `Kendaraan ${merk} ${model} (${nopol}) tidak dapat dihapus karena sedang digunakan.`
+        };
+      }
+
+      sheet.deleteRow(i + 1);
+      logAudit(userId || 'ADMIN', 'DELETE_VEHICLE', 'VEHICLES', vehicleId,
+        `Hapus kendaraan: ${nopol} (${merk} ${model})`);
+      return { success: true, message: `Kendaraan ${merk} ${model} (${nopol}) berhasil dihapus dari sistem.` };
+    }
+  }
+  return { success: false, message: 'Kendaraan tidak ditemukan.' };
+}
+
+
 // ============================================================================
 
 function handleCreateBooking(params) {
@@ -904,9 +1040,10 @@ function handleCreateBooking(params) {
   }
   
   const lock = LockService.getScriptLock();
+  let lockAcquired = false;
   try {
-    const success = lock.waitLock(10000);
-    if (!success) return { success: false, message: 'Server sedang sibuk. Silakan coba lagi.' };
+    lock.waitLock(10000); // GAS: throw exception jika gagal, bukan return false
+    lockAcquired = true;
     
     const vehicleSheet = getSheet(CONFIG.SHEETS.VEHICLES);
     const vehicleData = vehicleSheet.getDataRange().getValues();
@@ -977,8 +1114,13 @@ function handleCreateBooking(params) {
         : 'Peminjaman telah disetujui otomatis.',
       data: { bookingId, status: initialStatus }
     };
+  } catch (err) {
+    if (err.message && err.message.toLowerCase().includes('lock')) {
+      return { success: false, message: 'Server sedang sibuk. Silakan coba lagi.' };
+    }
+    return { success: false, message: 'Gagal membuat peminjaman: ' + err.message };
   } finally {
-    lock.releaseLock();
+    if (lockAcquired) lock.releaseLock();
   }
 }
 
@@ -994,9 +1136,10 @@ function handleStartTrip(params) {
   }
   
   const lock = LockService.getScriptLock();
+  let lockAcquired = false;
   try {
-    const success = lock.waitLock(10000);
-    if (!success) return { success: false, message: 'Server sedang sibuk.' };
+    lock.waitLock(10000); // GAS: throw exception jika gagal, bukan return false
+    lockAcquired = true;
     
     const vehicleSheet = getSheet(CONFIG.SHEETS.VEHICLES);
     const vData = vehicleSheet.getDataRange().getValues();
@@ -1060,8 +1203,13 @@ function handleStartTrip(params) {
       message: 'Bismillah! Pemakaian kendaraan berhasil dimulai.',
       data: { tripId, vehicleId, startKm: startKmNum, startTime: now }
     };
+  } catch (err) {
+    if (err.message && err.message.toLowerCase().includes('lock')) {
+      return { success: false, message: 'Server sedang sibuk. Silakan coba sesaat lagi.' };
+    }
+    return { success: false, message: 'Gagal memulai pemakaian: ' + err.message };
   } finally {
-    lock.releaseLock();
+    if (lockAcquired) lock.releaseLock();
   }
 }
 
@@ -1073,9 +1221,10 @@ function handleFinishTrip(params) {
   }
   
   const lock = LockService.getScriptLock();
+  let lockAcquired = false;
   try {
-    const success = lock.waitLock(10000);
-    if (!success) return { success: false, message: 'Server sedang sibuk.' };
+    lock.waitLock(10000); // GAS: throw exception jika gagal, bukan return false
+    lockAcquired = true;
     
     const tripSheet = getSheet(CONFIG.SHEETS.TRIPS);
     const tripData = tripSheet.getDataRange().getValues();
@@ -1156,8 +1305,13 @@ function handleFinishTrip(params) {
         purpose: targetTrip[11]
       }
     };
+  } catch (err) {
+    if (err.message && err.message.toLowerCase().includes('lock')) {
+      return { success: false, message: 'Server sedang sibuk. Silakan coba sesaat lagi.' };
+    }
+    return { success: false, message: 'Gagal menyelesaikan pemakaian: ' + err.message };
   } finally {
-    lock.releaseLock();
+    if (lockAcquired) lock.releaseLock();
   }
 }
 

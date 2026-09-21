@@ -16,12 +16,12 @@ function handleCreateBooking(params) {
   }
   
   // Gunakan LockService untuk mencegah double-booking bersamaan
+  // Catatan: waitLock() di GAS melempar exception jika gagal (bukan return boolean)
   const lock = LockService.getScriptLock();
+  let lockAcquired = false;
   try {
-    const success = lock.waitLock(10000); // 10 detik
-    if (!success) {
-      return { success: false, message: 'Server sedang memproses peminjaman lain. Silakan coba 5 detik lagi.' };
-    }
+    lock.waitLock(10000); // Throw exception jika tidak bisa lock dalam 10 detik
+    lockAcquired = true;
     
     // 1. Cek status kendaraan
     const vehicleSheet = getSheet(CONFIG.SHEETS.VEHICLES);
@@ -120,9 +120,15 @@ function handleCreateBooking(params) {
       }
     };
   } catch (err) {
+    // Jika error dari waitLock (timeout lock), tampilkan pesan yang tepat
+    if (err.message && err.message.toLowerCase().includes('lock')) {
+      return { success: false, message: 'Server sedang sibuk memproses peminjaman lain. Silakan coba beberapa detik lagi.' };
+    }
     return { success: false, message: 'Gagal memproses peminjaman: ' + err.message };
   } finally {
-    lock.releaseLock();
+    if (lockAcquired) {
+      lock.releaseLock();
+    }
   }
 }
 

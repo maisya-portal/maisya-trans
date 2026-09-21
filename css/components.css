@@ -947,3 +947,315 @@
   from { transform: translateY(100%); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+/* ==========================================================================
+   10. LOGOUT CONFIRMATION MODAL (Elegant Custom Dialog)
+   ========================================================================== */
+
+/* Overlay */
+.logout-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(2, 44, 34, 0.55);
+  backdrop-filter: blur(8px) saturate(150%);
+  -webkit-backdrop-filter: blur(8px) saturate(150%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.logout-modal-overlay.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Card */
+.logout-modal-card {
+  position: relative;
+  background: var(--surface);
+  border-radius: 28px;
+  padding: 2.5rem 2rem 2rem;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow:
+    0 25px 50px -12px rgba(2, 44, 34, 0.4),
+    0 0 0 1px rgba(13, 92, 58, 0.1);
+  overflow: hidden;
+  transform: scale(0.85) translateY(24px);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+  opacity: 0;
+}
+
+.logout-modal-overlay.is-visible .logout-modal-card {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+/* Decorative blobs */
+.logout-modal-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+.logout-blob-1 {
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.15), transparent 70%);
+  top: -60px;
+  right: -60px;
+}
+
+.logout-blob-2 {
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.12), transparent 70%);
+  bottom: -40px;
+  left: -40px;
+}
+
+/* Icon area */
+.logout-modal-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+}
+
+.logout-modal-icon-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+  border: 2px solid rgba(239, 68, 68, 0.25);
+  animation: logout-ring-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes logout-ring-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.12); opacity: 0.6; }
+}
+
+.logout-modal-icon {
+  position: relative;
+  z-index: 1;
+  width: 36px;
+  height: 36px;
+  stroke: #EF4444;
+  filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.4));
+}
+
+/* Text */
+.logout-modal-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 0.6rem;
+  letter-spacing: -0.3px;
+}
+
+.logout-modal-desc {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+.logout-modal-desc strong {
+  color: var(--primary-700);
+  font-weight: 700;
+}
+
+.logout-modal-body {
+  margin-bottom: 1.75rem;
+}
+
+/* Action buttons */
+.logout-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.72rem 1.4rem;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: var(--font-main);
+  cursor: pointer;
+  border: none;
+  transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  flex: 1;
+  justify-content: center;
+}
+
+.logout-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.logout-btn:active {
+  transform: scale(0.95) !important;
+}
+
+/* Cancel button */
+.logout-btn-cancel {
+  background: var(--surface-secondary);
+  color: var(--text-secondary);
+  border: 1.5px solid var(--surface-border);
+}
+
+.logout-btn-cancel:hover {
+  background: var(--surface-border);
+  color: var(--text-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* Confirm button */
+.logout-btn-confirm {
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.35);
+}
+
+.logout-btn-confirm:hover {
+  background: linear-gradient(135deg, #F87171, #EF4444);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5);
+}
+
+/* Safety note */
+.logout-modal-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 1.25rem;
+  margin-bottom: 0;
+  letter-spacing: 0.2px;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .logout-modal-card {
+  background: var(--surface);
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(16, 185, 129, 0.15);
+}
+
+[data-theme="dark"] .logout-btn-cancel {
+  background: var(--surface-secondary);
+  border-color: var(--surface-border);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .logout-modal-card {
+    padding: 2rem 1.5rem 1.75rem;
+    border-radius: 24px;
+  }
+  .logout-modal-actions {
+    flex-direction: column-reverse;
+  }
+  .logout-modal-title {
+    font-size: 1.25rem;
+  }
+}
+
+/* ==========================================================================
+   11. VEHICLE ADMIN ACTION BUTTONS (Edit & Hapus)
+   ========================================================================== */
+
+.vehicle-admin-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  border-top: 1px solid var(--surface-border);
+  background: var(--surface-secondary);
+  border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+}
+
+.veh-admin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 50px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: var(--font-main);
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  flex: 1;
+  justify-content: center;
+}
+
+.veh-admin-btn svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.veh-admin-btn:active {
+  transform: scale(0.93) !important;
+}
+
+/* Edit button */
+.veh-edit-btn {
+  background: var(--surface);
+  color: var(--primary-700);
+  border-color: var(--primary-100);
+}
+
+.veh-edit-btn:hover {
+  background: var(--primary-50);
+  border-color: var(--primary-500);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(13, 92, 58, 0.15);
+}
+
+/* Delete button */
+.veh-delete-btn {
+  background: var(--surface);
+  color: #DC2626;
+  border-color: #FECACA;
+}
+
+.veh-delete-btn:hover {
+  background: #FEF2F2;
+  border-color: #EF4444;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.15);
+}
+
+/* Dark mode */
+[data-theme="dark"] .vehicle-admin-actions {
+  background: var(--surface-secondary);
+  border-top-color: var(--surface-border);
+}
+
+[data-theme="dark"] .veh-edit-btn {
+  background: var(--surface);
+  border-color: var(--primary-100);
+}
+
+[data-theme="dark"] .veh-delete-btn {
+  background: var(--surface);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+

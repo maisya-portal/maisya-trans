@@ -969,7 +969,7 @@
        MODAL 7: GOOGLE AUTH DIALOG
        ========================================================================= -->
   <div id="modalGoogleAuthPrompt" class="modal-backdrop">
-    <div class="modal-card" style="max-width: 420px;">
+    <div class="modal-card" style="max-width: 440px;">
       <div class="modal-header">
         <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
           <svg width="20" height="20" viewBox="0 0 24 24">
@@ -984,20 +984,31 @@
       </div>
       <form id="formGoogleAuthPrompt" onsubmit="Auth.submitGooglePromptForm(event)">
         <div class="modal-body">
-          <p style="font-size:0.875rem; color:var(--text-secondary); margin-bottom:1rem; line-height:1.5;">
-            Gunakan akun Google aktif Anda untuk masuk atau mendaftar secara otomatis tanpa perlu mengingat password baru.
+          <p style="font-size:0.875rem; color:var(--text-secondary); margin-bottom:1.25rem; line-height:1.6;">
+            Gunakan akun Google aktif Anda untuk masuk. Verifikasi password diperlukan untuk keamanan ekstra.
           </p>
           <div class="form-group">
-            <label class="form-label" for="googleAuthEmail">Alamat Email Google (@gmail.com / domain instansi) *</label>
+            <label class="form-label" for="googleAuthEmail">Alamat Email Google *</label>
             <input type="email" id="googleAuthEmail" class="form-control" placeholder="nama@gmail.com" required autocomplete="email">
           </div>
           <div class="form-group">
-            <label class="form-label" for="googleAuthName">Nama Lengkap Guru / Karyawan (Opsional)</label>
+            <label class="form-label" for="googleAuthName">Nama Lengkap (Opsional)</label>
             <input type="text" id="googleAuthName" class="form-control" placeholder="Contoh: Ustadz Ahmad, S.Pd.">
           </div>
-          <div style="background:var(--gray-50); border:1px dashed var(--gray-300); border-radius:8px; padding:10px 12px; font-size:0.75rem; color:var(--text-muted); display:flex; gap:8px; align-items:flex-start;">
-            <span>ℹ️</span>
-            <span>Jika akun belum terdaftar, sistem akan otomatis mendaftarkan profil Anda dengan status Aktif untuk akses kendaraan dinas.</span>
+          <!-- Password field - wajib diisi -->
+          <div class="form-group" id="googlePasswordGroup">
+            <label class="form-label" for="googleAuthPassword">
+              🔒 Password Maisya-Trans *
+              <span style="font-weight:400; color:var(--text-muted); font-size:0.78rem;"> (akun lama) atau buat baru (min. 6 karakter)</span>
+            </label>
+            <div style="position:relative;">
+              <input type="password" id="googleAuthPassword" class="form-control" placeholder="Masukkan password Anda" style="padding-right: 3rem;">
+              <button type="button" onclick="UI.togglePasswordVisibility('googleAuthPassword', this)" style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--text-muted); padding:0; font-size:1.1rem;" title="Tampilkan/Sembunyikan Password">👁️</button>
+            </div>
+          </div>
+          <div style="background:var(--primary-50); border:1px solid var(--primary-100); border-radius:8px; padding:10px 12px; font-size:0.78rem; color:var(--primary-700); display:flex; gap:8px; align-items:flex-start;">
+            <span>🔐</span>
+            <span>Untuk akun yang sudah terdaftar: masukkan password lama. Untuk akun baru: buat password baru minimal 6 karakter.</span>
           </div>
         </div>
         <div class="modal-footer">
@@ -1007,6 +1018,160 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: EDIT KENDARAAN (Admin Only)
+       ============================================================ -->
+  <div id="modalEditVehicle" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 560px;">
+      <div class="modal-header">
+        <div id="editVehicleModalTitle" class="modal-title">✏️ Edit Data Kendaraan</div>
+        <button class="modal-close-btn" data-close-modal="modalEditVehicle">✕</button>
+      </div>
+      <form id="formEditVehicle" onsubmit="VehiclesView.submitEdit(event)">
+        <div class="modal-body">
+          <input type="hidden" id="editVehicleId">
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.85rem;">
+            <div class="form-group">
+              <label class="form-label">Jenis Kendaraan *</label>
+              <select id="editVehicleJenis" class="form-control" required>
+                <option value="MOTOR">Motor</option>
+                <option value="MOBIL">Mobil</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nomor Polisi *</label>
+              <input type="text" id="editVehicleNopol" class="form-control" placeholder="G 1234 AB" required style="text-transform:uppercase;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Merk *</label>
+              <input type="text" id="editVehicleMerk" class="form-control" placeholder="Honda, Yamaha, Toyota..." required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Model *</label>
+              <input type="text" id="editVehicleModel" class="form-control" placeholder="Vario 160, NMAX, Avanza..." required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tahun</label>
+              <input type="number" id="editVehicleTahun" class="form-control" placeholder="2023" min="1990" max="2030">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Warna</label>
+              <input type="text" id="editVehicleWarna" class="form-control" placeholder="Hitam Metalik">
+            </div>
+            <div class="form-group">
+              <label class="form-label">KM Saat Ini</label>
+              <input type="number" id="editVehicleKm" class="form-control" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <select id="editVehicleStatus" class="form-control">
+                <option value="AVAILABLE">Tersedia</option>
+                <option value="MAINTENANCE">Dalam Perawatan</option>
+                <option value="INACTIVE">Nonaktif</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Interval Ganti Oli (KM)</label>
+              <input type="number" id="editVehicleOilInterval" class="form-control" placeholder="2000" min="500">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Interval Tune-Up (KM)</label>
+              <input type="number" id="editVehicleTuneupInterval" class="form-control" placeholder="5000" min="1000">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top:0.25rem;">
+            <label class="form-label">Catatan / Keterangan</label>
+            <textarea id="editVehicleNotes" class="form-control" rows="2" placeholder="Catatan kondisi atau informasi tambahan kendaraan..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close-modal="modalEditVehicle">Batal</button>
+          <button type="submit" id="btnSubmitEditVehicle" class="btn btn-primary">
+            💾 Simpan Perubahan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: KONFIRMASI HAPUS KENDARAAN (Admin Only)
+       ============================================================ -->
+  <div id="modalDeleteVehicle" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 400px; text-align:center;">
+      <div class="modal-body" style="padding:2rem 1.5rem 1rem;">
+        <input type="hidden" id="deleteVehicleId">
+        <div style="width:64px; height:64px; border-radius:50%; background:rgba(239,68,68,0.1); display:flex; align-items:center; justify-content:center; margin:0 auto 1.25rem;">
+          <svg width="30" height="30" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+            <path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+          </svg>
+        </div>
+        <h3 style="font-size:1.15rem; font-weight:800; color:var(--text-primary); margin-bottom:0.5rem;">Hapus Kendaraan?</h3>
+        <p style="font-size:0.875rem; color:var(--text-secondary); line-height:1.6;">
+          Kendaraan <strong id="deleteVehicleName" style="color:var(--primary-700);"></strong> akan dihapus permanen dari sistem dan tidak dapat dikembalikan.
+        </p>
+        <div style="background:#FEF2F2; border:1px solid #FECACA; border-radius:8px; padding:8px 12px; margin-top:1rem; font-size:0.78rem; color:#B91C1C;">
+          ⚠️ Kendaraan yang sedang <strong>digunakan</strong> tidak dapat dihapus.
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content:center; gap:0.75rem;">
+        <button type="button" class="btn btn-outline" data-close-modal="modalDeleteVehicle" style="flex:1;">Batal</button>
+        <button type="button" id="btnConfirmDeleteVehicle" onclick="VehiclesView.confirmDelete()"
+          style="flex:1; background:linear-gradient(135deg,#EF4444,#DC2626); color:#fff; border:none; border-radius:50px; padding:0.7rem 1.25rem; font-weight:700; font-size:0.9rem; font-family:var(--font-main); cursor:pointer; transition:all 0.2s;">
+          🗑️ Ya, Hapus Permanen
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       LOGOUT CONFIRMATION MODAL (Elegant Custom Dialog)
+
+       ============================================================ -->
+  <div id="logoutConfirmModal" class="logout-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
+    <div class="logout-modal-card">
+      <!-- Decorative background blobs -->
+      <div class="logout-modal-blob logout-blob-1"></div>
+      <div class="logout-modal-blob logout-blob-2"></div>
+
+      <!-- Icon -->
+      <div class="logout-modal-icon-wrap">
+        <div class="logout-modal-icon-ring"></div>
+        <svg class="logout-modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 16l4-4m0 0l-4-4m4 4H7"/>
+          <path d="M13 20H6a2 2 0 01-2-2V6a2 2 0 012-2h7"/>
+        </svg>
+      </div>
+
+      <!-- Text Content -->
+      <div class="logout-modal-body">
+        <h2 id="logoutModalTitle" class="logout-modal-title">Keluar dari Akun?</h2>
+        <p class="logout-modal-desc">
+          Anda akan keluar dari <strong>Maisya-Trans</strong>.<br>
+          Sesi aktif Anda akan diakhiri dengan aman.
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="logout-modal-actions">
+        <button id="logoutCancelBtn" class="logout-btn logout-btn-cancel" onclick="Auth.closeLogoutModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Tetap di Sini
+        </button>
+        <button id="logoutConfirmBtn" class="logout-btn logout-btn-confirm" onclick="Auth.confirmLogout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 16l4-4m0 0l-4-4m4 4H7"/><path d="M13 20H6a2 2 0 01-2-2V6a2 2 0 012-2h7"/></svg>
+          Ya, Keluar
+        </button>
+      </div>
+
+      <!-- Safety note -->
+      <p class="logout-modal-note">🔒 Sesi Anda akan diakhiri dengan aman</p>
     </div>
   </div>
 

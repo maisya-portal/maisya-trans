@@ -108,9 +108,10 @@ function seedDemoData() {
   const tariffSheet = getSheet(CONFIG.SHEETS.TARIFFS);
   const settingsSheet = getSheet(CONFIG.SHEETS.SETTINGS);
   
-  // 1. Seed Users (1 Admin, 2 Users)
+  // 1. Seed Users (1 Admin, 2 Users + Admin Kesantrian)
   if (userSheet.getLastRow() <= 1) {
     const adminPassHash = hashPassword('admin123');
+    const kesantrianPassHash = hashPassword('99158kesantrian');
     const userPassHash = hashPassword('user123');
     const now = nowISO();
     
@@ -118,6 +119,13 @@ function seedDemoData() {
       'USR-ADMIN-01', 'Ustadz Admin Maisya', '19850101001', 'Kepala Sarpras', 
       'Sarana & Prasarana', '081234567890', 'admin@imamsyafii.ponpes.id', 
       adminPassHash, CONFIG.ROLES.ADMIN, CONFIG.STATUS.USER.ACTIVE, now, now, 'SYSTEM', now
+    ]);
+
+    // Admin Kesantrian PPISB
+    userSheet.appendRow([
+      'USR-ADMIN-KSN', 'Admin Kesantrian PPISB', 'KSN-2026', 'Kepala Kesantrian',
+      'Kesantrian', '081999158001', 'kesantrian.ppisb@gmail.com',
+      kesantrianPassHash, CONFIG.ROLES.ADMIN, CONFIG.STATUS.USER.ACTIVE, now, now, 'SYSTEM', now
     ]);
     
     userSheet.appendRow([
@@ -131,6 +139,9 @@ function seedDemoData() {
       'Tata Usaha & Logistik', '085712345678', 'rizqi@imamsyafii.ponpes.id', 
       userPassHash, CONFIG.ROLES.USER, CONFIG.STATUS.USER.ACTIVE, now, now, 'USR-ADMIN-01', now
     ]);
+  } else {
+    // Pastikan akun Admin Kesantrian selalu ada meskipun seed sudah pernah dijalankan
+    seedAdminKesantrian(userSheet);
   }
   
   // 2. Seed Vehicles (2 Motor, 1 Mobil)
@@ -181,4 +192,39 @@ function seedDemoData() {
   }
   
   return { success: true, message: 'Data demo dan inisialisasi tabel berhasil dibuat.' };
+}
+
+/**
+ * Buat atau perbarui akun Admin Kesantrian PPISB
+ * Jalankan fungsi ini sekali dari Apps Script Editor jika akun belum ada
+ */
+function seedAdminKesantrian(userSheetArg) {
+  const sheet = userSheetArg || getSheet(CONFIG.SHEETS.USERS);
+  const data = sheet.getDataRange().getValues();
+  const targetEmail = 'kesantrian.ppisb@gmail.com';
+  const passHash = hashPassword('99158kesantrian');
+  const now = nowISO();
+
+  // Cek apakah akun sudah ada
+  for (let i = 1; i < data.length; i++) {
+    const rowEmail = String(data[i][6]).toLowerCase().trim();
+    if (rowEmail === targetEmail) {
+      // Sudah ada — pastikan role ADMIN dan status ACTIVE
+      const rowIdx = i + 1;
+      sheet.getRange(rowIdx, 8).setValue(passHash);              // password_hash
+      sheet.getRange(rowIdx, 9).setValue(CONFIG.ROLES.ADMIN);    // role
+      sheet.getRange(rowIdx, 10).setValue(CONFIG.STATUS.USER.ACTIVE); // status
+      Logger.log('[seedAdminKesantrian] Akun diperbarui: ' + targetEmail);
+      return { success: true, message: 'Akun Admin Kesantrian diperbarui.' };
+    }
+  }
+
+  // Belum ada — buat baru
+  sheet.appendRow([
+    'USR-ADMIN-KSN', 'Admin Kesantrian PPISB', 'KSN-2026', 'Kepala Kesantrian',
+    'Kesantrian', '081999158001', targetEmail,
+    passHash, CONFIG.ROLES.ADMIN, CONFIG.STATUS.USER.ACTIVE, now, now, 'SYSTEM', now
+  ]);
+  Logger.log('[seedAdminKesantrian] Akun baru dibuat: ' + targetEmail);
+  return { success: true, message: 'Akun Admin Kesantrian berhasil dibuat.' };
 }

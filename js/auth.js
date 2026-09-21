@@ -137,6 +137,7 @@ const Auth = {
         if (!googleData.isAutoLogin) {
           UI.showToast(res.message || 'Alhamdulillah, berhasil masuk dengan Google!', 'success');
         }
+        Auth.startIdleWatcher();
         App.updateUserHeaderUI();
         UI.switchView('dashboard');
         App.startPolling();
@@ -196,6 +197,7 @@ const Auth = {
     if (!isAutoLogin) {
       UI.showToast(`Alhamdulillah, selamat datang ${name}! Berhasil masuk dengan Akun Google.`, 'success', 3500);
     }
+    Auth.startIdleWatcher();
     App.updateUserHeaderUI();
     UI.switchView('dashboard');
     App.startPolling();
@@ -228,19 +230,27 @@ const Auth = {
   },
 
   /**
-   * Submit dari Form Modal Google
+   * Submit dari Form Modal Google — kirim email + nama + password
    */
   async submitGooglePromptForm(e) {
     e.preventDefault();
     const emailInput = document.getElementById('googleAuthEmail');
     const nameInput = document.getElementById('googleAuthName');
+    const passwordInput = document.getElementById('googleAuthPassword');
     const btnSubmit = document.getElementById('btnSubmitGooglePrompt');
 
     const email = emailInput ? emailInput.value.trim() : '';
     const name = nameInput ? nameInput.value.trim() : '';
+    const password = passwordInput ? passwordInput.value : '';
 
     if (!email || !email.includes('@')) {
       UI.showToast('Harap masukkan alamat email Google yang valid.', 'error');
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      UI.showToast('Password wajib diisi minimal 6 karakter.', 'error');
+      if (passwordInput) passwordInput.focus();
       return;
     }
 
@@ -252,12 +262,13 @@ const Auth = {
     await this.processGoogleLogin({
       email: email,
       name: name || email.split('@')[0],
-      picture: ''
+      picture: '',
+      password: password
     });
 
     if (btnSubmit) {
       btnSubmit.disabled = false;
-      btnSubmit.textContent = 'Lanjutkan dengan Akun Google Ini';
+      btnSubmit.textContent = 'Lanjutkan dengan Google';
     }
   },
 
@@ -305,13 +316,37 @@ const Auth = {
   },
 
   logout() {
-    if (confirm('Apakah Anda yakin ingin keluar dari akun Maisya-Trans?')) {
-      // Hapus auto-login Google HANYA saat pengguna sengaja logout manual
+    // Show elegant custom modal instead of browser confirm()
+    const modal = document.getElementById('logoutConfirmModal');
+    if (modal) {
+      modal.classList.add('is-visible');
+      // Close on backdrop click
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) Auth.closeLogoutModal();
+      }, { once: true });
+      // Close on Escape key
+      const escHandler = (e) => {
+        if (e.key === 'Escape') { Auth.closeLogoutModal(); document.removeEventListener('keydown', escHandler); }
+      };
+      document.addEventListener('keydown', escHandler);
+    }
+  },
+
+  closeLogoutModal() {
+    const modal = document.getElementById('logoutConfirmModal');
+    if (modal) modal.classList.remove('is-visible');
+  },
+
+  confirmLogout() {
+    this.closeLogoutModal();
+    this.stopIdleWatcher();
+    // Brief delay to let the close animation play before page reload
+    setTimeout(() => {
       localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.GOOGLE_AUTH_SESSION);
       this.clearSession();
       window.location.hash = 'login';
       window.location.reload();
-    }
+    }, 250);
   },
 
   clearSession() {
@@ -319,7 +354,107 @@ const Auth = {
     this.token = null;
     localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.AUTH_USER);
     localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.AUTH_TOKEN);
+    localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.LAST_ACTIVITY);
+  },
+
+  /* ================================================================
+   * AUTO-LOGOUT: Keluar otomatis jika idle lebih dari 1 jam (3600 detik)
+   * ================================================================ */
+  IDLE_TIMEOUT_MS: 60 * 60 * 1000, // 1 jam
+  _idleTimer: null,
+  _idleWarningTimer: null,
+
+  /** Catat waktu aktivitas terakhir ke localStorage */
+  touchActivity() {
+    localStorage.setItem(APP_CONFIG.STORAGE_KEYS.LAST_ACTIVITY, Date.now().toString());
+  },
+
+  /** Cek apakah sesi sudah idle terlalu lama (untuk tab yang baru dibuka) */
+  checkIdleOnLoad() {
+    const last = parseInt(localStorage.getItem(APP_CONFIG.STORAGE_KEYS.LAST_ACTIVITY) || '0', 10);
+    if (last && this.isLoggedIn()) {
+      const elapsed = Date.now() - last;
+      if (elapsed > this.IDLE_TIMEOUT_MS) {
+        console.warn('[Auth] Sesi idle lebih dari 1 jam, otomatis logout.');
+        this._doIdleLogout();
+        return true;
+      }
+    }
+    return false;
+  },
+
+  /** Inisialisasi pemantauan idle — panggil setelah login berhasil */
+  startIdleWatcher() {
+    this.touchActivity();
+    this._clearIdleTimers();
+
+    // Dengarkan semua event interaksi pengguna
+    const resetEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+    const resetFn = () => {
+      this.touchActivity();
+      this._resetIdleTimer();
+    };
+    resetEvents.forEach(ev => document.addEventListener(ev, resetFn, { passive: true }));
+    this._idleResetFn = resetFn;
+    this._idleResetEvents = resetEvents;
+
+    this._resetIdleTimer();
+  },
+
+  /** Reset / restart timer idle */
+  _resetIdleTimer() {
+    this._clearIdleTimers();
+    const WARN_BEFORE_MS = 5 * 60 * 1000; // peringatan 5 menit sebelum logout
+
+    // Timer peringatan (55 menit)
+    this._idleWarningTimer = setTimeout(() => {
+      if (this.isLoggedIn()) {
+        UI.showToast('⚠️ Sesi Anda akan berakhir dalam 5 menit karena tidak ada aktivitas.', 'error', 8000);
+      }
+    }, this.IDLE_TIMEOUT_MS - WARN_BEFORE_MS);
+
+    // Timer logout (60 menit)
+    this._idleTimer = setTimeout(() => {
+      if (this.isLoggedIn()) {
+        this._doIdleLogout();
+      }
+    }, this.IDLE_TIMEOUT_MS);
+  },
+
+  /** Hentikan semua timer idle */
+  _clearIdleTimers() {
+    if (this._idleTimer) { clearTimeout(this._idleTimer); this._idleTimer = null; }
+    if (this._idleWarningTimer) { clearTimeout(this._idleWarningTimer); this._idleWarningTimer = null; }
+  },
+
+  /** Hentikan pemantauan idle (saat logout manual) */
+  stopIdleWatcher() {
+    this._clearIdleTimers();
+    if (this._idleResetFn && this._idleResetEvents) {
+      this._idleResetEvents.forEach(ev => document.removeEventListener(ev, this._idleResetFn));
+    }
+  },
+
+  /** Eksekusi auto-logout akibat idle */
+  _doIdleLogout() {
+    this.stopIdleWatcher();
+    // Tampilkan modal logout khusus idle
+    const modal = document.getElementById('logoutConfirmModal');
+    if (modal) {
+      const title = modal.querySelector('.logout-modal-title');
+      const desc = modal.querySelector('.logout-modal-desc');
+      if (title) title.textContent = 'Sesi Berakhir Otomatis';
+      if (desc) desc.innerHTML = 'Anda telah tidak aktif selama <strong>1 jam</strong>.<br>Demi keamanan, sesi Anda telah diakhiri.';
+    }
+    localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.GOOGLE_AUTH_SESSION);
+    this.clearSession();
+    setTimeout(() => {
+      window.location.hash = 'login';
+      window.location.reload();
+    }, 150);
   }
 };
 
 Auth.init();
+// Cek idle saat halaman dimuat (untuk kasus tab lama yang ditinggal)
+Auth.checkIdleOnLoad();

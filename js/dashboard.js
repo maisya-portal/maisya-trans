@@ -252,10 +252,13 @@ const DashboardView = {
           <div class="monitor-idle-text">
             Sedang tidak digunakan
           </div>
-          <div style="font-size:0.78rem; color:var(--text-muted); max-width:260px;">
+          <div style="font-size:0.78rem; color:var(--text-muted); max-width:260px; margin-bottom:0.5rem;">
             Alhamdulillah armada dalam kondisi stanby dan siap digunakan untuk keperluan pondok.
           </div>
-          <button class="btn btn-primary btn-sm" style="margin-top:0.5rem;" onclick="BookingView.openQuickBorrow('${type}')">
+          <div style="font-size:0.75rem; background:rgba(234,179,8,0.12); border:1px solid rgba(234,179,8,0.35); border-radius:8px; padding:0.5rem 0.75rem; color:#92400e; margin-bottom:0.65rem; line-height:1.5; max-width:280px;">
+            📋 <strong>Perlu Reservasi:</strong> Ajukan peminjaman &amp; tunggu persetujuan Admin Sarpras sebelum memulai pemakaian.
+          </div>
+          <button class="btn btn-primary btn-sm" style="margin-top:0.25rem;" onclick="BookingView.openQuickBorrow('${type}')">
             ▶ Pinjam ${isMotor ? 'Motor' : 'Mobil'} Sekarang
           </button>
         </div>
