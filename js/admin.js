@@ -231,6 +231,7 @@ const AdminView = {
     const oilInterval = document.getElementById('addVehicleOilInterval').value;
     const tuneupInterval = document.getElementById('addVehicleTuneupInterval').value;
     const notes = document.getElementById('addVehicleNotes').value;
+    const imageUrl = document.getElementById('addVehicleImageUrl') ? document.getElementById('addVehicleImageUrl').value : '';
 
     const res = await Api.request('addVehicle', 'POST', {
       jenis,
@@ -240,7 +241,8 @@ const AdminView = {
       current_km: km,
       oil_interval_km: oilInterval,
       tuneup_interval_km: tuneupInterval,
-      notes
+      notes,
+      imageUrl
     });
 
     if (res.success) {

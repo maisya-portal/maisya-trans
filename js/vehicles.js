@@ -87,11 +87,16 @@ const VehiclesView = {
             <button class="favorite-toggle-btn ${isFav ? 'active' : ''}"
                     onclick="UI.toggleFavorite('${v.vehicleId}')"
                     title="${isFav ? 'Hapus favorit' : 'Tandai favorit'}">★</button>
-            ${isMotor ? `
+            ${v.imageUrl ? `
+              <img src="${v.imageUrl}" alt="${v.merk} ${v.model}" style="width:100%; height:100%; object-fit:cover; display:block;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+              <div class="fallback-icon" style="display:none; width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+                ${isMotor ? `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>` : `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>`}
+              </div>
+            ` : (isMotor ? `
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             ` : `
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
-            `}
+            `)}
           </div>
 
           <div class="vehicle-card-body">
@@ -164,6 +169,7 @@ const VehiclesView = {
     document.getElementById('editVehicleTuneupInterval').value = v.tuneupIntervalKm || (v.jenis === 'MOBIL' ? 10000 : 5000);
     document.getElementById('editVehicleStatus').value         = v.status;
     document.getElementById('editVehicleNotes').value          = v.notes || '';
+    document.getElementById('editVehicleImageUrl').value       = v.imageUrl || '';
 
     const title = document.getElementById('editVehicleModalTitle');
     if (title) title.textContent = `Edit: ${v.merk} ${v.model} (${v.nomorPolisi})`;
@@ -190,6 +196,7 @@ const VehiclesView = {
       tuneup_interval_km: document.getElementById('editVehicleTuneupInterval').value,
       status:             document.getElementById('editVehicleStatus').value,
       notes:              document.getElementById('editVehicleNotes').value,
+      imageUrl:           document.getElementById('editVehicleImageUrl').value,
       userId: user ? user.userId : '',
       token:  Auth.getToken() || ''
     };

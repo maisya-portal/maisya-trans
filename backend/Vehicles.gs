@@ -33,6 +33,7 @@ function getAllVehicles() {
     const tuneupInterval = Number(row[13]) || CONFIG.DEFAULT_TUNEUP_INTERVAL_KM;
     const status = row[14] || CONFIG.STATUS.VEHICLE.AVAILABLE;
     const notes = row[15] || '';
+    const imageUrl = row[17] || '';
     
     // Perhitungan Oli
     const nextOilKm = lastOilKm + oilInterval;
@@ -101,6 +102,7 @@ function getAllVehicles() {
       healthLabel,
       status,
       notes,
+      imageUrl,
       activeTrip,
       createdAt: row[16]
     });
@@ -155,7 +157,7 @@ function getUserNameMap() {
  * Tambah Kendaraan Baru (Khusus Admin)
  */
 function handleAddVehicle(params) {
-  const { jenis, merk, model, nomor_polisi, tahun, warna, current_km, oil_interval_km, tuneup_interval_km, notes, userId } = params;
+  const { jenis, merk, model, nomor_polisi, tahun, warna, current_km, oil_interval_km, tuneup_interval_km, notes, imageUrl, userId } = params;
   
   if (!nomor_polisi || !merk || !model || !jenis) {
     return { success: false, message: 'Nomor Polisi, Merk, Model, dan Jenis wajib diisi.' };
@@ -194,7 +196,8 @@ function handleAddVehicle(params) {
     tuneupInterval,
     CONFIG.STATUS.VEHICLE.AVAILABLE,
     notes || '',
-    now
+    now,
+    imageUrl || ''
   ];
   
   sheet.appendRow(newRow);
@@ -211,7 +214,7 @@ function handleAddVehicle(params) {
  * Update Data Kendaraan
  */
 function handleUpdateVehicle(params) {
-  const { vehicleId, merk, model, nomor_polisi, tahun, warna, status, notes, oil_interval_km, tuneup_interval_km, userId } = params;
+  const { vehicleId, merk, model, nomor_polisi, tahun, warna, status, notes, oil_interval_km, tuneup_interval_km, imageUrl, userId } = params;
   
   const sheet = getSheet(CONFIG.SHEETS.VEHICLES);
   const data = sheet.getDataRange().getValues();
@@ -237,6 +240,7 @@ function handleUpdateVehicle(params) {
   if (tuneup_interval_km) sheet.getRange(foundRow, 14).setValue(Number(tuneup_interval_km));
   if (status) sheet.getRange(foundRow, 15).setValue(status);
   if (notes !== undefined) sheet.getRange(foundRow, 16).setValue(notes);
+  if (imageUrl !== undefined) sheet.getRange(foundRow, 18).setValue(imageUrl);
   
   logAudit(userId || 'ADMIN', 'UPDATE_VEHICLE', 'VEHICLES', vehicleId, `Update data kendaraan ID ${vehicleId}`);
   
