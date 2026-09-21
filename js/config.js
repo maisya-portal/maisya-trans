@@ -29,6 +29,7 @@ const APP_CONFIG = {
     AUTH_USER: 'maisya_trans_user',
     REMEMBER_ME: 'maisya_trans_remember_me',
     REMEMBERED_CREDENTIALS: 'maisya_trans_saved_credentials',
+    GOOGLE_AUTH_SESSION: 'maisya_trans_google_session',
     API_URL: 'maisya_trans_api_url',
     THEME: 'maisya_trans_theme',
     FAVORITES: 'maisya_trans_fav_vehicles',

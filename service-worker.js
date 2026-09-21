@@ -3,7 +3,7 @@
  * Pondok Pesantren Imam Syafi'i Brebes
  */
 
-const CACHE_NAME = 'maisya-trans-v1.0.9';
+const CACHE_NAME = 'maisya-trans-v1.1.0';
 
 const STATIC_ASSETS = [
   './',

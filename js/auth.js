@@ -124,8 +124,19 @@ const Auth = {
         localStorage.setItem(APP_CONFIG.STORAGE_KEYS.AUTH_USER, JSON.stringify(this.currentUser));
         localStorage.setItem(APP_CONFIG.STORAGE_KEYS.AUTH_TOKEN, this.token);
         
+        // Simpan sesi Google Auto-Login permanen (tetap auto-login kecuali logout manual)
+        localStorage.setItem(APP_CONFIG.STORAGE_KEYS.GOOGLE_AUTH_SESSION, JSON.stringify({
+          email: cleanEmail,
+          name: this.currentUser.nama || cleanName,
+          picture: googleData.picture || '',
+          autoLogin: true,
+          savedAt: Date.now()
+        }));
+
         UI.closeModal('modalGoogleAuthPrompt');
-        UI.showToast(res.message || 'Alhamdulillah, berhasil masuk dengan Google!', 'success');
+        if (!googleData.isAutoLogin) {
+          UI.showToast(res.message || 'Alhamdulillah, berhasil masuk dengan Google!', 'success');
+        }
         App.updateUserHeaderUI();
         UI.switchView('dashboard');
         App.startPolling();
@@ -136,21 +147,21 @@ const Auth = {
       // Lakukan auto-fallback agar pengguna TETAP LANGSUNG BISA MASUK tanpa terblokir!
       if (res && res.message && (res.message.includes('tidak dikenali') || res.message.includes('googleAuth'))) {
         console.warn('[Auth] Backend GAS belum memuat handleGoogleAuth. Menjalankan fallback sesi lokal...');
-        this.activateGoogleFallbackSession(cleanEmail, cleanName, googleData.picture);
+        this.activateGoogleFallbackSession(cleanEmail, cleanName, googleData.picture, googleData.isAutoLogin);
         return;
       }
 
       UI.showToast(res.message || 'Gagal masuk dengan akun Google.', 'error');
     } catch (err) {
       console.warn('[Auth] Gagal request remote Google Auth, beralih ke sesi lokal:', err);
-      this.activateGoogleFallbackSession(cleanEmail, cleanName, googleData.picture);
+      this.activateGoogleFallbackSession(cleanEmail, cleanName, googleData.picture, googleData.isAutoLogin);
     }
   },
 
   /**
    * Sesi lokal untuk pengguna Google agar langsung bisa masuk
    */
-  activateGoogleFallbackSession(email, name, picture) {
+  activateGoogleFallbackSession(email, name, picture, isAutoLogin = false) {
     const isOwnerAdmin = (email.includes('admin') || email.includes('iftah'));
     const fallbackUser = {
       userId: 'USR-GGL-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
@@ -172,11 +183,48 @@ const Auth = {
     localStorage.setItem(APP_CONFIG.STORAGE_KEYS.AUTH_USER, JSON.stringify(this.currentUser));
     localStorage.setItem(APP_CONFIG.STORAGE_KEYS.AUTH_TOKEN, this.token);
 
+    // Simpan sesi Google Auto-Login permanen (tetap auto-login kecuali logout manual)
+    localStorage.setItem(APP_CONFIG.STORAGE_KEYS.GOOGLE_AUTH_SESSION, JSON.stringify({
+      email: email,
+      name: name,
+      picture: picture || '',
+      autoLogin: true,
+      savedAt: Date.now()
+    }));
+
     UI.closeModal('modalGoogleAuthPrompt');
-    UI.showToast(`Alhamdulillah, selamat datang ${name}! Berhasil masuk dengan Akun Google.`, 'success', 3500);
+    if (!isAutoLogin) {
+      UI.showToast(`Alhamdulillah, selamat datang ${name}! Berhasil masuk dengan Akun Google.`, 'success', 3500);
+    }
     App.updateUserHeaderUI();
     UI.switchView('dashboard');
     App.startPolling();
+  },
+
+  /**
+   * Cek & Jalankan Auto-Login Google saat aplikasi dibuka
+   */
+  async checkGoogleAutoLogin() {
+    if (this.isLoggedIn()) return true;
+
+    try {
+      const raw = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.GOOGLE_AUTH_SESSION);
+      if (!raw) return false;
+      const gSession = JSON.parse(raw);
+      if (gSession && gSession.autoLogin && gSession.email) {
+        console.log('[Auth] Google Auto-Login terdeteksi untuk:', gSession.email);
+        await this.processGoogleLogin({
+          email: gSession.email,
+          name: gSession.name,
+          picture: gSession.picture,
+          isAutoLogin: true
+        });
+        return this.isLoggedIn();
+      }
+    } catch (e) {
+      console.warn('[Auth] Gagal auto-login Google:', e);
+    }
+    return false;
   },
 
   /**
@@ -258,6 +306,8 @@ const Auth = {
 
   logout() {
     if (confirm('Apakah Anda yakin ingin keluar dari akun Maisya-Trans?')) {
+      // Hapus auto-login Google HANYA saat pengguna sengaja logout manual
+      localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.GOOGLE_AUTH_SESSION);
       this.clearSession();
       window.location.hash = 'login';
       window.location.reload();

@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
 const App = {
   deferredPrompt: null,
 
-  init() {
+  async init() {
     console.log('[MAISYA-TRANS] Memulai aplikasi...');
 
     // 1. Inisialisasi Modul
@@ -42,12 +42,27 @@ const App = {
       UI.switchView(startView, false);
       this.startPolling();
     } else {
-      // Jika belum login, KUNCI akses: hanya form login atau pendaftaran
-      const hash = window.location.hash.replace('#', '');
-      if (hash === 'register') {
-        UI.switchView('register', false);
+      // 4. Periksa Auto-Login Google: Otomatis masuk jika sebelumnya pernah login dengan Google (kecuali logout manual)
+      const didAutoLogin = await Auth.checkGoogleAutoLogin();
+      if (didAutoLogin && Auth.isLoggedIn()) {
+        let startView = 'dashboard';
+        const hash = window.location.hash.replace('#', '');
+        if (hash && document.getElementById(`view-${hash}`) && hash !== 'login' && hash !== 'register') {
+          startView = hash;
+        }
+        try {
+          history.replaceState({ view: startView, index: 0 }, '', `#${startView}`);
+        } catch (e) {}
+        UI.switchView(startView, false);
+        this.startPolling();
       } else {
-        UI.switchView('login', false);
+        // Jika belum login dan tidak ada auto-login Google, barulah tampilkan form login
+        const hash = window.location.hash.replace('#', '');
+        if (hash === 'register') {
+          UI.switchView('register', false);
+        } else {
+          UI.switchView('login', false);
+        }
       }
     }
   },
@@ -116,6 +131,22 @@ const App = {
         rememberCheckbox.checked = remembered.remember;
       }
     }
+
+    // Muat data Akun Google yang pernah login ke form dialog Google jika ada
+    try {
+      const gRaw = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.GOOGLE_AUTH_SESSION);
+      if (gRaw) {
+        const gSession = JSON.parse(gRaw);
+        const gEmailInput = document.getElementById('googleAuthEmail');
+        const gNameInput = document.getElementById('googleAuthName');
+        if (gEmailInput && gSession.email && !gEmailInput.value) {
+          gEmailInput.value = gSession.email;
+        }
+        if (gNameInput && gSession.name && !gNameInput.value) {
+          gNameInput.value = gSession.name;
+        }
+      }
+    } catch (e) {}
   },
 
   /**
