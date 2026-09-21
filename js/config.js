@@ -20,6 +20,9 @@ const APP_CONFIG = {
   // Default tariff (Rp/KM)
   DEFAULT_TARIFF_PER_KM: 1000,
   
+  // Google Sign-In Client ID (Google Identity Services)
+  GOOGLE_CLIENT_ID: 'YOUR_GOOGLE_CLIENT_ID_HERE.apps.googleusercontent.com',
+  
   // Storage Keys
   STORAGE_KEYS: {
     AUTH_TOKEN: 'maisya_trans_token',

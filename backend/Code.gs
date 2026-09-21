@@ -78,6 +78,9 @@ function doGet(e) {
           vehicleType: params.jenis
         }), true, 'Export laporan CSV siap');
         
+      case 'googleAuth':
+        return wrapResult(handleGoogleAuth(params));
+
       default:
         return jsonResponse(null, false, `Aksi '${action}' tidak dikenali.`);
     }
@@ -119,6 +122,9 @@ function doPost(e) {
         
       case 'login':
         return wrapResult(handleLogin(body));
+
+      case 'googleAuth':
+        return wrapResult(handleGoogleAuth(body));
         
       case 'approveUser':
         if (role !== CONFIG.ROLES.ADMIN) return forbiddenResponse();

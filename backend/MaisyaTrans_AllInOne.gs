@@ -618,6 +618,100 @@ function handleLogin(params) {
   return { success: false, message: 'Pengguna tidak ditemukan. Silakan periksa kembali email/NIP Anda.' };
 }
 
+function handleGoogleAuth(params) {
+  const { email, name, picture, googleId } = params;
+  if (!email) return { success: false, message: 'Alamat email Google tidak terdeteksi.' };
+  
+  const emailLower = String(email).toLowerCase().trim();
+  const userSheet = getSheet(CONFIG.SHEETS.USERS);
+  const data = userSheet.getDataRange().getValues();
+  
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const uEmail = String(row[6]).toLowerCase().trim();
+    if (uEmail === emailLower) {
+      const uId = row[0];
+      const uName = row[1];
+      const uRole = row[8];
+      const uStatus = row[9];
+      
+      if (uStatus === CONFIG.STATUS.USER.REJECTED) {
+        return { success: false, message: 'Mohon maaf, akun Anda berstatus ditolak oleh Admin Sarpras.' };
+      }
+      if (uStatus === CONFIG.STATUS.USER.INACTIVE) {
+        return { success: false, message: 'Akun Anda sedang dinonaktifkan sementara oleh Admin.' };
+      }
+      
+      const now = nowISO();
+      userSheet.getRange(i + 1, 14).setValue(now);
+      const token = createSessionToken(uId, uRole);
+      logAudit(uId, 'LOGIN_GOOGLE', 'USERS', uId, `User ${uName} (${emailLower}) login dengan Google`);
+      
+      return {
+        success: true,
+        message: 'Alhamdulillah, berhasil masuk dengan Google!',
+        data: {
+          token: token,
+          user: {
+            userId: uId,
+            nama: uName,
+            nip: row[2],
+            jabatan: row[3],
+            divisi: row[4],
+            no_hp: row[5],
+            email: uEmail,
+            role: uRole,
+            status: uStatus,
+            picture: picture || '',
+            lastLogin: now
+          }
+        }
+      };
+    }
+  }
+  
+  const userId = generateUUID('USR');
+  const displayName = name ? String(name).trim() : emailLower.split('@')[0];
+  const now = nowISO();
+  
+  const newRow = [
+    userId, displayName, '-', 'Guru / Karyawan', 'Pondok', '-', emailLower, '',
+    CONFIG.ROLES.USER, CONFIG.STATUS.USER.ACTIVE, now, now, 'GOOGLE_AUTO', now
+  ];
+  userSheet.appendRow(newRow);
+  
+  addNotification({
+    userId: 'ADMIN',
+    type: 'USER_BARU',
+    title: 'Pengguna Baru via Google',
+    message: `${displayName} (${emailLower}) telah terdaftar dan aktif via Google.`
+  });
+  
+  logAudit(userId, 'REGISTER_GOOGLE', 'USERS', userId, `User baru terdaftar via Google: ${displayName} (${emailLower})`);
+  const token = createSessionToken(userId, CONFIG.ROLES.USER);
+  
+  return {
+    success: true,
+    message: 'Alhamdulillah, pendaftaran akun Google berhasil dan Anda langsung masuk!',
+    data: {
+      token: token,
+      user: {
+        userId: userId,
+        nama: displayName,
+        nip: '-',
+        jabatan: 'Guru / Karyawan',
+        divisi: 'Pondok',
+        no_hp: '-',
+        email: emailLower,
+        role: CONFIG.ROLES.USER,
+        status: CONFIG.STATUS.USER.ACTIVE,
+        picture: picture || '',
+        lastLogin: now
+      }
+    }
+  };
+}
+
 // ============================================================================
 // BAGIAN 5: KELOLA ARMADA & MONITORING KESEHATAN (VEHICLES)
 // ============================================================================
@@ -1311,6 +1405,8 @@ function doGet(e) {
         return jsonResponse(getFullStatistics(), true);
       case 'getNotifications':
         return jsonResponse(getNotifications(userId, role), true);
+      case 'googleAuth':
+        return wrapResult(handleGoogleAuth(params));
       default:
         return jsonResponse(null, false, `Aksi '${action}' tidak dikenali.`);
     }
@@ -1338,6 +1434,8 @@ function doPost(e) {
         return wrapResult(handleLogin(body));
       case 'register':
         return wrapResult(handleRegister(body));
+      case 'googleAuth':
+        return wrapResult(handleGoogleAuth(body));
       case 'approveUser':
         return wrapResult(handleApproveUser(body));
       case 'rejectUser':

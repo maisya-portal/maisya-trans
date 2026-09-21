@@ -647,3 +647,63 @@ button, input, select, textarea {
 .offline-notice-bar.show {
   display: flex;
 }
+
+/* ==========================================================================
+   Google Sign-In & Auth Divider Styles
+   ========================================================================== */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.25rem 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.auth-divider span {
+  padding: 0 0.75rem;
+}
+
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  background: #ffffff;
+  color: #374151;
+  border: 1.5px solid #D1D5DB;
+  border-radius: var(--border-radius-md);
+  padding: 0.7rem 1.2rem;
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: all var(--transition-speed);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  user-select: none;
+}
+
+.btn-google:hover {
+  background: #F9FAFB;
+  border-color: #9CA3AF;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.btn-google:active {
+  transform: translateY(0);
+}
+
+.btn-google svg {
+  flex-shrink: 0;
+}

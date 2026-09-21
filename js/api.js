@@ -78,6 +78,56 @@ const Api = {
         
         switch (action) {
           // --- AUTH ---
+          case 'googleAuth': {
+            const { email, name, picture } = data;
+            const emailLower = (email || '').toLowerCase().trim();
+            let user = Store.data.users.find(u => u.email.toLowerCase() === emailLower);
+
+            if (user) {
+              if (user.status === 'REJECTED') {
+                return resolve({ success: false, message: 'Mohon maaf, akun Anda berstatus ditolak oleh Admin.' });
+              }
+              if (user.status === 'INACTIVE') {
+                return resolve({ success: false, message: 'Akun Anda sedang dinonaktifkan sementara.' });
+              }
+              user.lastLogin = now;
+              Store.save();
+              const mockToken = btoa(JSON.stringify({ userId: user.userId, role: user.role, time: Date.now() }));
+              return resolve({
+                success: true,
+                message: 'Alhamdulillah, berhasil masuk dengan akun Google!',
+                data: { token: mockToken, user }
+              });
+            } else {
+              // Registrasi otomatis pengguna baru via Google
+              const newUser = {
+                userId: 'USR-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+                nama: name || emailLower.split('@')[0],
+                nip: '-',
+                jabatan: 'Guru / Karyawan',
+                divisi: 'Pondok',
+                no_hp: '-',
+                email: emailLower,
+                password_hash: '',
+                role: 'USER',
+                status: 'ACTIVE',
+                picture: picture || '',
+                createdAt: now,
+                approvedAt: now,
+                approvedBy: 'GOOGLE_AUTO',
+                lastLogin: now
+              };
+              Store.data.users.push(newUser);
+              Store.save();
+              const mockToken = btoa(JSON.stringify({ userId: newUser.userId, role: newUser.role, time: Date.now() }));
+              return resolve({
+                success: true,
+                message: 'Alhamdulillah, akun Google berhasil terdaftar dan langsung masuk!',
+                data: { token: mockToken, user: newUser }
+              });
+            }
+          }
+
           case 'login': {
             const { username, password } = data;
             const inputLower = (username || '').toLowerCase().trim();
