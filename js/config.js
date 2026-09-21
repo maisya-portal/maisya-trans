@@ -12,8 +12,7 @@ const APP_CONFIG = {
   PROJECT_ID: '14TIGDX5_TvoaOzw9t6teCBkAy_fbaY_pw1H4HKZyaPa6oGE2CSojwKmB',
   
   // URL Deployment Web App Google Apps Script
-  // Pengguna/Admin dapat mengubah atau memasukkan URL Web App ini melalui Pengaturan
-  DEFAULT_GAS_API_URL: 'https://script.google.com/macros/s/AKfycbzQ_YOUR_DEPLOYED_EXEC_ID/exec',
+  DEFAULT_GAS_API_URL: 'https://script.google.com/macros/s/AKfycbz7IHLds3V4sywzxL2ZOXVs-tyEMSkur1gpBStPpSkGME9YVyEKatiHOLm5hGSIuifF/exec',
   
   // Polling interval untuk update realtime status dashboard (20 detik)
   POLLING_INTERVAL_MS: 20000,
