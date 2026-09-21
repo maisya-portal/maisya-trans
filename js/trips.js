@@ -8,22 +8,25 @@ const TripsView = {
   lastFinishedReceipt: null,
 
   async openFinishModal(tripId) {
-    const res = await Api.request('getDashboard', 'GET');
-    let trip = null;
-
-    if (res.success && res.data) {
-      const vList = res.data.vehicles || [];
-      for (const v of vList) {
-        if (v.activeTrip && v.activeTrip.tripId === tripId) {
-          trip = { ...v.activeTrip, vehicleName: `${v.merk} ${v.model}`, nomorPolisi: v.nomorPolisi, currentKm: v.currentKm };
-          break;
-        }
+    let trip = Store.data.trips.find(t => t.tripId === tripId && t.status === 'ACTIVE');
+    if (!trip) {
+      const v = Store.data.vehicles.find(x => x.activeTrip && x.activeTrip.tripId === tripId);
+      if (v) {
+        trip = { ...v.activeTrip, vehicleName: `${v.merk} ${v.model}`, nomorPolisi: v.nomorPolisi, currentKm: v.currentKm };
       }
     }
 
     if (!trip) {
-      // Cari di Store jika tidak ketemu di response
-      trip = Store.data.trips.find(t => t.tripId === tripId && t.status === 'ACTIVE');
+      const res = await Api.request('getDashboard', 'GET');
+      if (res.success && res.data) {
+        const vList = res.data.vehicles || [];
+        for (const v of vList) {
+          if (v.activeTrip && v.activeTrip.tripId === tripId) {
+            trip = { ...v.activeTrip, vehicleName: `${v.merk} ${v.model}`, nomorPolisi: v.nomorPolisi, currentKm: v.currentKm };
+            break;
+          }
+        }
+      }
     }
 
     if (!trip) {
@@ -35,18 +38,23 @@ const TripsView = {
   },
 
   async openFinishByVehicleId(vehicleId) {
-    const res = await Api.request('getDashboard', 'GET');
     let trip = null;
-
-    if (res.success && res.data) {
-      const v = res.data.vehicles.find(x => x.vehicleId === vehicleId);
-      if (v && v.activeTrip) {
-        trip = { ...v.activeTrip, vehicleName: `${v.merk} ${v.model}`, nomorPolisi: v.nomorPolisi, currentKm: v.currentKm };
-      }
+    const vLocal = Store.data.vehicles.find(x => x.vehicleId === vehicleId);
+    if (vLocal && vLocal.activeTrip) {
+      trip = { ...vLocal.activeTrip, vehicleName: `${vLocal.merk} ${vLocal.model}`, nomorPolisi: vLocal.nomorPolisi, currentKm: vLocal.currentKm };
+    }
+    if (!trip) {
+      trip = Store.data.trips.find(t => t.vehicleId === vehicleId && t.status === 'ACTIVE');
     }
 
     if (!trip) {
-      trip = Store.data.trips.find(t => t.vehicleId === vehicleId && t.status === 'ACTIVE');
+      const res = await Api.request('getDashboard', 'GET');
+      if (res.success && res.data) {
+        const v = res.data.vehicles.find(x => x.vehicleId === vehicleId);
+        if (v && v.activeTrip) {
+          trip = { ...v.activeTrip, vehicleName: `${v.merk} ${v.model}`, nomorPolisi: v.nomorPolisi, currentKm: v.currentKm };
+        }
+      }
     }
 
     if (!trip) {

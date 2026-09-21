@@ -32,7 +32,15 @@ const BookingView = {
    * Alur Pinjam Sekarang (Quick Flow)
    */
   openQuickBorrow(type) {
-    const available = this.vehicles.find(v => v.jenis === type && v.status === 'AVAILABLE');
+    let allVehicles = this.vehicles;
+    if ((!allVehicles || allVehicles.length === 0) && typeof VehiclesView !== 'undefined' && VehiclesView.vehicles.length > 0) {
+      allVehicles = VehiclesView.vehicles;
+    }
+    if (!allVehicles || allVehicles.length === 0) {
+      allVehicles = Store.data.vehicles;
+    }
+
+    const available = allVehicles.find(v => v.jenis === type && v.status === 'AVAILABLE');
     if (!available) {
       UI.showToast(`Maaf, tidak ada unit ${type} yang tersedia saat ini.`, 'error');
       return;
@@ -41,7 +49,13 @@ const BookingView = {
   },
 
   openQuickBorrowById(vehicleId) {
-    const v = this.vehicles.find(x => x.vehicleId === vehicleId);
+    let v = this.vehicles.find(x => x.vehicleId === vehicleId);
+    if (!v && typeof VehiclesView !== 'undefined' && VehiclesView.vehicles.length > 0) {
+      v = VehiclesView.vehicles.find(x => x.vehicleId === vehicleId);
+    }
+    if (!v && typeof Store !== 'undefined') {
+      v = Store.data.vehicles.find(x => x.vehicleId === vehicleId);
+    }
     if (!v) return;
 
     this.selectedVehicle = v;
