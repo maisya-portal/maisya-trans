@@ -1596,6 +1596,12 @@ function doPost(e) {
         return wrapResult(handleRejectUser(body));
       case 'addVehicle':
         return wrapResult(handleAddVehicle(body));
+      case 'updateVehicle':
+        if (body.role !== CONFIG.ROLES.ADMIN) return jsonResponse(null, false, 'Akses ditolak.');
+        return wrapResult(handleUpdateVehicle(body));
+      case 'deleteVehicle':
+        if (body.role !== CONFIG.ROLES.ADMIN) return jsonResponse(null, false, 'Akses ditolak.');
+        return wrapResult(handleDeleteVehicle(body));
       case 'createBooking':
         return wrapResult(handleCreateBooking(body));
       case 'startTrip':
