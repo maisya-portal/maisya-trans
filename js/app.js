@@ -139,6 +139,35 @@ const App = {
   },
 
   /**
+   * Mengatur tampilan state halaman login (form / loading / success / error)
+   */
+  setLoginState(state, message = '') {
+    const form = document.getElementById('loginFormWrapper');
+    const loading = document.getElementById('loginLoadingState');
+    const success = document.getElementById('loginSuccessState');
+    const error = document.getElementById('loginErrorState');
+
+    if (form) form.style.display = state === 'form' ? '' : 'none';
+    if (loading) loading.style.display = state === 'loading' ? 'block' : 'none';
+    if (success) success.style.display = state === 'success' ? 'block' : 'none';
+    if (error) error.style.display = state === 'error' ? 'block' : 'none';
+
+    if (state === 'success' && message) {
+      const el = document.getElementById('loginSuccessMsg');
+      if (el) el.textContent = message;
+    }
+    if (state === 'error' && message) {
+      const el = document.getElementById('loginErrorMsg');
+      if (el) el.textContent = message;
+    }
+  },
+
+  /** Reset halaman login ke tampilan form awal */
+  resetLoginState() {
+    this.setLoginState('form');
+  },
+
+  /**
    * Bind Login & Register Form Handlers
    */
   bindAuthForms() {
@@ -151,34 +180,29 @@ const App = {
         const password = document.getElementById('loginPassword').value;
         const rememberCheckbox = document.getElementById('loginRememberMe');
         const isRemember = rememberCheckbox ? rememberCheckbox.checked : true;
-        const btnSubmit = document.getElementById('btnLoginSubmit');
-
-        if (btnSubmit) {
-          btnSubmit.disabled = true;
-          btnSubmit.textContent = 'Memverifikasi...';
-        }
+        // Tampilkan state loading di halaman login
+        App.setLoginState('loading');
 
         try {
-          const res = await Auth.login(username, password);
-          if (res.success) {
-            // Simpan atau bersihkan kredensial yang diingat
-            Auth.saveRememberedCredentials(username, password, isRemember);
+          const res = await Auth.login(username, password, false); // false = skip global spinner
 
-            UI.showToast(res.message, 'success');
+          if (res.success) {
+            Auth.saveRememberedCredentials(username, password, isRemember);
+            const nama = Auth.getUser()?.nama || username;
+            // Tampilkan animasi sukses
+            App.setLoginState('success', `Selamat datang kembali, ${nama}! 🎉`);
+            await new Promise(r => setTimeout(r, 1600));
             Auth.startIdleWatcher();
             this.updateUserHeaderUI();
+            App.resetLoginState(); // reset form ke semula
             UI.switchView('dashboard');
             this.startPolling();
           } else {
-            UI.showToast(res.message, 'error');
+            // Tampilkan animasi gagal
+            App.setLoginState('error', res.message || 'Email atau password tidak cocok.');
           }
         } catch (err) {
-          UI.showToast('Gagal terhubung ke server. Periksa koneksi internet Anda.', 'error');
-        } finally {
-          if (btnSubmit) {
-            btnSubmit.disabled = false;
-            btnSubmit.textContent = 'Masuk Sekarang';
-          }
+          App.setLoginState('error', 'Gagal terhubung ke server. Periksa koneksi internet Anda.');
         }
       });
     }

@@ -437,7 +437,9 @@
              VIEW: LOGIN (Modern Islamic Design)
              =============================================================== -->
         <section id="view-login" class="view-section" style="display:none;">
-          <div style="max-width:440px; margin:2rem auto; background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-xl); padding:2rem; box-shadow:var(--shadow-xl);">
+          <div style="max-width:440px; margin:2rem auto; background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-xl); padding:2rem; box-shadow:var(--shadow-xl); overflow:hidden; position:relative;">
+
+            <!-- HEADER -->
             <div style="text-align:center; margin-bottom:1.75rem;">
               <img src="./assets/logo/logo.png?v=1.0.6" alt="Logo Maisya-Trans" style="width:84px; height:84px; margin-bottom:0.75rem; filter:drop-shadow(0 6px 16px rgba(13,92,58,0.35)); object-fit:contain;">
               <h2 style="font-size:1.4rem; color:var(--primary-700); font-weight:800; letter-spacing:0.5px;">MAISYA-TRANS</h2>
@@ -445,59 +447,89 @@
               <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">Mobilitas Aman, Tertib, dan Terdata</p>
             </div>
 
-            <form id="formLogin">
-              <div class="form-group">
-                <label class="form-label" for="loginUsername">Email atau NIP</label>
-                <div class="input-with-icon">
-                  <span class="input-icon">👤</span>
-                  <input type="text" id="loginUsername" name="username" class="form-control" placeholder="admin@imamsyafii.ponpes.id / ahmad..." required autocomplete="username">
+            <!-- STATE: Form (default) -->
+            <div id="loginFormWrapper">
+              <form id="formLogin">
+                <div class="form-group">
+                  <label class="form-label" for="loginUsername">Email atau NIP</label>
+                  <div class="input-with-icon">
+                    <span class="input-icon">👤</span>
+                    <input type="text" id="loginUsername" name="username" class="form-control" placeholder="admin@imamsyafii.pondes.id / ahmad..." required autocomplete="username">
+                  </div>
                 </div>
-              </div>
 
-              <div class="form-group">
-                <label class="form-label" for="loginPassword">Password</label>
-                <div class="input-with-icon">
-                  <span class="input-icon">🔒</span>
-                  <input type="password" id="loginPassword" name="password" class="form-control" placeholder="Masukkan password Anda" required autocomplete="current-password">
-                  <button type="button" class="password-toggle-btn" aria-label="Lihat Password">👁️</button>
+                <div class="form-group">
+                  <label class="form-label" for="loginPassword">Password</label>
+                  <div class="input-with-icon">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="loginPassword" name="password" class="form-control" placeholder="Masukkan password Anda" required autocomplete="current-password">
+                    <button type="button" class="password-toggle-btn" aria-label="Lihat Password">👁️</button>
+                  </div>
                 </div>
+
+                <!-- Checkbox Ingat Sandi & Akun -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin:0.85rem 0 1.25rem 0; font-size:0.85rem;">
+                  <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; color:var(--text-secondary); user-select:none; font-weight:600;">
+                    <input type="checkbox" id="loginRememberMe" checked style="width:17px; height:17px; accent-color:var(--primary-700); cursor:pointer;">
+                    <span>Ingat Sandi Saya</span>
+                  </label>
+                  <span style="font-size:0.75rem; color:var(--primary-700); font-weight:700; background:rgba(13,92,58,0.08); padding:3px 8px; border-radius:6px; display:flex; align-items:center; gap:4px;">
+                    <span>🔒</span> Tetap Masuk
+                  </span>
+                </div>
+
+                <button type="submit" id="btnLoginSubmit" class="btn btn-primary btn-block">
+                  Masuk Sekarang
+                </button>
+              </form>
+
+              <div class="auth-divider">
+                <span>atau</span>
               </div>
 
-              <!-- Checkbox Ingat Sandi & Akun -->
-              <div style="display:flex; justify-content:space-between; align-items:center; margin:0.85rem 0 1.25rem 0; font-size:0.85rem;">
-                <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; color:var(--text-secondary); user-select:none; font-weight:600;">
-                  <input type="checkbox" id="loginRememberMe" checked style="width:17px; height:17px; accent-color:var(--primary-700); cursor:pointer;">
-                  <span>Ingat Sandi Saya</span>
-                </label>
-                <span style="font-size:0.75rem; color:var(--primary-700); font-weight:700; background:rgba(13,92,58,0.08); padding:3px 8px; border-radius:6px; display:flex; align-items:center; gap:4px;">
-                  <span>🔒</span> Tetap Masuk
-                </span>
-              </div>
-
-              <button type="submit" id="btnLoginSubmit" class="btn btn-primary btn-block">
-                Masuk Sekarang
+              <!-- Tombol Masuk dengan Google -->
+              <button type="button" id="btnGoogleSignIn" class="btn btn-google btn-block" onclick="Auth.signInWithGoogle()">
+                <svg width="20" height="20" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                  <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.26 21.36 7.33 24 12 24z"/>
+                  <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.16 0 9.98 0 12s.46 3.84 1.26 5.42l4.02-3.15z"/>
+                  <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                </svg>
+                <span>Lanjutkan dengan Google</span>
               </button>
-            </form>
 
-            <div class="auth-divider">
-              <span>atau</span>
+              <div style="margin-top:1.5rem; text-align:center; font-size:0.88rem; color:var(--text-secondary);">
+                Belum memiliki akun pegawai?
+                <a href="#" onclick="UI.switchView('register')" style="font-weight:700;">Daftar di sini</a>
+              </div>
             </div>
 
-            <!-- Tombol Masuk dengan Google -->
-            <button type="button" id="btnGoogleSignIn" class="btn btn-google btn-block" onclick="Auth.signInWithGoogle()">
-              <svg width="20" height="20" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
-                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.26 21.36 7.33 24 12 24z"/>
-                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.16 0 9.98 0 12s.46 3.84 1.26 5.42l4.02-3.15z"/>
-                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-              </svg>
-              <span>Lanjutkan dengan Google</span>
-            </button>
-
-            <div style="margin-top:1.5rem; text-align:center; font-size:0.88rem; color:var(--text-secondary);">
-              Belum memiliki akun pegawai? 
-              <a href="#" onclick="UI.switchView('register')" style="font-weight:700;">Daftar di sini</a>
+            <!-- STATE: Loading -->
+            <div id="loginLoadingState" style="display:none; padding:2rem 1rem; text-align:center;">
+              <div style="width:64px; height:64px; border:5px solid var(--primary-100); border-top-color:var(--primary-700); border-radius:50%; animation:spin-modern 0.9s linear infinite; margin:0 auto 1.25rem;"></div>
+              <p style="font-weight:600; font-size:1rem; color:var(--text-color); margin-bottom:0.4rem;">Memverifikasi akun...</p>
+              <p style="font-size:0.82rem; color:var(--text-muted);">Sedang mencocokkan email dan password Anda</p>
             </div>
+
+            <!-- STATE: Success -->
+            <div id="loginSuccessState" style="display:none; padding:2rem 1rem; text-align:center;">
+              <div style="width:72px; height:72px; background:linear-gradient(135deg,#22c55e,#16a34a); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1.25rem; animation:auth-pop 0.4s cubic-bezier(0.175,0.885,0.32,1.275) both;">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <p style="font-weight:700; font-size:1.1rem; color:#16a34a; margin-bottom:0.4rem;">Alhamdulillah, Berhasil!</p>
+              <p id="loginSuccessMsg" style="font-size:0.85rem; color:var(--text-muted);">Memuat dashboard Anda...</p>
+            </div>
+
+            <!-- STATE: Error -->
+            <div id="loginErrorState" style="display:none; padding:2rem 1rem; text-align:center;">
+              <div style="width:72px; height:72px; background:linear-gradient(135deg,#ef4444,#dc2626); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1.25rem; animation:auth-pop 0.4s cubic-bezier(0.175,0.885,0.32,1.275) both;">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </div>
+              <p style="font-weight:700; font-size:1.1rem; color:#dc2626; margin-bottom:0.4rem;">Login Gagal</p>
+              <p id="loginErrorMsg" style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.25rem;">Email atau password salah.</p>
+              <button class="btn btn-primary btn-block" onclick="App.resetLoginState()">Coba Lagi</button>
+            </div>
+
           </div>
         </section>
 
@@ -1322,7 +1354,7 @@
   <script src="./js/config.js?v=1.1.2"></script>
   <script src="./js/utils.js?v=1.1.2"></script>
   <script src="./js/store.js?v=1.1.2"></script>
-  <script src="./js/auth.js?v=1.1.1"></script>
+  <script src="./js/auth.js?v=1.1.2"></script>
   <script src="./js/api.js?v=1.1.3"></script>
   <script src="./js/ui.js?v=1.1.3"></script>
   <script src="./js/dashboard.js?v=1.1.2"></script>
@@ -1335,7 +1367,7 @@
   <script src="./js/admin.js?v=1.1.4"></script>
   <script src="./js/notifications.js?v=1.1.2"></script>
   <script src="./js/profile.js?v=1.1.2"></script>
-  <script src="./js/app.js?v=1.1.1"></script>
+  <script src="./js/app.js?v=1.1.2"></script>
 
 </body>
 </html>

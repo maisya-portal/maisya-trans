@@ -36,8 +36,8 @@ const Auth = {
     return this.isLoggedIn() && this.currentUser.role === 'ADMIN';
   },
 
-  async login(username, password) {
-    const res = await Api.request('login', 'POST', { username, password });
+  async login(username, password, showSpinner = false) {
+    const res = await Api.request('login', 'POST', { username, password }, showSpinner);
     if (res.success && res.data) {
       this.currentUser = res.data.user;
       this.token = res.data.token;
