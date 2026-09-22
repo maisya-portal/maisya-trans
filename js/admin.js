@@ -15,18 +15,15 @@ const AdminView = {
       return;
     }
 
-    const [uRes, vRes, sRes] = await Promise.all([
-      Api.request('getUsers', 'GET'),
-      Api.request('getVehicles', 'GET'),
-      Api.request('getStatistics', 'GET')
-    ]);
+    // Jalankan satu request tunggal untuk efisiensi
+    const res = await Api.request('getAdminDashboard', 'GET');
 
-    if (uRes.success && uRes.data) {
-      this.users = uRes.data;
+    if (res.success && res.data) {
+      this.users = res.data.users || [];
       this.pendingUsers = this.users.filter(u => u.status === 'PENDING');
+      this.vehicles = res.data.vehicles || [];
+      this.stats = res.data.stats || null;
     }
-    if (vRes.success && vRes.data) this.vehicles = vRes.data;
-    if (sRes.success && sRes.data) this.stats = sRes.data;
 
     this.render();
   },

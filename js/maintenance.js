@@ -8,13 +8,13 @@ const MaintenanceView = {
   vehicles: [],
 
   async load() {
-    const [mRes, vRes] = await Promise.all([
-      Api.request('getMaintenance', 'GET'),
-      Api.request('getVehicles', 'GET')
-    ]);
+    // Jalankan satu request tunggal untuk efisiensi
+    const res = await Api.request('getMaintenanceDashboard', 'GET');
 
-    if (mRes.success && mRes.data) this.maintenanceList = mRes.data;
-    if (vRes.success && vRes.data) this.vehicles = vRes.data;
+    if (res.success && res.data) {
+      this.maintenanceList = res.data.maintenance || [];
+      this.vehicles = res.data.vehicles || [];
+    }
 
     this.renderHealthSummary();
     this.renderMaintenanceHistory();

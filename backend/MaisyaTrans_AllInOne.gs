@@ -367,6 +367,7 @@ function getNotifications(userId, role) {
     const notifications = [];
     for (let i = data.length - 1; i >= 1; i--) {
       const row = data[i];
+      if (!row[0]) continue; // Optimize: skip blank rows
       const targetUser = row[1];
       const isForThisUser = (role === CONFIG.ROLES.ADMIN) 
         ? (targetUser === 'ADMIN' || targetUser === 'ALL' || targetUser === userId)
@@ -800,6 +801,8 @@ function getAllVehicles() {
   
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
+    if (!row[0]) continue; // Optimize: skip blank rows
+
     const vehicleId = row[0];
     const currentKm = Number(row[7]) || 0;
     const lastServiceKm = Number(row[8]) || 0;
@@ -1344,6 +1347,8 @@ function getTripHistory(filterParams = {}) {
   
   for (let i = data.length - 1; i >= 1; i--) {
     const row = data[i];
+    if (!row[0]) continue; // Optimize: skip blank rows
+
     const tripUserId = row[2];
     if (role === CONFIG.ROLES.USER && tripUserId !== filterUserId) continue;
     
@@ -1388,6 +1393,8 @@ function getAllUsers() {
   const users = [];
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
+    if (!row[0]) continue; // Optimize: skip blank rows
+
     users.push({
       userId: row[0],
       nama: row[1],
@@ -1564,6 +1571,34 @@ function getFullStatistics() {
   };
 }
 
+function getMaintenanceRecords() {
+  try {
+    const sheet = getSheet(CONFIG.SHEETS.MAINTENANCE);
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return [];
+    const records = [];
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      if (!row[0]) continue;
+      records.push({
+        maintenanceId: row[0],
+        vehicleId: row[1],
+        type: row[2],
+        date: row[3],
+        km: Number(row[4]) || 0,
+        description: row[5],
+        cost: Number(row[6]) || 0,
+        nextDueKm: Number(row[7]) || 0,
+        nextDueDate: row[8],
+        createdBy: row[9]
+      });
+    }
+    return records;
+  } catch (err) {
+    return [];
+  }
+}
+
 function handleUpdateTariff(params) {
   const { newRate, adminId } = params;
   const rateNum = Number(newRate);
@@ -1619,6 +1654,19 @@ function doGet(e) {
           vehicles,
           recentTrips: trips.slice(0, 5),
           notifications: notifications.slice(0, 5)
+        }, true);
+      }
+      case 'getAdminDashboard': {
+        return jsonResponse({
+          users: getAllUsers(),
+          vehicles: getAllVehicles(),
+          stats: getFullStatistics()
+        }, true);
+      }
+      case 'getMaintenanceDashboard': {
+        return jsonResponse({
+          maintenance: getMaintenanceRecords(),
+          vehicles: getAllVehicles()
         }, true);
       }
       case 'getVehicles':
