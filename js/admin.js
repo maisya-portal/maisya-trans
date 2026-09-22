@@ -219,7 +219,7 @@ const AdminView = {
         <div class="form-group">
           <label class="form-label" style="font-size:0.8rem;">URL Web App Deployment (/exec):</label>
           <div style="display:flex; gap:0.5rem;">
-            <input type="text" id="adminGasUrlInput" class="form-control" value="${currentApiUrl}">
+            <input type="text" id="adminGasUrlInput" class="form-control" value="${currentApiUrl}" autocomplete="off" data-lpignore="true">
             <button class="btn btn-primary" onclick="AdminView.saveGasUrl()">Simpan URL</button>
           </div>
         </div>
