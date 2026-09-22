@@ -146,7 +146,54 @@ const AdminView = {
         </div>
       </div>
 
-      <!-- 3. Section: Ekspor Laporan Perjalanan (CSV) -->
+      <!-- 3. Section: Daftar Pengguna Aktif & Manajemen -->
+      <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-lg); padding:1.25rem; margin-bottom:1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+          <h4 style="font-size:1rem; display:flex; align-items:center; gap:6px;">
+            <span>👨‍👩‍👧‍👦</span> Daftar Pengguna & Akses
+          </h4>
+          <button class="btn btn-primary btn-sm" onclick="UI.openModal('modalAddUser')">+ Tambah User</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; text-align:left; border-collapse:collapse; font-size:0.85rem;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--surface-border);">
+                <th style="padding:0.5rem; color:var(--text-muted);">Nama</th>
+                <th style="padding:0.5rem; color:var(--text-muted);">Email / NIP</th>
+                <th style="padding:0.5rem; color:var(--text-muted);">Role</th>
+                <th style="padding:0.5rem; color:var(--text-muted);">Status</th>
+                <th style="padding:0.5rem; color:var(--text-muted); text-align:right;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${this.users.filter(u => u.status !== 'PENDING').map(u => `
+                <tr style="border-bottom:1px solid var(--surface-border);">
+                  <td style="padding:0.5rem;">
+                    <strong>${u.nama}</strong><br>
+                    <span style="color:var(--text-muted); font-size:0.75rem;">${u.jabatan || '-'}</span>
+                  </td>
+                  <td style="padding:0.5rem;">
+                    ${u.email}<br>
+                    <span style="color:var(--text-muted); font-size:0.75rem;">NIP: ${u.nip || '-'}</span>
+                  </td>
+                  <td style="padding:0.5rem;">
+                    <span class="badge ${u.role === 'ADMIN' ? 'badge-maintenance' : 'badge-available'}">${u.role}</span>
+                  </td>
+                  <td style="padding:0.5rem;">
+                    <span class="badge ${u.status === 'ACTIVE' ? 'badge-available' : 'badge-in-use'}">${u.status}</span>
+                  </td>
+                  <td style="padding:0.5rem; text-align:right;">
+                    <button class="btn btn-secondary btn-sm" style="padding:0.25rem 0.5rem;" onclick="AdminView.openEditUser('${u.userId}')">Edit</button>
+                    ${u.userId !== Auth.getUser().userId ? `<button class="btn btn-danger btn-sm" style="padding:0.25rem 0.5rem; margin-left:4px;" onclick="AdminView.deleteUser('${u.userId}')">Hapus</button>` : ''}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 4. Section: Ekspor Laporan Perjalanan (CSV) -->
       <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-lg); padding:1.25rem; margin-bottom:1.5rem;">
         <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:1rem;">
           <div>
@@ -293,5 +340,89 @@ const AdminView = {
     const url = input.value.trim();
     setActiveApiUrl(url);
     UI.showToast('URL Google Apps Script berhasil disimpan!', 'success');
+  },
+
+  async submitAddUser() {
+    const btn = document.querySelector('#formAddUser button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = 'Menyimpan...';
+
+    const payload = {
+      nama: document.getElementById('addUserName').value,
+      email: document.getElementById('addUserEmail').value,
+      password: document.getElementById('addUserPassword').value,
+      nip: document.getElementById('addUserNip').value,
+      jabatan: document.getElementById('addUserJabatan').value,
+      divisi: document.getElementById('addUserDivisi').value,
+      no_hp: document.getElementById('addUserPhone').value,
+      role: document.getElementById('addUserRole').value
+    };
+
+    const res = await Api.request('addUser', 'POST', payload);
+    btn.disabled = false;
+    btn.innerHTML = 'Simpan Pengguna';
+
+    if (res.success) {
+      UI.showToast(res.message, 'success');
+      UI.closeModal('modalAddUser');
+      document.getElementById('formAddUser').reset();
+      this.load();
+    } else {
+      UI.showToast(res.message, 'error');
+    }
+  },
+
+  openEditUser(userId) {
+    const user = this.users.find(u => u.userId === userId);
+    if (!user) return;
+
+    document.getElementById('editUserId').value = user.userId;
+    document.getElementById('editUserName').value = user.nama;
+    document.getElementById('editUserEmail').value = user.email;
+    document.getElementById('editUserPassword').value = ''; // Kosongkan
+    document.getElementById('editUserStatus').value = user.status;
+    document.getElementById('editUserRole').value = user.role;
+    
+    UI.openModal('modalEditUser');
+  },
+
+  async submitEditUser() {
+    const btn = document.querySelector('#formEditUser button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = 'Menyimpan...';
+
+    const payload = {
+      targetUserId: document.getElementById('editUserId').value,
+      nama: document.getElementById('editUserName').value,
+      email: document.getElementById('editUserEmail').value,
+      password: document.getElementById('editUserPassword').value,
+      status: document.getElementById('editUserStatus').value,
+      role: document.getElementById('editUserRole').value
+    };
+
+    const res = await Api.request('updateUser', 'POST', payload);
+    btn.disabled = false;
+    btn.innerHTML = 'Simpan Perubahan';
+
+    if (res.success) {
+      UI.showToast(res.message, 'success');
+      UI.closeModal('modalEditUser');
+      document.getElementById('formEditUser').reset();
+      this.load();
+    } else {
+      UI.showToast(res.message, 'error');
+    }
+  },
+
+  async deleteUser(userId) {
+    if (!confirm('Apakah Anda yakin ingin menghapus permanen pengguna ini? Aksi ini tidak dapat dibatalkan.')) return;
+    
+    const res = await Api.request('deleteUser', 'POST', { targetUserId: userId });
+    if (res.success) {
+      UI.showToast(res.message, 'success');
+      this.load();
+    } else {
+      UI.showToast(res.message, 'error');
+    }
   }
 };

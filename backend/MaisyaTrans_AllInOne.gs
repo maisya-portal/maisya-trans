@@ -1444,6 +1444,75 @@ function handleRejectUser(params) {
   return { success: false, message: 'User tidak ditemukan.' };
 }
 
+function handleAddUserByAdmin(params) {
+  const { nama, nip, jabatan, divisi, no_hp, email, password, role, adminId } = params;
+  if (!nama || !email || !password) return { success: false, message: 'Nama, Email, dan Password wajib diisi.' };
+
+  const userSheet = getSheet(CONFIG.SHEETS.USERS);
+  const data = userSheet.getDataRange().getValues();
+  const emailLower = String(email).toLowerCase().trim();
+
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][6]).toLowerCase().trim() === emailLower) {
+      return { success: false, message: 'Alamat email sudah terdaftar.' };
+    }
+  }
+
+  const userId = generateUUID('USR');
+  const now = nowISO();
+  const passHash = hashPassword(password);
+  
+  const newRow = [
+    userId, nama.trim(), nip || '-', jabatan || '-', divisi || 'Pondok', no_hp || '-', emailLower, passHash,
+    role || CONFIG.ROLES.USER, CONFIG.STATUS.USER.ACTIVE, now, now, adminId || 'ADMIN', ''
+  ];
+  userSheet.appendRow(newRow);
+  
+  logAudit(adminId || 'ADMIN', 'ADD_USER', 'USERS', userId, `Admin menambahkan user: ${nama} (${emailLower})`);
+  return { success: true, message: 'Pengguna berhasil ditambahkan.' };
+}
+
+function handleUpdateUser(params) {
+  const { targetUserId, nama, nip, jabatan, divisi, no_hp, email, role, status, password, adminId } = params;
+  const userSheet = getSheet(CONFIG.SHEETS.USERS);
+  const data = userSheet.getDataRange().getValues();
+  
+  let foundRow = -1;
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === targetUserId) { foundRow = i + 1; break; }
+  }
+  if (foundRow === -1) return { success: false, message: 'User tidak ditemukan.' };
+
+  if (nama) userSheet.getRange(foundRow, 2).setValue(nama.trim());
+  if (nip !== undefined) userSheet.getRange(foundRow, 3).setValue(nip);
+  if (jabatan) userSheet.getRange(foundRow, 4).setValue(jabatan);
+  if (divisi) userSheet.getRange(foundRow, 5).setValue(divisi);
+  if (no_hp !== undefined) userSheet.getRange(foundRow, 6).setValue(no_hp);
+  if (email) userSheet.getRange(foundRow, 7).setValue(String(email).toLowerCase().trim());
+  if (password && password.trim().length >= 6) userSheet.getRange(foundRow, 8).setValue(hashPassword(password));
+  if (role) userSheet.getRange(foundRow, 9).setValue(role);
+  if (status) userSheet.getRange(foundRow, 10).setValue(status);
+
+  logAudit(adminId || 'ADMIN', 'UPDATE_USER', 'USERS', targetUserId, `Admin mengedit user ID ${targetUserId}`);
+  return { success: true, message: 'Data pengguna berhasil diperbarui.' };
+}
+
+function handleDeleteUser(params) {
+  const { targetUserId, adminId } = params;
+  const userSheet = getSheet(CONFIG.SHEETS.USERS);
+  const data = userSheet.getDataRange().getValues();
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === targetUserId) {
+      const nama = data[i][1];
+      userSheet.deleteRow(i + 1);
+      logAudit(adminId || 'ADMIN', 'DELETE_USER', 'USERS', targetUserId, `Admin menghapus user: ${nama}`);
+      return { success: true, message: `Pengguna ${nama} berhasil dihapus permanen.` };
+    }
+  }
+  return { success: false, message: 'User tidak ditemukan.' };
+}
+
 // ============================================================================
 // BAGIAN 9: STATISTIK & LAPORAN (REPORTS)
 // ============================================================================
@@ -1597,6 +1666,15 @@ function doPost(e) {
         return wrapResult(handleApproveUser(body));
       case 'rejectUser':
         return wrapResult(handleRejectUser(body));
+      case 'addUser':
+        if (body.role !== CONFIG.ROLES.ADMIN) return jsonResponse(null, false, 'Akses ditolak.');
+        return wrapResult(handleAddUserByAdmin(body));
+      case 'updateUser':
+        if (body.role !== CONFIG.ROLES.ADMIN) return jsonResponse(null, false, 'Akses ditolak.');
+        return wrapResult(handleUpdateUser(body));
+      case 'deleteUser':
+        if (body.role !== CONFIG.ROLES.ADMIN) return jsonResponse(null, false, 'Akses ditolak.');
+        return wrapResult(handleDeleteUser(body));
       case 'addVehicle':
         return wrapResult(handleAddVehicle(body));
       case 'updateVehicle':
