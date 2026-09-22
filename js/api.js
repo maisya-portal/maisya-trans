@@ -19,13 +19,20 @@ const Api = {
   /**
    * Core request executor
    */
-  async request(action, method = 'GET', data = {}) {
+  async request(action, method = 'GET', data = {}, showSpinner = true) {
     const currentUser = Auth.getUser();
     const token = Auth.getToken();
     
+    // Tampilkan loading overlay jika diminta
+    if (showSpinner && typeof UI !== 'undefined' && UI.showLoading) {
+      UI.showLoading('Memuat data...');
+    }
+    
     // Fallback ke Store jika dalam mode mockup/offline
     if (this.isMockMode()) {
-      return this.executeMock(action, data, currentUser);
+      const res = await this.executeMock(action, data, currentUser);
+      if (showSpinner && typeof UI !== 'undefined' && UI.hideLoading) UI.hideLoading();
+      return res;
     }
 
     try {
@@ -61,10 +68,13 @@ const Api = {
       }
 
       const result = await response.json();
+      if (showSpinner && typeof UI !== 'undefined' && UI.hideLoading) UI.hideLoading();
       return result;
     } catch (err) {
       console.warn(`[API] Remote call failed (${err.message}). Menggunakan offline local store.`);
-      return this.executeMock(action, data, currentUser);
+      const fallbackRes = await this.executeMock(action, data, currentUser);
+      if (showSpinner && typeof UI !== 'undefined' && UI.hideLoading) UI.hideLoading();
+      return fallbackRes;
     }
   },
 

@@ -174,6 +174,25 @@ const UI = {
   },
 
   /**
+   * Global Loading Overlay
+   */
+  showLoading(text = 'Memproses data...') {
+    const overlay = document.getElementById('globalLoadingOverlay');
+    const textEl = document.getElementById('loadingText');
+    if (overlay) {
+      if (textEl) textEl.textContent = text;
+      overlay.classList.add('active');
+    }
+  },
+
+  hideLoading() {
+    const overlay = document.getElementById('globalLoadingOverlay');
+    if (overlay) {
+      overlay.classList.remove('active');
+    }
+  },
+
+  /**
    * Toast Notification
    */
   showToast(message, type = 'success', duration = 3500) {
