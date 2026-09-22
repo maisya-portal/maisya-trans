@@ -111,12 +111,12 @@ const Auth = {
    * Kirim autentikasi Google ke Backend / API dengan Smart Auto-Fallback
    */
   async processGoogleLogin(googleData) {
-    UI.showToast('Memverifikasi akun Google...', 'info', 2000);
     const cleanEmail = (googleData.email || '').toLowerCase().trim();
     const cleanName = googleData.name || cleanEmail.split('@')[0];
+    const isFromModal = !!document.getElementById('googleAuthLoading');
 
     try {
-      const res = await Api.request('googleAuth', 'POST', googleData);
+      const res = await Api.request('googleAuth', 'POST', googleData, false); // false = jangan pakai global spinner
 
       if (res && res.success && res.data) {
         this.currentUser = res.data.user;
@@ -133,7 +133,14 @@ const Auth = {
           savedAt: Date.now()
         }));
 
+        if (!googleData.isAutoLogin && isFromModal) {
+          // Tampilkan animasi sukses di dalam modal, lalu pindah ke dashboard
+          this._setGoogleModalState('success', `Selamat datang, ${this.currentUser.nama || cleanName}! Memuat dashboard...`);
+          await new Promise(r => setTimeout(r, 1800));
+        }
+
         UI.closeModal('modalGoogleAuthPrompt');
+        this._setGoogleModalState('form'); // reset untuk next open
         if (!googleData.isAutoLogin) {
           UI.showToast(res.message || 'Alhamdulillah, berhasil masuk dengan Google!', 'success');
         }
@@ -152,7 +159,13 @@ const Auth = {
         return;
       }
 
-      UI.showToast(res.message || 'Gagal masuk dengan akun Google.', 'error');
+      // Login gagal - tampilkan state error di modal
+      const errMsg = res.message || 'Email tidak ditemukan atau password salah.';
+      if (isFromModal && !googleData.isAutoLogin) {
+        this._setGoogleModalState('error', errMsg);
+      } else {
+        UI.showToast(errMsg, 'error');
+      }
     } catch (err) {
       console.warn('[Auth] Gagal request remote Google Auth, beralih ke sesi lokal:', err);
       this.activateGoogleFallbackSession(cleanEmail, cleanName, googleData.picture, googleData.isAutoLogin);
@@ -237,7 +250,6 @@ const Auth = {
     const emailInput = document.getElementById('googleAuthEmail');
     const nameInput = document.getElementById('googleAuthName');
     const passwordInput = document.getElementById('googleAuthPassword');
-    const btnSubmit = document.getElementById('btnSubmitGooglePrompt');
 
     const email = emailInput ? emailInput.value.trim() : '';
     const name = nameInput ? nameInput.value.trim() : '';
@@ -254,10 +266,8 @@ const Auth = {
       return;
     }
 
-    if (btnSubmit) {
-      btnSubmit.disabled = true;
-      btnSubmit.textContent = 'Menghubungkan...';
-    }
+    // Tampilkan state LOADING di dalam modal
+    this._setGoogleModalState('loading');
 
     await this.processGoogleLogin({
       email: email,
@@ -265,11 +275,35 @@ const Auth = {
       picture: '',
       password: password
     });
+  },
 
-    if (btnSubmit) {
-      btnSubmit.disabled = false;
-      btnSubmit.textContent = 'Lanjutkan dengan Google';
+  /** Helper: Atur tampilan modal Google ke state tertentu */
+  _setGoogleModalState(state, message = '') {
+    const form = document.getElementById('formGoogleAuthPrompt');
+    const loading = document.getElementById('googleAuthLoading');
+    const success = document.getElementById('googleAuthSuccess');
+    const error = document.getElementById('googleAuthError');
+
+    if (form) form.style.display = state === 'form' ? '' : 'none';
+    if (loading) loading.style.display = state === 'loading' ? 'block' : 'none';
+    if (success) success.style.display = state === 'success' ? 'block' : 'none';
+    if (error) error.style.display = state === 'error' ? 'block' : 'none';
+
+    if (state === 'success' && message) {
+      const el = document.getElementById('googleAuthSuccessMsg');
+      if (el) el.textContent = message;
     }
+    if (state === 'error' && message) {
+      const el = document.getElementById('googleAuthErrorMsg');
+      if (el) el.textContent = message;
+    }
+  },
+
+  /** Helper: Reset modal Google ke tampilan form awal */
+  _resetGoogleModalToForm() {
+    this._setGoogleModalState('form');
+    const passwordInput = document.getElementById('googleAuthPassword');
+    if (passwordInput) { passwordInput.value = ''; passwordInput.focus(); }
   },
 
   /**

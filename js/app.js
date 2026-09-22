@@ -134,21 +134,8 @@ const App = {
       }
     }
 
-    // Muat data Akun Google yang pernah login ke form dialog Google jika ada
-    try {
-      const gRaw = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.GOOGLE_AUTH_SESSION);
-      if (gRaw) {
-        const gSession = JSON.parse(gRaw);
-        const gEmailInput = document.getElementById('googleAuthEmail');
-        const gNameInput = document.getElementById('googleAuthName');
-        if (gEmailInput && gSession.email && !gEmailInput.value) {
-          gEmailInput.value = gSession.email;
-        }
-        if (gNameInput && gSession.name && !gNameInput.value) {
-          gNameInput.value = gSession.name;
-        }
-      }
-    } catch (e) {}
+    // Catatan: form Google Auth sengaja TIDAK di-prefill otomatis
+    // agar pengguna selalu mengisi email dan password secara sadar
   },
 
   /**
