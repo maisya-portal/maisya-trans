@@ -1,9 +1,10 @@
 /**
  * MAISYA-TRANS - Service Worker
  * Pondok Pesantren Imam Syafi'i Brebes
+ * Version: 2.0.0 (Public Vehicle Lending System)
  */
 
-const CACHE_NAME = 'maisya-trans-v1.2.0';
+const CACHE_NAME = 'maisya-trans-v2.0.0';
 
 const STATIC_ASSETS = [
   './',
@@ -52,26 +53,27 @@ const STATIC_ASSETS = [
   './assets/icons/favicon.ico'
 ];
 
-// Install Event - Cache Static App Shell
+// Install Event - Force Skip Waiting
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Caching app shell assets...');
+      console.log('[SW v2.0.0] Caching app shell assets...');
       return cache.addAll(STATIC_ASSETS).catch((err) => {
         console.warn('[SW] Cache prefetch error:', err);
       });
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
-// Activate Event - Clean old caches
+// Activate Event - Clean all older caches immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('[SW] Removing old cache:', key);
+            console.log('[SW] Deleting obsolete cache:', key);
             return caches.delete(key);
           }
         })
@@ -80,11 +82,11 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event
+// Fetch Event - Network First for HTML & Scripts to ensure instant updates
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Jangan cache request API Google Apps Script (karena butuh data realtime / internet)
+  // Jangan cache request API Google Apps Script
   if (url.origin.includes('script.google.com') || url.pathname.includes('/exec')) {
     event.respondWith(
       fetch(event.request).catch(() => {
@@ -100,21 +102,23 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network First for Navigation HTML, Cache First for Static Assets
-  if (event.request.mode === 'navigate') {
+  // Network First for Navigation and scripts
+  if (event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          const resClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+          if (response && response.status === 200) {
+            const resClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+          }
           return response;
         })
-        .catch(() => caches.match('./index.html'))
+        .catch(() => caches.match(event.request).then(cached => cached || caches.match('./index.html')))
     );
     return;
   }
 
-  // Stale-While-Revalidate for CSS, JS, SVG, Fonts
+  // Stale-While-Revalidate for images, fonts, icons
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
@@ -123,9 +127,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
         }
         return networkResponse;
-      }).catch((err) => {
-        // Fallback or ignore
-      });
+      }).catch(() => {});
 
       return cachedResponse || fetchPromise;
     })

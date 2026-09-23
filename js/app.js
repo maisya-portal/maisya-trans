@@ -29,9 +29,8 @@ const App = {
 
     // 3. Setup Halaman Awal: Selalu Buka Beranda Monitoring Publik secara Default
     let startView = 'dashboard';
-    const hash = window.location.hash.replace('#', '');
-    if (hash && document.getElementById(`view-${hash}`)) {
-      // Jika pengguna bukan admin dan mencoba buka admin view, alihkan ke dashboard
+    const hash = window.location.hash.replace('#', '').trim();
+    if (hash && hash !== 'login' && hash !== 'register' && document.getElementById(`view-${hash}`)) {
       if (hash === 'admin' && !Auth.isAdmin()) {
         startView = 'login';
       } else {
@@ -276,8 +275,27 @@ const App = {
           .then(reg => {
             reg.update();
             console.log('[PWA] Service Worker aktif:', reg.scope);
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('[PWA] Versi baru terinstal. Memuat ulang tampilan...');
+                    window.location.reload();
+                  }
+                });
+              }
+            });
           })
           .catch(err => console.warn('[PWA] Registrasi SW gagal:', err));
+      });
+
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
       });
     }
 
