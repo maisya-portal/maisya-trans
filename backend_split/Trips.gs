@@ -288,6 +288,141 @@ function handleFinishTrip(params) {
 }
 
 /**
+ * Check-In Serah Terima Kendaraan Sebelum Mulai
+ */
+function handleCheckInTrip(params) {
+  const { 
+    bookingId, 
+    vehicleId, 
+    userId, 
+    userName, 
+    start_km, 
+    start_fuel, 
+    start_cleanliness, 
+    start_condition, 
+    start_damage_notes, 
+    start_photos 
+  } = params;
+
+  const startChecklist = {
+    fuel: start_fuel || 'FULL',
+    cleanliness: start_cleanliness || 'BERSIH',
+    condition: start_condition || 'BAIK',
+    notes: start_damage_notes || '',
+    photos: start_photos || []
+  };
+
+  return handleStartTrip({
+    userId: userId || 'GUEST',
+    vehicleId: vehicleId,
+    bookingId: bookingId || '',
+    start_km: start_km,
+    purpose: params.purpose || 'Operasional Pondok',
+    start_checklist: startChecklist
+  });
+}
+
+/**
+ * Check-Out Pengembalian Kendaraan & Kalkulasi BBM / Biaya
+ */
+function handleCheckOutTrip(params) {
+  const { 
+    tripId, 
+    end_km, 
+    end_fuel, 
+    end_cleanliness, 
+    end_condition, 
+    end_damage_notes, 
+    end_photos, 
+    filled_fuel, 
+    fuel_receipt_photo, 
+    payment_method, 
+    payment_proof_photo 
+  } = params;
+
+  const endKmNum = Number(end_km);
+  if (isNaN(endKmNum) || endKmNum <= 0) {
+    return { success: false, message: 'Kilometer akhir tidak valid. Masukkan angka sesuai odometer.' };
+  }
+
+  const returnCondition = {
+    fuel: end_fuel || 'FULL',
+    cleanliness: end_cleanliness || 'BERSIH',
+    condition: end_condition || 'BAIK',
+    notes: end_damage_notes || '',
+    photos: end_photos || [],
+    filledFuel: !!filled_fuel,
+    fuelReceipt: fuel_receipt_photo || '',
+    paymentMethod: payment_method || 'CASH',
+    paymentProof: payment_proof_photo || ''
+  };
+
+  // Eksekusi finish trip
+  const result = handleFinishTrip({
+    tripId: tripId,
+    end_km: endKmNum,
+    return_condition: returnCondition,
+    damage_notes: end_damage_notes || '',
+    userId: params.userId || ''
+  });
+
+  if (result.success && filled_fuel) {
+    // Jika isi BBM sendiri, bebaskan biaya (Rp 0)
+    result.data.totalCost = 0;
+    result.data.fuelWaiver = true;
+    result.message += ' Biaya sewa dibebaskan karena pengguna telah mengisi bahan bakar.';
+  }
+
+  return result;
+}
+
+/**
+ * Verifikasi Pengembalian & Kunci oleh Admin
+ */
+function handleVerifyReturnTrip(params) {
+  const { tripId, adminId, verificationNotes, conditionStatus } = params;
+  
+  const tripSheet = getSheet(CONFIG.SHEETS.TRIPS);
+  const tripData = tripSheet.getDataRange().getValues();
+  let tripRowIdx = -1;
+  let vehicleId = '';
+
+  for (let i = 1; i < tripData.length; i++) {
+    if (tripData[i][0] === tripId) {
+      tripRowIdx = i + 1;
+      vehicleId = tripData[i][3];
+      break;
+    }
+  }
+
+  if (tripRowIdx === -1) {
+    return { success: false, message: 'Data perjalanan tidak ditemukan.' };
+  }
+
+  // Update status verifikasi
+  tripSheet.getRange(tripRowIdx, 16).setValue(CONFIG.STATUS.TRIP.FINISHED);
+
+  // Pastikan kendaraan kembali AVAILABLE
+  if (vehicleId) {
+    const vehicleSheet = getSheet(CONFIG.SHEETS.VEHICLES);
+    const vData = vehicleSheet.getDataRange().getValues();
+    for (let i = 1; i < vData.length; i++) {
+      if (vData[i][0] === vehicleId) {
+        vehicleSheet.getRange(i + 1, 15).setValue(CONFIG.STATUS.VEHICLE.AVAILABLE);
+        break;
+      }
+    }
+  }
+
+  logAudit(adminId, 'VERIFY_RETURN', 'TRIPS', tripId, `Verifikasi pengembalian kendaraan: ${conditionStatus || 'OK'}`);
+
+  return {
+    success: true,
+    message: 'Verifikasi serah terima kendaraan dan kunci berhasil dicatat. Status armada telah kembali Tersedia.'
+  };
+}
+
+/**
  * Ambil tarif per KM aktif
  */
 function getActiveTariff() {
@@ -358,8 +493,8 @@ function getTripHistory(filterParams = {}) {
     const row = data[i];
     const tripUserId = row[2];
     
-    // User biasa hanya melihat riwayat miliknya
-    if (role === CONFIG.ROLES.USER && tripUserId !== filterUserId) {
+    // User biasa hanya melihat riwayat miliknya jika bukan guest/admin
+    if (role === CONFIG.ROLES.USER && tripUserId !== filterUserId && filterUserId) {
       continue;
     }
     
@@ -396,3 +531,4 @@ function getTripHistory(filterParams = {}) {
   
   return trips;
 }
+

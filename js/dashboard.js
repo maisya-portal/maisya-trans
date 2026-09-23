@@ -1,294 +1,364 @@
 /**
- * MAISYA-TRANS - Dashboard Controller (Real-time Vehicle Monitoring)
+ * MAISYA-TRANS - Dashboard Controller (Real-time Fleet Monitoring & Public Access)
  * Pondok Pesantren Imam Syafi'i Brebes
+ * "Mobilitas Aman, Tertib, dan Terdata"
  */
 
 const DashboardView = {
   data: null,
-  refreshTimer: null,
+  activeFilter: 'ALL',
 
   async load() {
     const container = document.getElementById('dashboardContent');
     if (!container) return;
 
-    // Tampilkan data langsung jika ada, lalu fetch update
     const res = await Api.request('getDashboard', 'GET');
     if (res.success && res.data) {
       this.data = res.data;
       this.render();
-
-      // Tampilkan status popup elegan jika baru pertama kali dibuka
-      if (this.data.overview) {
-        UI.showWelcomeStatusPopup(
-          this.data.overview,
-          this.data.activeMotor,
-          this.data.activeMobil
-        );
-      }
     }
+  },
+
+  setFilter(filter) {
+    this.activeFilter = filter;
+    this.render();
   },
 
   render() {
     const container = document.getElementById('dashboardContent');
     if (!container || !this.data) return;
 
-    const { overview, activeMotor, activeMobil, recentTrips, activeBookings, vehicles } = this.data;
-    const user = Auth.getUser() || { nama: 'Guru / Karyawan' };
+    const { overview, vehicles, activeTrips, recentTrips, activeBookings } = this.data;
+    const user = Auth.getUser();
+    const isAdmin = Auth.isAdmin();
 
-    // Saring pengingat servis yang mendekati / terlambat
-    const serviceAlerts = (vehicles || []).filter(v => v.oilStatus !== 'OK' || v.tuneupStatus !== 'OK');
+    // Saring armada berdasarkan filter aktif
+    let filteredVehicles = (vehicles || []).filter(v => {
+      if (this.activeFilter === 'MOTOR') return v.jenis === 'MOTOR';
+      if (this.activeFilter === 'MOBIL') return v.jenis === 'MOBIL';
+      if (this.activeFilter === 'AVAILABLE') return v.status === 'AVAILABLE';
+      if (this.activeFilter === 'IN_USE') return v.status === 'IN_USE';
+      if (this.activeFilter === 'PENDING') return v.status === 'PENDING_APPROVAL';
+      if (this.activeFilter === 'MAINTENANCE') return v.status === 'MAINTENANCE';
+      return true;
+    });
 
     container.innerHTML = `
-      <!-- 1. Welcome Banner Islami -->
-      <div class="welcome-banner">
-        <div class="banner-content">
-          <div class="banner-greeting">
-            Assalamu'alaikum, ${user.nama} 👋
+      <!-- 1. Hero Banner: Informasi Real-time Pondok -->
+      <div class="welcome-banner" style="background: linear-gradient(135deg, var(--primary-800), var(--primary-700)); color:#FFFFFF; border-radius:var(--border-radius-lg); padding:1.5rem; margin-bottom:1.5rem; position:relative; overflow:hidden; box-shadow:var(--shadow-lg);">
+        <div style="position:relative; z-index:2; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:1rem;">
+          <div>
+            <div style="font-size:0.8rem; font-weight:700; color:var(--gold-400); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">
+              Pondok Pesantren Imam Syafi'i Brebes
+            </div>
+            <h2 style="font-size:1.4rem; font-weight:800; color:#FFFFFF; margin-bottom:4px;">
+              ${isAdmin ? `Assalamu'alaikum, ${user?.nama || 'Admin Sarpras'} 🛡️` : 'Sistem Peminjaman Kendaraan Operasional'}
+            </h2>
+            <p style="font-size:0.88rem; color:rgba(255,255,255,0.85); max-width:620px;">
+              Akses peminjaman mudah untuk seluruh asatidzah, guru, staf, dan santri. Pantau status armada dan argo pemakaian real-time secara transparan.
+            </p>
           </div>
-          <div class="banner-sub">
-            Selamat datang di Sistem Peminjaman & Monitoring Kendaraan Pondok Pesantren Imam Syafi’i Brebes.
-          </div>
-          <div class="banner-status-tag">
-            ${overview.allAvailable 
-              ? '🟢 Seluruh Armada Siap Operasional' 
-              : `🔴 ${overview.totalInUse} Kendaraan Sedang Digunakan`}
+
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <button class="btn btn-gold btn-sm" onclick="BookingView.openBookingModal()" style="font-weight:700; box-shadow:0 4px 12px rgba(217,119,6,0.3);">
+              ➕ Ajukan Peminjaman
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="DashboardView.load()" style="background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.3); color:#FFFFFF;" title="Segarkan Data">
+              🔄 Segarkan
+            </button>
           </div>
         </div>
-        <div>
-          <button class="btn btn-gold btn-sm" onclick="DashboardView.load()" title="Segarkan Data Real-time">
-            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            Segarkan
-          </button>
-        </div>
-      </div>
 
-      <!-- 2. Realtime Monitoring Cards (MOTOR & MOBIL) -->
-      <div class="monitoring-grid">
-        <!-- MOTOR CARD -->
-        ${this.renderMonitorCard('MOTOR', activeMotor, overview.motorAvailableCount)}
-
-        <!-- MOBIL CARD -->
-        ${this.renderMonitorCard('MOBIL', activeMobil, overview.mobilAvailableCount)}
-      </div>
-
-      <!-- 3. Quick Action Bar -->
-      <div class="quick-actions-bar">
-        <div class="quick-action-btn primary" data-view="booking">
-          <div class="quick-action-icon">
-            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <!-- Mini Stats Counters -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:0.75rem; margin-top:1.25rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.15); position:relative; z-index:2;">
+          <div style="background:rgba(255,255,255,0.1); padding:0.6rem 0.8rem; border-radius:10px;">
+            <div style="font-size:0.72rem; color:rgba(255,255,255,0.75); text-transform:uppercase;">Total Armada</div>
+            <div style="font-size:1.25rem; font-weight:800; color:#FFFFFF;">${overview.totalVehicles || 0} <span style="font-size:0.75rem; font-weight:500;">Unit</span></div>
           </div>
-          <span class="quick-action-label">Pinjam Sekarang</span>
-        </div>
-
-        <div class="quick-action-btn gold" data-view="vehicles">
-          <div class="quick-action-icon">
-            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          <div style="background:rgba(16,185,129,0.25); padding:0.6rem 0.8rem; border-radius:10px; border:1px solid rgba(16,185,129,0.4);">
+            <div style="font-size:0.72rem; color:#A7F3D0; text-transform:uppercase;">Tersedia</div>
+            <div style="font-size:1.25rem; font-weight:800; color:#34D399;">${(overview.motorAvailableCount || 0) + (overview.mobilAvailableCount || 0)} <span style="font-size:0.75rem; font-weight:500;">Unit</span></div>
           </div>
-          <span class="quick-action-label">Daftar Armada</span>
-        </div>
-
-        <div class="quick-action-btn blue" data-view="history">
-          <div class="quick-action-icon">
-            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+          <div style="background:rgba(239,68,68,0.25); padding:0.6rem 0.8rem; border-radius:10px; border:1px solid rgba(239,68,68,0.4);">
+            <div style="font-size:0.72rem; color:#FCA5A5; text-transform:uppercase;">Sedang Dipakai</div>
+            <div style="font-size:1.25rem; font-weight:800; color:#F87171;">${overview.totalInUse || 0} <span style="font-size:0.75rem; font-weight:500;">Unit</span></div>
           </div>
-          <span class="quick-action-label">Riwayat & Biaya</span>
-        </div>
-
-        <div class="quick-action-btn slate" data-view="notifications">
-          <div class="quick-action-icon">
-            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          <div style="background:rgba(245,158,11,0.25); padding:0.6rem 0.8rem; border-radius:10px; border:1px solid rgba(245,158,11,0.4);">
+            <div style="font-size:0.72rem; color:#FDE68A; text-transform:uppercase;">Menunggu Persetujuan</div>
+            <div style="font-size:1.25rem; font-weight:800; color:#FBBF24;">${overview.pendingBookingsCount || 0} <span style="font-size:0.75rem; font-weight:500;">Pengajuan</span></div>
           </div>
-          <span class="quick-action-label">Notifikasi (${overview.unreadNotifCount || 0})</span>
         </div>
       </div>
 
-      <!-- DAFTAR PENGAJUAN AKTIF -->
-      <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-md); padding:1.25rem; margin-bottom:1.5rem;">
-        <h4 style="font-size: 0.95rem; margin-bottom: 1rem; display:flex; align-items:center; gap:6px;">
-          <span>📅</span> Pengajuan Peminjaman Aktif
-        </h4>
-        ${activeBookings && activeBookings.length > 0 ? `
-          <div style="display:flex; flex-direction:column; gap:0.75rem;">
-            ${activeBookings.map(b => `
-              <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0; border-bottom:1px solid var(--surface-border-subtle); font-size:0.85rem;">
-                <div>
-                  <span style="font-weight:700;">${b.userName}</span> mengajukan <strong>${b.vehicleName}</strong>
-                  <div style="color:var(--text-muted); margin-top:2px;">📅 ${b.tanggal} 🕒 ${b.startTime} - ${b.estimatedEndTime}</div>
-                  <div style="font-size:0.75rem; color:var(--text-muted);">Keperluan: ${b.kepentingan} - ${b.purpose}</div>
-                </div>
-                <div>
-                  <span class="badge ${b.status === 'APPROVED' ? 'badge-available' : 'badge-maintenance'}">${b.status === 'APPROVED' ? 'Disetujui' : 'Menunggu'}</span>
-                </div>
-              </div>
-            `).join('')}
+      <!-- 2. Live Argo Cards Section: Kendaraan Sedang Digunakan -->
+      ${this.renderActiveArgoSection(vehicles)}
+
+      <!-- 3. Katalog & Status Armada Real-time -->
+      <div style="margin-bottom: 1.5rem;">
+        <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+          <div>
+            <h3 style="font-size:1.15rem; font-weight:800; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
+              <span>🚗</span> Daftar Seluruh Kendaraan Terdaftar
+            </h3>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">
+              Status kendaraan real-time, foto, nomor polisi, dan pengajuan peminjaman
+            </p>
           </div>
-        ` : `
-          <div style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.88rem;">
-            Tidak ada pengajuan peminjaman saat ini.
+
+          <!-- Filter Pills -->
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+            <button class="btn btn-sm ${this.activeFilter === 'ALL' ? 'btn-primary' : 'btn-outline'}" onclick="DashboardView.setFilter('ALL')">Semua</button>
+            <button class="btn btn-sm ${this.activeFilter === 'MOTOR' ? 'btn-primary' : 'btn-outline'}" onclick="DashboardView.setFilter('MOTOR')">🏍️ Motor</button>
+            <button class="btn btn-sm ${this.activeFilter === 'MOBIL' ? 'btn-primary' : 'btn-outline'}" onclick="DashboardView.setFilter('MOBIL')">🚗 Mobil</button>
+            <button class="btn btn-sm ${this.activeFilter === 'AVAILABLE' ? 'btn-primary' : 'btn-outline'}" onclick="DashboardView.setFilter('AVAILABLE')">🟢 Tersedia</button>
+            <button class="btn btn-sm ${this.activeFilter === 'IN_USE' ? 'btn-primary' : 'btn-outline'}" onclick="DashboardView.setFilter('IN_USE')">🔴 Dipakai</button>
+            <button class="btn btn-sm ${this.activeFilter === 'PENDING' ? 'btn-primary' : 'btn-outline'}" onclick="DashboardView.setFilter('PENDING')">🟡 Pengajuan</button>
           </div>
-        `}
+        </div>
+
+        <!-- Vehicle Grid -->
+        <div class="vehicle-grid">
+          ${filteredVehicles.map(v => this.renderVehicleCard(v)).join('')}
+        </div>
       </div>
 
-      <!-- 4. Smart Maintenance Alerts (Jika ada yang mendekati / overdue) -->
-      ${serviceAlerts.length > 0 ? `
-        <div style="margin-bottom: 1.5rem;">
-          <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem; display:flex; align-items:center; gap:6px;">
-            <span>🔧</span> Pengingat Servis & Ganti Oli Armada
-          </h4>
-          <div style="display:flex; flex-direction:column; gap:0.5rem;">
-            ${serviceAlerts.map(v => `
-              <div class="health-chip ${v.oilStatus === 'OVERDUE' || v.tuneupStatus === 'OVERDUE' ? 'danger' : 'warning'}" style="justify-content:space-between;">
-                <div>
-                  <strong>${v.merk} ${v.model} (${v.nomorPolisi})</strong>: 
-                  ${v.oilStatus !== 'OK' ? v.oilStatusText : v.tuneupStatusText}
-                </div>
-                <span style="font-size:0.75rem; font-weight:700;">Odometer: ${v.currentKm.toLocaleString('id-ID')} KM</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      ` : ''}
+      <!-- 4. Antrean Pengajuan & Verifikasi Pengembalian (Untuk Admin & Publik) -->
+      ${this.renderPendingQueues(activeBookings, isAdmin)}
+    `;
+  },
 
-      <!-- 5. Recent Activity Timeline -->
-      <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-md); padding:1.25rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-          <h4 style="font-size: 0.95rem; display:flex; align-items:center; gap:6px;">
-            <span>⏱️</span> Aktivitas & Perjalanan Terbaru
-          </h4>
-          <button class="btn btn-outline btn-sm" data-view="history">Lihat Semua</button>
+  /**
+   * Render Section Live Argo untuk kendaraan yang sedang aktif berjalan
+   */
+  renderActiveArgoSection(vehicles) {
+    const inUseVehicles = (vehicles || []).filter(v => v.status === 'IN_USE' && v.activeTrip);
+    if (inUseVehicles.length === 0) return '';
+
+    return `
+      <div style="margin-bottom: 2rem;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+          <h3 style="font-size:1.05rem; font-weight:800; color:#DC2626; display:flex; align-items:center; gap:8px;">
+            <span class="argo-live-dot"></span>
+            <span>KENDARAAN SEDANG DIGUNAKAN (LIVE ARGO REAL-TIME)</span>
+          </h3>
+          <span style="font-size:0.78rem; color:var(--text-muted); font-weight:600;">Waktu diperbarui otomatis per detik</span>
         </div>
 
-        ${recentTrips && recentTrips.length > 0 ? `
-          <div style="display:flex; flex-direction:column; gap:0.75rem;">
-            ${recentTrips.map(t => `
-              <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0; border-bottom:1px solid var(--surface-border-subtle); font-size:0.85rem;">
-                <div style="display:flex; align-items:center; gap:0.75rem;">
-                  <span style="font-weight:700; font-family:monospace; background:var(--surface-secondary); padding:2px 6px; border-radius:4px;">
-                    ${t.startTime ? new Date(t.startTime).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}) : '--:--'}
-                  </span>
-                  <div>
-                    <span style="font-weight:700;">${t.userName}</span> 
-                    <span style="color:var(--text-muted);">${t.status === 'ACTIVE' ? 'sedang menggunakan' : 'selesai menggunakan'}</span>
-                    <strong>${t.vehicleName}</strong>
-                    <div style="font-size:0.75rem; color:var(--text-muted);">${t.purpose}</div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:1.25rem;">
+          ${inUseVehicles.map(v => {
+            const trip = v.activeTrip;
+            const startTimeFormatted = new Date(trip.startTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            const startDateFormatted = new Date(trip.startTime).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+
+            return `
+              <div class="argo-ticker-box">
+                <div class="argo-header-row">
+                  <div style="font-weight:800; font-size:1rem; color:#FFFFFF;">
+                    ${v.merk} ${v.model}
+                    <span style="background:rgba(255,255,255,0.15); padding:2px 8px; border-radius:6px; font-size:0.75rem; margin-left:6px; font-family:monospace;">
+                      ${v.nomorPolisi}
+                    </span>
+                  </div>
+                  <div class="argo-live-badge">
+                    <span class="argo-live-dot"></span>
+                    <span>Argo Berjalan</span>
                   </div>
                 </div>
-                <div style="text-align:right;">
-                  ${t.status === 'ACTIVE' ? `
-                    <span class="badge badge-in-use">Sedang Aktif</span>
-                  ` : `
-                    <div style="font-weight:700; color:var(--primary-700);">${t.distanceKm} KM</div>
-                    <div style="font-size:0.75rem; color:var(--text-muted);">Rp${(t.totalCost || 0).toLocaleString('id-ID')}</div>
-                  `}
+
+                <div class="argo-digital-display">
+                  <div>
+                    <div class="argo-time-label">Durasi Pemakaian Real-time</div>
+                    <div class="argo-time-val" data-argo-start="${trip.startTime}">00:00:00</div>
+                  </div>
+                  <div style="text-align:right;">
+                    <div class="argo-time-label">Mulai Sejak</div>
+                    <div style="font-size:0.9rem; font-weight:700; color:#F8FAFC;">${startTimeFormatted} WIB</div>
+                    <div style="font-size:0.7rem; color:#94A3B8;">${startDateFormatted}</div>
+                  </div>
+                </div>
+
+                <div class="argo-meta-grid">
+                  <div class="argo-meta-item">
+                    <span>Peminjam</span>
+                    <strong>👤 ${trip.userName}</strong>
+                    <div style="font-size:0.72rem; color:#94A3B8; margin-top:2px;">${trip.divisi || 'Pesantren'}</div>
+                  </div>
+                  <div class="argo-meta-item">
+                    <span>Tujuan / Keperluan</span>
+                    <strong>📍 ${trip.tujuan || trip.purpose || 'Dinas'}</strong>
+                    <div style="font-size:0.72rem; color:#94A3B8; margin-top:2px;">${trip.purpose || '-'}</div>
+                  </div>
+                  <div class="argo-meta-item">
+                    <span>KM Awal Check-In</span>
+                    <strong>🛣️ ${(trip.startKm || v.currentKm).toLocaleString('id-ID')} KM</strong>
+                  </div>
+                  <div class="argo-meta-item">
+                    <span>BBM & Kebersihan</span>
+                    <strong>⛽ ${trip.fuelLevelStart || '75%'} • ✨ ${trip.cleanlinessStart || 'Bersih'}</strong>
+                  </div>
+                </div>
+
+                <div style="margin-top:1rem; display:flex; gap:0.5rem;">
+                  <button class="btn btn-danger btn-sm btn-block" onclick="TripsView.openCheckOutModal('${trip.tripId}')" style="font-weight:700; box-shadow:0 4px 12px rgba(220,38,38,0.35);">
+                    ⏹ Selesai Pakai &amp; Check-Out
+                  </button>
+                  <a href="https://wa.me/${(trip.noHp || '').replace(/[^0-9]/g, '')}" target="_blank" class="btn btn-outline btn-sm" style="background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.2); color:#FFFFFF;" title="Hubungi Peminjam via WhatsApp">
+                    📱 WA
+                  </a>
                 </div>
               </div>
-            `).join('')}
-          </div>
-        ` : `
-          <div style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.88rem;">
-            Belum ada aktivitas perjalanan tercatat.
-          </div>
-        `}
+            `;
+          }).join('')}
+        </div>
       </div>
     `;
   },
 
-  renderMonitorCard(type, activeVehicle, availableCount) {
-    const isMotor = type === 'MOTOR';
-    const typeLabel = isMotor ? 'MOTOR OPERASIONAL' : 'MOBIL DINAS';
-    const typeIcon = isMotor 
-      ? '<svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>'
-      : '<svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>';
+  /**
+   * Render Kartu Kendaraan Individual
+   */
+  renderVehicleCard(v) {
+    const isMotor = v.jenis === 'MOTOR';
+    
+    // Status visual mapping
+    let badgeClass = 'badge-available';
+    let statusLabel = '🟢 Tersedia';
+    let statusDesc = 'Armada stanby & siap dipinjam';
 
-    if (activeVehicle && activeVehicle.activeTrip) {
-      const trip = activeVehicle.activeTrip;
-      const elapsed = Utils.calculateElapsed(trip.startTime);
-      const startFormatted = new Date(trip.startTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-
-      return `
-        <div class="monitor-card status-in-use">
-          <div class="monitor-card-header">
-            <div class="monitor-type-badge ${isMotor ? 'motor' : 'mobil'}">
-              ${typeIcon}
-              <span>${typeLabel}</span>
-            </div>
-            <div class="pulse-indicator in-use">
-              <span class="pulse-dot"></span>
-              <span>Sedang Digunakan</span>
-            </div>
-          </div>
-
-          <div class="monitor-active-body">
-            <div class="monitor-vehicle-info">
-              <div>
-                <div class="vehicle-brand-name">${activeVehicle.merk} ${activeVehicle.model}</div>
-                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Tujuan: ${trip.purpose || 'Dinas Pondok'}</div>
-              </div>
-              <span class="vehicle-plate-badge">${activeVehicle.nomorPolisi}</span>
-            </div>
-
-            <div class="borrower-info">
-              <div class="borrower-avatar-sm">${trip.userName.charAt(0)}</div>
-              <span>Pengemudi: <strong>${trip.userName}</strong></span>
-            </div>
-
-            <!-- Visual Progress Bar Pemakaian -->
-            <div class="trip-progress-container">
-              <div class="trip-progress-labels">
-                <span>Mulai ${startFormatted}</span>
-                <span style="color:#EF4444; font-weight:700;">● Berjalan ${elapsed}</span>
-              </div>
-              <div class="trip-progress-track">
-                <div class="trip-progress-fill"></div>
-              </div>
-            </div>
-
-            <div class="trip-stat-pills">
-              <div class="stat-pill">KM Awal: <strong>${trip.startKm.toLocaleString('id-ID')} KM</strong></div>
-              <div class="stat-pill">KM Terkini: <strong>${activeVehicle.currentKm.toLocaleString('id-ID')} KM</strong></div>
-            </div>
-
-            <div style="margin-top:0.5rem; display:flex; gap:0.5rem;">
-              <button class="btn btn-danger btn-sm btn-block" onclick="TripsView.openFinishModal('${trip.tripId}')">
-                ⏹ Selesai Pemakaian
-              </button>
-            </div>
-          </div>
-        </div>
-      `;
+    if (v.status === 'IN_USE') {
+      badgeClass = 'badge-in-use';
+      statusLabel = '🔴 Sedang Digunakan';
+      statusDesc = v.activeTrip ? `Dipakai: ${v.activeTrip.userName}` : 'Sedang dalam perjalanan';
+    } else if (v.status === 'PENDING_APPROVAL') {
+      badgeClass = 'badge-pending';
+      statusLabel = '🟡 Menunggu Persetujuan';
+      statusDesc = 'Pengajuan menunggu Admin Sarpras';
+    } else if (v.status === 'APPROVED') {
+      badgeClass = 'badge-approved';
+      statusLabel = '🔵 Disetujui (Ambil Kunci)';
+      statusDesc = 'Siap ambil kunci & Check-In';
+    } else if (v.status === 'MAINTENANCE') {
+      badgeClass = 'badge-maintenance';
+      statusLabel = '🟠 Dalam Perawatan';
+      statusDesc = 'Perawatan mesin / servis bengkel';
     }
 
-    // Idle State (Tidak sedang digunakan)
+    const defaultImg = isMotor 
+      ? 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=600&auto=format&fit=crop&q=80'
+      : 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=600&auto=format&fit=crop&q=80';
+
     return `
-      <div class="monitor-card status-available">
-        <div class="monitor-card-header">
-          <div class="monitor-type-badge ${isMotor ? 'motor' : 'mobil'}">
-            ${typeIcon}
-            <span>${typeLabel}</span>
+      <div class="vehicle-card" id="vcard-${v.vehicleId}">
+        <div class="vehicle-card-image-wrap">
+          <img src="${v.imageUrl || defaultImg}" alt="${v.merk} ${v.model}" onerror="this.src='${defaultImg}'">
+          <div style="position:absolute; top:8px; left:8px;">
+            <span class="badge ${badgeClass}" style="font-size:0.75rem; font-weight:800; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
+              ${statusLabel}
+            </span>
           </div>
-          <div class="pulse-indicator available">
-            <span class="pulse-dot"></span>
-            <span>Tersedia (${availableCount} Unit)</span>
+          <div style="position:absolute; bottom:8px; right:8px;">
+            <span class="vehicle-plate-badge" style="font-size:0.78rem;">${v.nomorPolisi}</span>
           </div>
         </div>
 
-        <div class="monitor-idle-body">
-          <div class="monitor-idle-icon">
-            <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <div class="vehicle-card-body">
+          <div class="vehicle-title-row">
+            <div>
+              <div class="vehicle-name">${v.merk} ${v.model}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">
+                Tahun ${v.tahun || '-'} • Warna ${v.warna || '-'}
+              </div>
+            </div>
           </div>
-          <div class="monitor-idle-text">
-            Sedang tidak digunakan
+
+          <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface-secondary); padding:6px 10px; border-radius:8px; margin:0.4rem 0; font-size:0.78rem;">
+            <span style="color:var(--text-secondary);">Odometer Terkini:</span>
+            <strong style="color:var(--primary-700); font-size:0.85rem;">${(v.currentKm || 0).toLocaleString('id-ID')} KM</strong>
           </div>
-          <div style="font-size:0.78rem; color:var(--text-muted); max-width:260px; margin-bottom:0.5rem;">
-            Alhamdulillah armada dalam kondisi stanby dan siap digunakan untuk keperluan pondok.
+
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.4rem; line-height:1.4;">
+            ℹ️ ${statusDesc}
           </div>
-          <div style="font-size:0.75rem; background:rgba(234,179,8,0.12); border:1px solid rgba(234,179,8,0.35); border-radius:8px; padding:0.5rem 0.75rem; color:#92400e; margin-bottom:0.65rem; line-height:1.5; max-width:280px;">
-            📋 <strong>Perlu Reservasi:</strong> Ajukan peminjaman &amp; tunggu persetujuan Admin Sarpras sebelum memulai pemakaian.
-          </div>
-          <button class="btn btn-primary btn-sm" style="margin-top:0.25rem;" onclick="BookingView.openQuickBorrow('${type}')">
-            ▶ Pinjam ${isMotor ? 'Motor' : 'Mobil'} Sekarang
-          </button>
+
+          <!-- Live Argo Mini jika sedang digunakan -->
+          ${v.status === 'IN_USE' && v.activeTrip ? `
+            <div style="background:rgba(239,68,68,0.08); border:1px dashed rgba(239,68,68,0.3); border-radius:8px; padding:6px 8px; margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center; font-size:0.75rem;">
+              <span style="color:#B91C1C; font-weight:700;">⏱️ Argo: <span data-argo-start="${v.activeTrip.startTime}" style="font-family:monospace; font-weight:800;">00:00:00</span></span>
+              <span style="color:var(--text-muted); font-size:0.7rem;">👤 ${v.activeTrip.userName.split(' ')[0]}</span>
+            </div>
+          ` : ''}
         </div>
+
+        <div class="vehicle-card-actions">
+          ${v.status === 'AVAILABLE' ? `
+            <button class="btn btn-primary btn-sm btn-block" onclick="BookingView.openBookingForVehicle('${v.vehicleId}')">
+              ▶ Ajukan Peminjaman
+            </button>
+          ` : (v.status === 'APPROVED' ? `
+            <button class="btn btn-gold btn-sm btn-block" onclick="BookingView.openCheckInModal('${v.vehicleId}')" style="font-weight:700;">
+              🔑 Check-In &amp; Ambil Kunci
+            </button>
+          ` : (v.status === 'IN_USE' ? `
+            <button class="btn btn-danger btn-sm btn-block" onclick="TripsView.openCheckOutByVehicle('${v.vehicleId}')">
+              ⏹ Check-Out &amp; Pengembalian
+            </button>
+          ` : (v.status === 'PENDING_APPROVAL' ? `
+            <button class="btn btn-outline btn-sm btn-block" disabled style="opacity:0.8; color:var(--gold-700);">
+              ⏳ Menunggu Persetujuan
+            </button>
+          ` : `
+            <button class="btn btn-outline btn-sm btn-block" disabled>Dalam Perawatan</button>
+          `)))}
+        </div>
+      </div>
+    `;
+  },
+
+  /**
+   * Render antrean pengajuan & aktivitas peminjaman
+   */
+  renderPendingQueues(activeBookings, isAdmin) {
+    return `
+      <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-lg); padding:1.25rem; margin-top:1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+          <h4 style="font-size: 0.95rem; font-weight:800; display:flex; align-items:center; gap:6px;">
+            <span>📅</span> Riwayat Pengajuan Peminjaman Terkini
+          </h4>
+          <button class="btn btn-outline btn-sm" onclick="UI.switchView('booking')">Lihat Semua</button>
+        </div>
+
+        ${activeBookings && activeBookings.length > 0 ? `
+          <div style="display:flex; flex-direction:column; gap:0.75rem;">
+            ${activeBookings.slice(0, 5).map(b => `
+              <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; padding:0.75rem; background:var(--surface-secondary); border-radius:var(--border-radius-md); font-size:0.85rem; gap:0.75rem;">
+                <div>
+                  <div style="font-weight:700; color:var(--text-primary);">
+                    ${b.userName} <span style="font-weight:400; color:var(--text-muted);">(${b.divisi || 'Pondok'})</span>
+                  </div>
+                  <div style="font-size:0.78rem; color:var(--primary-700); font-weight:600; margin-top:2px;">
+                    ${b.vehicleName} (${b.nomorPolisi || '-'})
+                  </div>
+                  <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
+                    📅 ${b.tanggal} • 🕒 ${b.startTime} - ${b.estimatedEndTime} • Tujuan: ${b.tujuan || b.purpose}
+                  </div>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                  <span class="badge ${b.status === 'APPROVED' ? 'badge-approved' : (b.status === 'IN_USE' ? 'badge-in-use' : 'badge-pending')}">
+                    ${b.status === 'APPROVED' ? 'Disetujui' : (b.status === 'IN_USE' ? 'Sedang Dipakai' : 'Menunggu Persetujuan')}
+                  </span>
+                  ${isAdmin && b.status === 'PENDING' ? `
+                    <button class="btn btn-primary btn-sm" onclick="AdminView.approveBooking('${b.bookingId}')">Setujui</button>
+                  ` : ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        ` : `
+          <div style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.85rem;">
+            Belum ada antrean pengajuan peminjaman saat ini.
+          </div>
+        `}
       </div>
     `;
   }

@@ -179,14 +179,16 @@
             </div>
           </div>
 
-          <!-- Quick Logout Button in Header -->
-          <button id="headerLogoutBtn" class="header-btn logout-header-btn" onclick="Auth.logout()" title="Keluar / Logout Akun" aria-label="Keluar">
+          <!-- Quick Logout Button in Header (Admin Only) -->
+          <button id="headerLogoutBtn" class="header-btn logout-header-btn" onclick="Auth.logout()" title="Keluar / Logout Akun" aria-label="Keluar" style="display:none;">
             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
             <span class="logout-header-text">Keluar</span>
           </button>
 
-          <button id="headerLoginBtn" class="btn btn-primary btn-sm" data-view="login" style="display:none;">
-            Masuk
+          <!-- Login Admin Button for Public View -->
+          <button id="headerLoginBtn" class="btn btn-gold btn-sm" onclick="UI.switchView('login')" style="font-weight:700; display:inline-flex; align-items:center; gap:6px; box-shadow:0 3px 8px rgba(217,119,6,0.25);">
+            <span>🛡️</span>
+            <span>Masuk Admin</span>
           </button>
         </div>
       </header>
@@ -228,8 +230,8 @@
             
             <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
               <button class="btn btn-sm btn-outline" onclick="VehiclesView.setFilter('ALL', 'ALL')">Semua</button>
-              <button class="btn btn-sm btn-outline" onclick="VehiclesView.setFilter('MOTOR', undefined)">Motor</button>
-              <button class="btn btn-sm btn-outline" onclick="VehiclesView.setFilter('MOBIL', undefined)">Mobil</button>
+              <button class="btn btn-sm btn-outline" onclick="VehiclesView.setFilter('MOTOR', undefined)">🏍️ Motor</button>
+              <button class="btn btn-sm btn-outline" onclick="VehiclesView.setFilter('MOBIL', undefined)">🚗 Mobil</button>
               <button class="btn btn-sm btn-outline" onclick="VehiclesView.setFilter(undefined, 'AVAILABLE')">🟢 Tersedia</button>
               <button class="btn btn-sm btn-outline" onclick="VehiclesView.setFilter(undefined, 'IN_USE')">🔴 Dipakai</button>
             </div>
@@ -246,21 +248,53 @@
              =============================================================== -->
         <section id="view-booking" class="view-section" style="display:none;">
           <div style="margin-bottom:1.5rem;">
-            <h2 style="font-size:1.25rem;">Formulir Peminjaman Kendaraan</h2>
+            <h2 style="font-size:1.25rem; font-weight:800; color:var(--text-primary);">Formulir Pengajuan Peminjaman Kendaraan</h2>
             <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
-              Ajukan permohonan peminjaman untuk operasional dakwah dan dinas pondok
+              Terbuka untuk guru, asatidzah, staf, dan santri PP. Imam Syafi'i Brebes. Tanpa perlu login.
             </p>
           </div>
 
           <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:1.5rem;">
             <!-- Form Input Booking -->
-            <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-lg); padding:1.5rem;">
+            <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-lg); padding:1.5rem; box-shadow:var(--shadow-md);">
               <form id="formBooking" onsubmit="BookingView.submitBookingForm(event)">
                 <div class="form-group">
                   <label class="form-label">Pilih Kendaraan *</label>
                   <select id="bookingVehicleSelect" class="form-control" required>
                     <!-- Populated by js/booking.js -->
                   </select>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                  <div class="form-group">
+                    <label class="form-label">Nama Peminjam *</label>
+                    <input type="text" id="bookingUserName" class="form-control" placeholder="Nama Lengkap" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Divisi / Bagian *</label>
+                    <input type="text" id="bookingDivisi" class="form-control" placeholder="Pendidikan / Asrama / TU..." required>
+                  </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                  <div class="form-group">
+                    <label class="form-label">Nomor WhatsApp *</label>
+                    <input type="tel" id="bookingNoHp" class="form-control" placeholder="081234567890" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Jumlah Penumpang *</label>
+                    <input type="number" id="bookingPassengers" class="form-control" value="1" min="1" max="15" required>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Tujuan Perjalanan *</label>
+                  <input type="text" id="bookingTujuan" class="form-control" placeholder="Contoh: Kemenag Brebes / Pasar Induk / Rumah Sakit" required>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Keperluan / Keterangan Dinas *</label>
+                  <textarea id="bookingPurpose" class="form-control" rows="2" placeholder="Contoh: Antar berkas santri / Belanja kebutuhan dapur" required></textarea>
                 </div>
 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
@@ -275,50 +309,32 @@
                 </div>
 
                 <div class="form-group">
-                  <label class="form-label">Perkiraan Waktu Kembali</label>
+                  <label class="form-label">Perkiraan Waktu Selesai / Kembali</label>
                   <input type="time" id="bookingEndTime" class="form-control" value="12:00">
                 </div>
 
                 <div class="form-group">
-                  <label class="form-label">Tujuan & Keperluan Perjalanan *</label>
-                  <textarea id="bookingPurpose" class="form-control" rows="2" placeholder="Contoh: Belanja logistik dapur santri ke Pasar Brebes" required></textarea>
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Kepentingan *</label>
-                  <select id="bookingKepentingan" class="form-control" required>
-                    <option value="">-- Pilih Kepentingan --</option>
-                    <option value="Pondok">Keperluan Pondok</option>
-                    <option value="Pribadi">Keperluan Pribadi</option>
-                  </select>
-                </div>
-
-                <div class="form-group">
                   <label class="form-label">Catatan Tambahan (Opsional)</label>
-                  <input type="text" id="bookingNotes" class="form-control" placeholder="Contoh: Membawa muatan berkas ujian">
+                  <input type="text" id="bookingNotes" class="form-control" placeholder="Contoh: Membawa barang muatan / perlu helm">
                 </div>
 
-                <button type="submit" id="btnSubmitBooking" class="btn btn-primary btn-block" style="margin-top:0.75rem;">
-                  Ajukan Peminjaman
+                <div style="background:var(--primary-50); border:1px solid var(--primary-100); border-radius:8px; padding:10px 12px; font-size:0.78rem; color:var(--primary-700); margin-bottom:1rem; line-height:1.5;">
+                  ℹ️ Setelah permohonan dikirim, status akan menjadi <strong>Menunggu Persetujuan Admin</strong>. Setelah disetujui, Anda dapat mengambil kunci dan melakukan <strong>Check-In</strong> sebelum berangkat.
+                </div>
+
+                <button type="submit" id="btnSubmitBooking" class="btn btn-primary btn-block" style="font-weight:700;">
+                  ▶ Kirim Pengajuan Peminjaman
                 </button>
               </form>
-
-              <!-- RIWAYAT PENGAJUAN -->
-              <div style="margin-top:2rem;">
-                <h3 style="font-size:1.1rem; margin-bottom:1rem;">Riwayat Pengajuan Saya</h3>
-                <div id="bookingHistoryContainer" style="display:flex; flex-direction:column; gap:0.75rem;">
-                  <!-- Populated by js/booking.js -->
-                </div>
-              </div>
             </div>
 
             <!-- Jadwal Booking & Kalender -->
-            <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-lg); padding:1.5rem;">
-              <h3 style="font-size:1.05rem; margin-bottom:0.75rem; display:flex; align-items:center; gap:6px;">
+            <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-lg); padding:1.5rem; box-shadow:var(--shadow-md);">
+              <h3 style="font-size:1.05rem; font-weight:800; margin-bottom:0.75rem; display:flex; align-items:center; gap:6px;">
                 <span>📅</span> Jadwal Reservasi Terdaftar
               </h3>
               <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">
-                Pastikan jadwal peminjaman tidak bentrok dengan rekan kerja lainnya.
+                Pastikan jadwal peminjaman tidak bentrok dengan permohonan lainnya.
               </p>
               <div id="activeBookingsList">
                 <!-- Populated by js/booking.js -->
@@ -670,143 +686,305 @@
   </div>
 
   <!-- =========================================================================
-       MODAL 1: START TRIP & CHECKLIST SEBELUM BERANGKAT
+       MODAL 1: CHECK-IN KENDARAAN (SERAH TERIMA KONDISI AWAL & MULAI ARGO)
        ========================================================================= -->
-  <div id="modalStartTrip" class="modal-backdrop">
-    <div class="modal-card">
+  <div id="modalCheckIn" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 640px;">
       <div class="modal-header">
         <div>
-          <div class="modal-title">▶ Mulai Pemakaian Kendaraan</div>
-          <div id="startTripVehicleName" style="font-size:0.85rem; color:var(--primary-700); font-weight:700; margin-top:2px;">
+          <div class="modal-title">🔑 Check-In &amp; Serah Terima Kendaraan</div>
+          <div id="checkInVehicleTitle" style="font-size:0.85rem; color:var(--primary-700); font-weight:700; margin-top:2px;">
             Honda Vario 160 CBS (G 2841 QX)
           </div>
         </div>
-        <button class="modal-close-btn" data-close-modal="modalStartTrip">✕</button>
+        <button class="modal-close-btn" data-close-modal="modalCheckIn">✕</button>
       </div>
 
       <div class="modal-body">
+        <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:1rem; line-height:1.5;">
+          Catat kondisi awal kendaraan sebelum digunakan sebagai bukti serah terima armada pesantren.
+        </p>
+
+        <!-- Identitas Peminjam -->
+        <div style="background:var(--surface-secondary); padding:0.85rem; border-radius:10px; margin-bottom:1rem;">
+          <div style="font-size:0.8rem; font-weight:800; color:var(--primary-700); margin-bottom:0.5rem;">
+            👤 DATA PEMINJAM
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
+            <div>
+              <label class="form-label" style="font-size:0.75rem;">Nama Peminjam *</label>
+              <input type="text" id="checkInUserNameInput" class="form-control" placeholder="Nama Lengkap" required>
+            </div>
+            <div>
+              <label class="form-label" style="font-size:0.75rem;">Divisi / Bagian *</label>
+              <input type="text" id="checkInDivisiInput" class="form-control" placeholder="Pendidikan / Asrama" required>
+            </div>
+            <div>
+              <label class="form-label" style="font-size:0.75rem;">Tujuan Perjalanan *</label>
+              <input type="text" id="checkInTujuanInput" class="form-control" placeholder="Tujuan" required>
+            </div>
+            <div>
+              <label class="form-label" style="font-size:0.75rem;">No. WhatsApp *</label>
+              <input type="tel" id="checkInNoHpInput" class="form-control" placeholder="081234567890" required>
+            </div>
+            <div style="grid-column:1 / -1;">
+              <label class="form-label" style="font-size:0.75rem;">Keperluan *</label>
+              <input type="text" id="checkInPurposeInput" class="form-control" placeholder="Keperluan" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1. Odometer KM Awal -->
         <div class="form-group">
-          <label class="form-label">Masukkan Odometer Kilometer Awal *</label>
+          <label class="form-label">Odometer Kilometer Awal (Speedometer) *</label>
           <div style="display:flex; align-items:center; gap:0.5rem;">
-            <input type="number" id="startTripKmInput" class="form-control" style="font-size:1.15rem; font-weight:800; color:var(--primary-700);" required>
+            <input type="number" id="checkInKmInput" class="form-control" style="font-size:1.15rem; font-weight:800; color:var(--primary-700);" required>
             <span style="font-weight:700; color:var(--text-muted);">KM</span>
           </div>
-          <span id="startTripLastKmBadge" style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">
-            Odometer Tercatat: 12.450 KM
+          <span id="checkInLastKmBadge" style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">
+            Odometer Terakhir: 12.450 KM
           </span>
         </div>
 
+        <!-- 2. Indikator Bahan Bakar Awal -->
         <div class="form-group">
-          <label class="form-label">Tujuan / Keperluan Perjalanan *</label>
-          <input type="text" id="startTripPurposeInput" class="form-control" placeholder="Contoh: Dinas pengantaran logistik pondok" value="Operasional Dinas Pondok" required>
+          <label class="form-label">Indikator Bahan Bakar (BBM) Awal *</label>
+          <div class="fuel-selector-group">
+            <button type="button" class="fuel-btn fuel-btn-checkin" data-level="E (Habis)" onclick="BookingView.setFuelCheckIn('E (Habis)')">E (Habis)</button>
+            <button type="button" class="fuel-btn fuel-btn-checkin" data-level="25%" onclick="BookingView.setFuelCheckIn('25%')">1/4 (25%)</button>
+            <button type="button" class="fuel-btn fuel-btn-checkin" data-level="50%" onclick="BookingView.setFuelCheckIn('50%')">1/2 (50%)</button>
+            <button type="button" class="fuel-btn fuel-btn-checkin active" data-level="75%" onclick="BookingView.setFuelCheckIn('75%')">3/4 (75%)</button>
+            <button type="button" class="fuel-btn fuel-btn-checkin" data-level="Full (100%)" onclick="BookingView.setFuelCheckIn('Full (100%)')">Full</button>
+          </div>
         </div>
 
-        <!-- CHECKLIST SEBELUM BERANGKAT -->
-        <div class="checklist-card">
-          <div style="font-size:0.88rem; font-weight:800; color:var(--primary-700); margin-bottom:0.5rem; display:flex; align-items:center; gap:6px;">
-            <span>🛡️</span> CHECKLIST SEBELUM BERANGKAT
+        <!-- 3. Tingkat Kebersihan Awal -->
+        <div class="form-group">
+          <label class="form-label">Tingkat Kebersihan Kendaraan Awal *</label>
+          <div class="cleanliness-group">
+            <button type="button" class="clean-btn clean-btn-checkin" data-clean="Sangat Bersih" onclick="BookingView.setCleanCheckIn('Sangat Bersih')">✨ Sangat Bersih</button>
+            <button type="button" class="clean-btn clean-btn-checkin active" data-clean="Bersih" onclick="BookingView.setCleanCheckIn('Bersih')">🟢 Bersih</button>
+            <button type="button" class="clean-btn clean-btn-checkin" data-clean="Cukup" onclick="BookingView.setCleanCheckIn('Cukup')">🟡 Cukup</button>
+            <button type="button" class="clean-btn clean-btn-checkin" data-clean="Kurang Bersih" onclick="BookingView.setCleanCheckIn('Kurang Bersih')">🔴 Perlu Dicuci</button>
           </div>
-          <label class="checklist-item">
-            <input type="checkbox" id="checkBan" class="departure-check">
-            <span class="checklist-label">Tekanan & kondisi ban aman</span>
-          </label>
-          <label class="checklist-item">
-            <input type="checkbox" id="checkRem" class="departure-check">
-            <span class="checklist-label">Sistem rem berfungsi optimal</span>
-          </label>
-          <label class="checklist-item">
-            <input type="checkbox" id="checkLampu" class="departure-check">
-            <span class="checklist-label">Lampu utama, rem & sein menyala</span>
-          </label>
-          <label class="checklist-item">
-            <input type="checkbox" id="checkSpion" class="departure-check">
-            <span class="checklist-label">Kaca spion lengkap dan teratur</span>
-          </label>
-          <label class="checklist-item">
-            <input type="checkbox" id="checkBbm" class="departure-check">
-            <span class="checklist-label">Bahan bakar (BBM) mencukupi</span>
-          </label>
+        </div>
 
-          <div style="margin-top:0.75rem; padding-top:0.5rem; border-top:1px solid var(--surface-border);">
-            <label class="checklist-item" style="align-items:flex-start;">
-              <input type="checkbox" id="departureConsentCheck" required>
-              <span class="checklist-label" style="font-weight:700; font-size:0.8rem; color:var(--primary-800);">
-                "Saya memastikan kendaraan dalam kondisi layak digunakan dan berikhtiar menjaga amanah armada pondok."
-              </span>
-            </label>
+        <!-- 4. Kondisi Eksterior & Interior -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+          <div class="form-group">
+            <label class="form-label">Kondisi Fisik / Bodi *</label>
+            <select id="checkInExteriorSelect" class="form-control">
+              <option value="Bagus / Mulus">Bagus / Mulus</option>
+              <option value="Baret Halus Wajar">Baret Halus Wajar</option>
+              <option value="Ada Lecet / Goresan">Ada Lecet / Goresan</option>
+              <option value="Penyok / Kendala Fisik">Penyok / Kendala Fisik</option>
+            </select>
           </div>
+          <div class="form-group">
+            <label class="form-label">Catatan Kerusakan Awal (Jika Ada)</label>
+            <input type="text" id="checkInDamageNotesInput" class="form-control" placeholder="Contoh: Baret di spakbor depan">
+          </div>
+        </div>
+
+        <!-- 5. Dokumentasi Foto Kendaraan Multi-Sisi -->
+        <div class="form-group">
+          <label class="form-label">📸 Dokumentasi Foto Kendaraan (Opsional / Dianjurkan)</label>
+          <div class="photo-upload-grid">
+            <div class="photo-slot" id="photoSlotCheckIn_front"></div>
+            <div class="photo-slot" id="photoSlotCheckIn_side"></div>
+            <div class="photo-slot" id="photoSlotCheckIn_back"></div>
+            <div class="photo-slot" id="photoSlotCheckIn_odometer"></div>
+          </div>
+        </div>
+
+        <!-- Checklist Persetujuan -->
+        <div style="margin-top:1rem; padding:0.75rem; background:rgba(13,92,58,0.06); border:1px solid rgba(13,92,58,0.2); border-radius:8px;">
+          <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:0.8rem; color:var(--primary-800); font-weight:700;">
+            <input type="checkbox" id="checkInConsentCheck" required style="margin-top:2px; accent-color:var(--primary-700);">
+            <span>"Saya telah menerima kunci, memeriksa kondisi fisik kendaraan, dan siap menjaga amanah armada pesantren dengan tertib dan hati-hati."</span>
+          </label>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-outline" data-close-modal="modalStartTrip">Batal</button>
-        <button id="btnSubmitStartTrip" class="btn btn-primary" onclick="BookingView.submitStartTrip()">
-          ▶ Bismillah, Mulai Pemakaian
+        <button class="btn btn-outline" data-close-modal="modalCheckIn">Batal</button>
+        <button id="btnSubmitCheckIn" class="btn btn-primary" onclick="BookingView.submitCheckIn()" style="font-weight:700;">
+          ▶ Bismillah, Mulai Menggunakan Kendaraan
         </button>
       </div>
     </div>
   </div>
 
   <!-- =========================================================================
-       MODAL 2: FINISH TRIP & RETURN CHECKLIST
+       MODAL 2: CHECK-OUT KENDARAAN (PENGEMBALIAN & KALKULASI BIAYA / BBM)
        ========================================================================= -->
-  <div id="modalFinishTrip" class="modal-backdrop">
-    <div class="modal-card">
+  <div id="modalCheckOut" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 640px;">
       <div class="modal-header">
         <div>
-          <div class="modal-title">⏹ Selesai Pemakaian Kendaraan</div>
-          <div id="finishTripVehicleName" style="font-size:0.85rem; color:var(--primary-700); font-weight:700; margin-top:2px;">
-            Honda Vario (G 2841 QX)
+          <div class="modal-title">⏹ Check-Out &amp; Pengembalian Kendaraan</div>
+          <div id="checkOutVehicleTitle" style="font-size:0.85rem; color:var(--primary-700); font-weight:700; margin-top:2px;">
+            Honda Vario 160 CBS (G 2841 QX)
           </div>
         </div>
-        <button class="modal-close-btn" data-close-modal="modalFinishTrip">✕</button>
+        <button class="modal-close-btn" data-close-modal="modalCheckOut">✕</button>
       </div>
 
       <div class="modal-body">
+        <!-- 1. Odometer Akhir -->
         <div class="form-group">
           <label class="form-label">Masukkan Odometer Kilometer Akhir *</label>
           <div style="display:flex; align-items:center; gap:0.5rem;">
-            <input type="number" id="finishTripEndKmInput" class="form-control" style="font-size:1.15rem; font-weight:800; color:var(--primary-700);" required>
+            <input type="number" id="checkOutEndKmInput" class="form-control" style="font-size:1.15rem; font-weight:800; color:var(--primary-700);" oninput="TripsView.calculateDistanceAndCost()" required>
             <span style="font-weight:700; color:var(--text-muted);">KM</span>
           </div>
-          <span id="finishTripStartKmBadge" style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">
+          <span id="checkOutStartKmBadge" style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">
             KM Awal: 12.450 KM
           </span>
         </div>
 
-        <!-- RETURN CHECKLIST -->
-        <div class="checklist-card">
-          <div style="font-size:0.88rem; font-weight:800; color:var(--primary-700); margin-bottom:0.5rem;">
-            📋 CHECKLIST PENGEMBALIAN ARMADA
+        <!-- 2. Kalkulasi Jarak Otomatis -->
+        <div style="background:var(--surface-secondary); padding:0.85rem 1rem; border-radius:10px; display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+          <div>
+            <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Total Jarak Tempuh</div>
+            <div id="checkOutCalcDistance" style="font-size:1.25rem; font-weight:800; color:var(--primary-700);">0 KM</div>
           </div>
-          <label class="checklist-item">
-            <input type="checkbox" id="returnCheckClean" checked>
-            <span class="checklist-label">Kendaraan dalam kondisi bersih</span>
-          </label>
-          <label class="checklist-item">
-            <input type="checkbox" id="returnCheckFuel" checked>
-            <span class="checklist-label">Bahan bakar cukup untuk pemakai berikutnya</span>
-          </label>
-          <label class="checklist-item">
-            <input type="checkbox" id="returnCheckNoDamage" checked onchange="TripsView.toggleDamageNote(!this.checked)">
-            <span class="checklist-label">Tidak ada kerusakan</span>
-          </label>
-          <label class="checklist-item">
-            <input type="checkbox" id="returnCheckDamage" onchange="TripsView.toggleDamageNote(this.checked); document.getElementById('returnCheckNoDamage').checked = !this.checked;">
-            <span class="checklist-label" style="color:#EF4444; font-weight:700;">Terdapat kendala / kerusakan selama perjalanan</span>
-          </label>
+          <div style="text-align:right;">
+            <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Estimasi Biaya</div>
+            <div id="checkOutCalcCost" style="font-size:1.25rem; font-weight:800; color:var(--text-primary);">Rp0</div>
+            <span id="checkOutWaivedBadge" class="badge badge-available" style="display:none; font-size:0.7rem;">BEBAS BIAYA (ISI BBM)</span>
+          </div>
+        </div>
 
-          <div id="damageNotesArea" style="display:none; margin-top:0.75rem;">
-            <label class="form-label" style="font-size:0.8rem; color:#991B1B;">Jelaskan kondisi/kerusakan kendaraan:</label>
-            <textarea id="returnDamageNotesInput" class="form-control" rows="2" placeholder="Contoh: Lampu sein kiri mati atau ban belakang tertusuk paku"></textarea>
+        <!-- 3. Kondisi Bahan Bakar & Kebersihan Saat Kembali -->
+        <div class="form-group">
+          <label class="form-label">Kondisi Bahan Bakar (BBM) Saat Kembali *</label>
+          <div class="fuel-selector-group">
+            <button type="button" class="fuel-btn fuel-btn-checkout" data-level="E (Habis)" onclick="TripsView.setFuelCheckOut('E (Habis)')">E (Habis)</button>
+            <button type="button" class="fuel-btn fuel-btn-checkout" data-level="25%" onclick="TripsView.setFuelCheckOut('25%')">1/4 (25%)</button>
+            <button type="button" class="fuel-btn fuel-btn-checkout" data-level="50%" onclick="TripsView.setFuelCheckOut('50%')">1/2 (50%)</button>
+            <button type="button" class="fuel-btn fuel-btn-checkout active" data-level="75%" onclick="TripsView.setFuelCheckOut('75%')">3/4 (75%)</button>
+            <button type="button" class="fuel-btn fuel-btn-checkout" data-level="Full (100%)" onclick="TripsView.setFuelCheckOut('Full (100%)')">Full</button>
           </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tingkat Kebersihan Saat Pengembalian *</label>
+          <div class="cleanliness-group">
+            <button type="button" class="clean-btn clean-btn-checkout" data-clean="Sangat Bersih" onclick="TripsView.setCleanCheckOut('Sangat Bersih')">✨ Sangat Bersih</button>
+            <button type="button" class="clean-btn clean-btn-checkout active" data-clean="Bersih" onclick="TripsView.setCleanCheckOut('Bersih')">🟢 Bersih</button>
+            <button type="button" class="clean-btn clean-btn-checkout" data-clean="Cukup" onclick="TripsView.setCleanCheckOut('Cukup')">🟡 Cukup</button>
+            <button type="button" class="clean-btn clean-btn-checkout" data-clean="Kotor" onclick="TripsView.setCleanCheckOut('Kotor')">🔴 Perlu Dicuci</button>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+          <div class="form-group">
+            <label class="form-label">Kondisi Fisik / Eksterior *</label>
+            <select id="checkOutExteriorSelect" class="form-control">
+              <option value="Baik / Tidak Ada Kerusakan">Baik / Tidak Ada Kerusakan</option>
+              <option value="Ada Baret Halus Baru">Ada Baret Halus Baru</option>
+              <option value="Ada Kerusakan / Kendala">Ada Kerusakan / Kendala</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Catatan Kerusakan / Kendala (Jika Ada)</label>
+            <input type="text" id="checkOutDamageNotesInput" class="form-control" placeholder="Contoh: Ban kempes atau lampu mati">
+          </div>
+        </div>
+
+        <!-- 4. Dokumentasi Foto Pengembalian -->
+        <div class="form-group">
+          <label class="form-label">📸 Dokumentasi Foto Pengembalian (Opsional / Dianjurkan)</label>
+          <div class="photo-upload-grid">
+            <div class="photo-slot" id="photoSlotCheckOut_front"></div>
+            <div class="photo-slot" id="photoSlotCheckOut_side"></div>
+            <div class="photo-slot" id="photoSlotCheckOut_odometer"></div>
+          </div>
+        </div>
+
+        <!-- 5. LAPORAN PENGISIAN BAHAN BAKAR (BBM) & PEMBEBASAN BIAYA -->
+        <div class="payment-choice-box">
+          <label class="form-label" style="font-weight:800; font-size:0.9rem; color:var(--primary-800); margin-bottom:0.4rem; display:block;">
+            ⛽ Apakah Anda mengisi bahan bakar selama penggunaan? *
+          </label>
+          <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem;">
+            <button type="button" id="btnBbmYes" class="btn btn-sm btn-outline" style="flex:1;" onclick="TripsView.setBbmToggle(true)">
+              ✓ Ya, Saya Isi Bensin Sendiri
+            </button>
+            <button type="button" id="btnBbmNo" class="btn btn-sm btn-primary active" style="flex:1;" onclick="TripsView.setBbmToggle(false)">
+              ✕ Tidak Mengisi Bensin
+            </button>
+          </div>
+
+          <!-- Opsi A: Jika Ya (Isi Bensin) -->
+          <div id="boxBbmUploadStruk" style="display:none; background:#ECFDF5; border:1px solid #A7F3D0; border-radius:10px; padding:0.85rem;">
+            <div style="font-weight:700; color:#065F46; font-size:0.82rem; margin-bottom:4px;">
+              🎁 Biaya Peminjaman DIBEBASKAN (Rp 0 / Gratis Operasional)!
+            </div>
+            <p style="font-size:0.75rem; color:#047857; margin-bottom:0.6rem;">
+              Sesuai ketentuan pesantren, peminjam yang mengisi bahan bakar dibebaskan dari biaya peminjaman. Harap unggah foto bukti nota/struk pengisian BBM.
+            </p>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
+              <div>
+                <label class="form-label" style="font-size:0.75rem; color:#065F46;">Total Nominal BBM (Rp)</label>
+                <input type="number" id="checkOutBbmCostInput" class="form-control" placeholder="Contoh: 35000">
+              </div>
+              <div>
+                <label class="form-label" style="font-size:0.75rem; color:#065F46;">Unggah Foto Struk BBM</label>
+                <input type="file" id="checkOutBbmReceiptInput" accept="image/*" class="form-control" onchange="TripsView.handleBbmReceiptUpload(this)">
+              </div>
+            </div>
+            <img id="bbmReceiptPreview" style="display:none; max-height:100px; border-radius:6px; margin-top:0.5rem;" alt="Preview Struk">
+          </div>
+
+          <!-- Opsi B: Jika Tidak (Bayar Tunai / Transfer) -->
+          <div id="boxNonBbmPayment" style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:10px; padding:0.85rem;">
+            <div style="font-weight:700; color:#92400E; font-size:0.82rem; margin-bottom:4px;">
+              💳 Pembayaran Biaya Operasional Kendaraan
+            </div>
+            <p style="font-size:0.75rem; color:#78350F; margin-bottom:0.6rem;">
+              Biaya dihitung berdasarkan jarak tempuh × tarif per KM. Silakan pilih metode pembayaran:
+            </p>
+            <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem;">
+              <button type="button" id="btnPayTunai" class="btn btn-sm btn-primary active" style="flex:1;" onclick="TripsView.setPaymentMethod('TUNAI')">
+                💵 Tunai (ke Admin Sarpras)
+              </button>
+              <button type="button" id="btnPayTransfer" class="btn btn-sm btn-outline" style="flex:1;" onclick="TripsView.setPaymentMethod('TRANSFER')">
+                🏦 Transfer Bank Syariah (BSI)
+              </button>
+            </div>
+
+            <!-- Rekening Pondok jika Transfer -->
+            <div id="boxTransferInfo" style="display:none;">
+              <div class="bank-info-card">
+                <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px; opacity:0.9;">Rekening Operasional Pesantren</div>
+                <div style="font-size:0.95rem; font-weight:800; margin-top:2px;">Bank Syariah Indonesia (BSI)</div>
+                <div class="bank-number-row">
+                  <span id="bankAccNoDisplay">5221717173</span>
+                  <button type="button" class="btn-copy-acc" onclick="TripsView.copyBankAccount()">Salin</button>
+                </div>
+                <div style="font-size:0.75rem; margin-top:4px; opacity:0.85;" id="bankAccNameDisplay">a.n. Pondok Pesantren Imam Syafi'i Brebes</div>
+              </div>
+
+              <div style="margin-top:0.6rem;">
+                <label class="form-label" style="font-size:0.75rem; color:#92400E;">Unggah Bukti Transfer (Screenshot)</label>
+                <input type="file" id="checkOutTransferProofInput" accept="image/*" class="form-control" onchange="TripsView.handleTransferProofUpload(this)">
+                <img id="transferProofPreview" style="display:none; max-height:100px; border-radius:6px; margin-top:0.5rem;" alt="Preview Transfer">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:1rem; font-size:0.78rem; color:var(--text-muted); line-height:1.4;">
+          ℹ️ Setelah Check-Out, serahkan kunci fisik kendaraan kepada Admin Sarpras. Admin akan melakukan verifikasi fisik akhir agar armada siap digunakan kembali.
         </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-outline" data-close-modal="modalFinishTrip">Batal</button>
-        <button id="btnSubmitFinishTrip" class="btn btn-danger" onclick="TripsView.submitFinishTrip()">
-          ⏹ Selesaikan Pemakaian
+        <button class="btn btn-outline" data-close-modal="modalCheckOut">Batal</button>
+        <button id="btnSubmitCheckOut" class="btn btn-danger" onclick="TripsView.submitCheckOut()" style="font-weight:700;">
+          ⏹ Selesaikan Check-Out &amp; Kembalikan Kunci
         </button>
       </div>
     </div>
@@ -825,7 +1003,7 @@
       <div class="modal-body">
         <div class="receipt-container">
           <div class="receipt-header">
-            <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:1px;">BUKTI PEMAKAIAN KENDARAAN DINAS</div>
+            <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:1px;">BUKTI PEMAKAIAN KENDARAAN OPERASIONAL</div>
             <div class="receipt-title">PP. IMAM SYAFI'I BREBES</div>
             <div id="receiptVehicleName" style="font-weight:700; font-size:0.95rem; margin-top:4px;">
               Honda Vario 160 CBS (G 2841 QX)
@@ -837,8 +1015,8 @@
             <span id="receiptPurpose" class="receipt-value">-</span>
           </div>
           <div class="receipt-row">
-            <span class="receipt-label">Durasi Perjalanan:</span>
-            <span id="receiptDuration" class="receipt-value">2 jam 15 menit</span>
+            <span class="receipt-label">Durasi Pemakaian:</span>
+            <span id="receiptDuration" class="receipt-value">35 menit</span>
           </div>
           <div class="receipt-row">
             <span class="receipt-label">Kilometer Awal:</span>
@@ -852,27 +1030,43 @@
             <span class="receipt-label">Total Jarak Tempuh:</span>
             <span id="receiptDistance" class="receipt-value" style="color:var(--primary-700); font-weight:800;">28 KM</span>
           </div>
-          <div class="receipt-row">
-            <span class="receipt-label">Tarif Berlaku:</span>
-            <span id="receiptRate" class="receipt-value">Rp1.000 / KM</span>
-          </div>
 
           <div class="receipt-total-row">
             <div>
-              <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">TOTAL BIAYA:</div>
-              <div id="receiptTotalCost" class="receipt-total-amount">Rp28.000</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">STATUS PEMBAYARAN:</div>
+              <div id="receiptTotalCost" class="receipt-total-amount">Rp0</div>
             </div>
-            <span class="badge badge-available" style="font-size:0.8rem; padding:4px 10px;">LUNAS / TERCATAT</span>
+            <span id="receiptPaymentStatus" class="badge badge-available" style="font-size:0.8rem; padding:4px 10px;">LUNAS / TERCATAT</span>
           </div>
         </div>
       </div>
 
       <div class="modal-footer" style="justify-content:space-between;">
         <button class="btn btn-outline btn-sm" data-close-modal="modalReceiptSummary">
-          Simpan & Tutup
+          Simpan &amp; Tutup
         </button>
-        <button class="btn btn-gold btn-sm" onclick="TripsView.shareReceiptToWhatsApp()">
+        <button class="btn btn-gold btn-sm" onclick="TripsView.shareReceiptToWhatsApp()" style="font-weight:700;">
           📲 Bagikan ke WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: KONFIRMASI PENGAJUAN SUKSES
+       ========================================================================= -->
+  <div id="modalBookingSuccess" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 460px;">
+      <div class="modal-header">
+        <div class="modal-title">Permohonan Terkirim</div>
+        <button class="modal-close-btn" data-close-modal="modalBookingSuccess">✕</button>
+      </div>
+      <div class="modal-body" id="modalBookingSuccessContent">
+        <!-- Injected dynamically by js/booking.js -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary btn-block btn-sm" data-close-modal="modalBookingSuccess">
+          Tutup &amp; Pantau Status
         </button>
       </div>
     </div>

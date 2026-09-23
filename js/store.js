@@ -1,9 +1,9 @@
 /**
  * MAISYA-TRANS - Local Store & Mock Database
  * Pondok Pesantren Imam Syafi'i Brebes
+ * "Mobilitas Aman, Tertib, dan Terdata"
  * 
- * Bertindak sebagai cache lokal dan fallback mockup demo
- * agar aplikasi dapat langsung dijalankan dan diuji 100% secara interaktif!
+ * Mendukung penyimpanan persisten lokal dan sinkronisasi real-time
  */
 
 const Store = {
@@ -26,8 +26,11 @@ const Store = {
     if (raw) {
       try {
         this.data = JSON.parse(raw);
-        // Pastikan relasi minimal tersedia
-        if (this.data.vehicles && this.data.vehicles.length > 0) return;
+        if (this.data.vehicles && this.data.vehicles.length > 0) {
+          // Pastikan properti baru terisi jika ada update schema
+          this.ensureSchemaIntegrity();
+          return;
+        }
       } catch (e) {
         console.warn('Gagal memuat local DB, menginisialisasi ulang seed data.');
       }
@@ -36,40 +39,64 @@ const Store = {
   },
 
   /**
+   * Memastikan integritas data local DB
+   */
+  ensureSchemaIntegrity() {
+    if (!this.data.bookings) this.data.bookings = [];
+    if (!this.data.trips) this.data.trips = [];
+    if (!this.data.notifications) this.data.notifications = [];
+    if (!this.data.settings) this.data.settings = {};
+    if (!this.data.settings.BANK_ACCOUNT_NO || this.data.settings.BANK_ACCOUNT_NO === '7192830192') {
+      this.data.settings.BANK_NAME = 'Bank Syariah Indonesia (BSI)';
+      this.data.settings.BANK_ACCOUNT_NO = '5221717173';
+      this.data.settings.BANK_ACCOUNT_NAME = "Pondok Pesantren Imam Syafi'i Brebes";
+    }
+    this.save();
+  },
+
+  /**
    * Simpan perubahan ke LocalStorage
    */
   save() {
-    localStorage.setItem(APP_CONFIG.STORAGE_KEYS.LOCAL_DB, JSON.stringify(this.data));
+    try {
+      localStorage.setItem(APP_CONFIG.STORAGE_KEYS.LOCAL_DB, JSON.stringify(this.data));
+    } catch (e) {
+      console.warn('Gagal menyimpan ke localStorage:', e);
+    }
   },
 
   /**
    * Seed data awal pondok
    */
   seedDefaultData() {
-    const now = new Date().toISOString();
-    const dateToday = now.substring(0, 10);
+    const now = new Date();
+    const nowIso = now.toISOString();
+    const dateToday = nowIso.substring(0, 10);
     
-    // 1. Users
+    // Waktu mulai 35 menit yang lalu untuk simulasi argo aktif real-time
+    const activeStartTime = new Date(now.getTime() - 35 * 60 * 1000).toISOString();
+
+    // 1. Users (Admin & Sample Users)
     this.data.users = [
       {
         userId: 'USR-ADMIN-01',
-        nama: 'Ustadz Admin Maisya',
+        nama: 'Ustadz Admin Sarpras',
         nip: '19850101001',
-        jabatan: 'Kepala Sarpras',
+        jabatan: 'Kepala Sarpras & Operasional',
         divisi: 'Sarana & Prasarana',
         no_hp: '081234567890',
         email: 'admin@imamsyafii.ponpes.id',
         password_hash: 'admin123',
         role: 'ADMIN',
         status: 'ACTIVE',
-        createdAt: now,
-        approvedAt: now,
+        createdAt: nowIso,
+        approvedAt: nowIso,
         approvedBy: 'SYSTEM',
-        lastLogin: now
+        lastLogin: nowIso
       },
       {
         userId: 'USR-GURU-01',
-        nama: 'Ustadz Ahmad Fauzi',
+        nama: 'Ustadz Ahmad Fauzi, S.Pd.I.',
         nip: '19900215002',
         jabatan: 'Guru Pengajar',
         divisi: 'Pendidikan & Asrama',
@@ -78,42 +105,26 @@ const Store = {
         password_hash: 'user123',
         role: 'USER',
         status: 'ACTIVE',
-        createdAt: now,
-        approvedAt: now,
+        createdAt: nowIso,
+        approvedAt: nowIso,
         approvedBy: 'USR-ADMIN-01',
-        lastLogin: now
+        lastLogin: nowIso
       },
       {
         userId: 'USR-STAF-02',
-        nama: 'Ustadz Muhammad Rizqi',
+        nama: 'Ustadz Muhammad Rizqi, S.Kom.',
         nip: '19930720003',
-        jabatan: 'Staf Administrasi',
-        divisi: 'Tata Usaha & Logistik',
+        jabatan: 'Staf Administrasi & Logistik',
+        divisi: 'Tata Usaha',
         no_hp: '085712345678',
         email: 'rizqi@imamsyafii.ponpes.id',
         password_hash: 'user123',
         role: 'USER',
         status: 'ACTIVE',
-        createdAt: now,
-        approvedAt: now,
+        createdAt: nowIso,
+        approvedAt: nowIso,
         approvedBy: 'USR-ADMIN-01',
-        lastLogin: now
-      },
-      {
-        userId: 'USR-PEND-03',
-        nama: 'Ustadz Abdullah Said',
-        nip: '19960810004',
-        jabatan: 'Pengasuhan Santri',
-        divisi: 'Kesantrian Putra',
-        no_hp: '081399887766',
-        email: 'abdullah@imamsyafii.ponpes.id',
-        password_hash: 'user123',
-        role: 'USER',
-        status: 'PENDING',
-        createdAt: now,
-        approvedAt: '',
-        approvedBy: '',
-        lastLogin: ''
+        lastLogin: nowIso
       }
     ];
 
@@ -134,9 +145,26 @@ const Store = {
         lastOilDate: '2026-08-15',
         oilIntervalKm: 2000,
         tuneupIntervalKm: 5000,
-        status: 'AVAILABLE',
+        status: 'IN_USE',
         notes: 'Motor operasional asrama putra. Kondisi mesin prima.',
-        createdAt: now
+        imageUrl: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=600&auto=format&fit=crop&q=80',
+        activeTrip: {
+          tripId: 'TRP-ACT-01',
+          bookingId: 'BKG-001',
+          userId: 'USR-GURU-01',
+          userName: 'Ustadz Ahmad Fauzi',
+          divisi: 'Pendidikan & Asrama',
+          noHp: '081298765432',
+          startTime: activeStartTime,
+          startKm: 12450,
+          purpose: 'Antar berkas ujian santri ke Kemenag Brebes',
+          tujuan: 'Kantor Kemenag Brebes',
+          passengerCount: 1,
+          fuelLevelStart: '75%',
+          cleanlinessStart: 'Bersih',
+          notes: 'Membawa dokumen penting pondok'
+        },
+        createdAt: nowIso
       },
       {
         vehicleId: 'VEH-MTR-02',
@@ -155,7 +183,8 @@ const Store = {
         tuneupIntervalKm: 5000,
         status: 'AVAILABLE',
         notes: 'Motor dinas luar kota / koordinasi daerah.',
-        createdAt: now
+        imageUrl: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=600&auto=format&fit=crop&q=80',
+        createdAt: nowIso
       },
       {
         vehicleId: 'VEH-MBL-01',
@@ -174,7 +203,8 @@ const Store = {
         tuneupIntervalKm: 10000,
         status: 'AVAILABLE',
         notes: 'Mobil dinas pondok kapasitas 7 penumpang.',
-        createdAt: now
+        imageUrl: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=600&auto=format&fit=crop&q=80',
+        createdAt: nowIso
       },
       {
         vehicleId: 'VEH-MBL-02',
@@ -193,7 +223,8 @@ const Store = {
         tuneupIntervalKm: 10000,
         status: 'MAINTENANCE',
         notes: 'Sedang servis rem dan perawatan rutin di bengkel rekanan.',
-        createdAt: now
+        imageUrl: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=600&auto=format&fit=crop&q=80',
+        createdAt: nowIso
       }
     ];
 
@@ -202,26 +233,74 @@ const Store = {
       {
         bookingId: 'BKG-001',
         userId: 'USR-GURU-01',
+        userName: 'Ustadz Ahmad Fauzi',
+        divisi: 'Pendidikan & Asrama',
+        noHp: '081298765432',
         vehicleId: 'VEH-MTR-01',
+        vehicleName: 'Honda Vario 160 CBS',
+        nomorPolisi: 'G 2841 QX',
+        jenis: 'MOTOR',
         tanggal: dateToday,
-        startTime: '13:00',
-        estimatedEndTime: '15:00',
+        startTime: '08:00',
+        estimatedEndTime: '11:30',
         purpose: 'Antar berkas ujian santri ke Kemenag Brebes',
-        notes: 'Bawa tas berkas',
-        status: 'APPROVED',
+        tujuan: 'Kemenag Brebes',
+        passengerCount: 1,
+        notes: 'Membawa berkas santri',
+        status: 'IN_USE',
         approvedBy: 'USR-ADMIN-01',
-        approvedAt: now,
-        createdAt: now
+        approvedAt: nowIso,
+        createdAt: nowIso
       }
     ];
 
-    // 4. Riwayat Perjalanan (Trips)
+    // 4. Trips (Active & History)
     this.data.trips = [
+      {
+        tripId: 'TRP-ACT-01',
+        bookingId: 'BKG-001',
+        userId: 'USR-GURU-01',
+        userName: 'Ustadz Ahmad Fauzi',
+        divisi: 'Pendidikan & Asrama',
+        noHp: '081298765432',
+        vehicleId: 'VEH-MTR-01',
+        vehicleName: 'Honda Vario 160 CBS',
+        nomorPolisi: 'G 2841 QX',
+        jenis: 'MOTOR',
+        startTime: activeStartTime,
+        endTime: '',
+        startKm: 12450,
+        endKm: 0,
+        distanceKm: 0,
+        ratePerKm: 1000,
+        totalCost: 0,
+        purpose: 'Antar berkas ujian santri ke Kemenag Brebes',
+        tujuan: 'Kantor Kemenag Brebes',
+        passengerCount: 1,
+        checkIn: {
+          startKm: 12450,
+          fuelLevel: '75%',
+          cleanliness: 'Bersih',
+          exteriorCondition: 'Bagus / Tidak ada lecet baru',
+          damageNotes: '',
+          photos: {
+            front: '',
+            side: '',
+            back: '',
+            odometer: ''
+          },
+          checkInTime: activeStartTime
+        },
+        status: 'ACTIVE',
+        createdAt: activeStartTime
+      },
       {
         tripId: 'TRP-HIST-01',
         bookingId: 'BKG-HIST-01',
         userId: 'USR-GURU-01',
         userName: 'Ustadz Ahmad Fauzi',
+        divisi: 'Pendidikan & Asrama',
+        noHp: '081298765432',
         vehicleId: 'VEH-MTR-01',
         vehicleName: 'Honda Vario 160 CBS',
         nomorPolisi: 'G 2841 QX',
@@ -232,10 +311,30 @@ const Store = {
         endKm: 12450,
         distanceKm: 28,
         ratePerKm: 1000,
-        totalCost: 28000,
+        totalCost: 0,
         purpose: 'Keperluan koordinasi dinas luar pondok',
+        tujuan: 'Dinas Pendidikan Brebes',
+        passengerCount: 1,
+        checkIn: {
+          startKm: 12422,
+          fuelLevel: '50%',
+          cleanliness: 'Bersih',
+          exteriorCondition: 'Baik'
+        },
+        checkOut: {
+          endKm: 12450,
+          fuelLevel: '75%',
+          cleanliness: 'Bersih',
+          isBbmFilled: true,
+          bbmCost: 35000,
+          bbmReceiptUrl: '',
+          paymentMethod: 'BBM_WAIVED',
+          isPaid: true
+        },
         damageNotes: '',
         status: 'FINISHED',
+        verifiedBy: 'USR-ADMIN-01',
+        verifiedAt: '2026-09-20T10:30:00.000Z',
         createdAt: '2026-09-20T10:15:00.000Z'
       },
       {
@@ -243,6 +342,8 @@ const Store = {
         bookingId: 'BKG-HIST-02',
         userId: 'USR-STAF-02',
         userName: 'Ustadz Muhammad Rizqi',
+        divisi: 'Tata Usaha & Logistik',
+        noHp: '085712345678',
         vehicleId: 'VEH-MBL-01',
         vehicleName: 'Toyota Grand New Avanza 1.3 G',
         nomorPolisi: 'G 1420 SY',
@@ -255,8 +356,27 @@ const Store = {
         ratePerKm: 1000,
         totalCost: 60000,
         purpose: 'Belanja logistik dapur santri di Pasar Induk Brebes',
+        tujuan: 'Pasar Induk Brebes',
+        passengerCount: 3,
+        checkIn: {
+          startKm: 35140,
+          fuelLevel: '50%',
+          cleanliness: 'Bersih',
+          exteriorCondition: 'Baik'
+        },
+        checkOut: {
+          endKm: 35200,
+          fuelLevel: '50%',
+          cleanliness: 'Bersih',
+          isBbmFilled: false,
+          paymentMethod: 'TRANSFER',
+          transferProofUrl: '',
+          isPaid: true
+        },
         damageNotes: '',
         status: 'FINISHED',
+        verifiedBy: 'USR-ADMIN-01',
+        verifiedAt: '2026-09-19T12:45:00.000Z',
         createdAt: '2026-09-19T12:30:00.000Z'
       }
     ];
@@ -284,21 +404,12 @@ const Store = {
     this.data.notifications = [
       {
         notificationId: 'NTF-001',
-        userId: 'ADMIN',
-        type: 'USER_BARU',
-        title: 'Registrasi Pengguna Menunggu Persetujuan',
-        message: 'Ustadz Abdullah Said telah mendaftar dan menunggu persetujuan akun.',
+        userId: 'ALL',
+        type: 'INFO',
+        title: 'Sistem Peminjaman Kendaraan Terbuka Aktif',
+        message: 'Pengguna dapat langsung mengajukan peminjaman kendaraan tanpa login. Kunci diambil setelah disetujui Admin Sarpras.',
         isRead: false,
-        createdAt: now
-      },
-      {
-        notificationId: 'NTF-002',
-        userId: 'ADMIN',
-        type: 'GANTI_OLI',
-        title: 'Pengingat Ganti Oli: Honda Vario (G 2841 QX)',
-        message: 'Tersisa 150 KM sebelum batas ganti oli berikutnya (Target 12.600 KM).',
-        isRead: false,
-        createdAt: now
+        createdAt: nowIso
       }
     ];
 
@@ -308,12 +419,15 @@ const Store = {
       TAGLINE: 'Mobilitas Aman, Tertib, dan Terdata',
       DEFAULT_TARIFF: '1000',
       APPROVAL_REQUIRED: 'true',
-      ALLOW_REGISTRATION: 'true'
+      ALLOW_REGISTRATION: 'true',
+      BANK_NAME: 'Bank Syariah Indonesia (BSI)',
+      BANK_ACCOUNT_NO: '5221717173',
+      BANK_ACCOUNT_NAME: "Pondok Pesantren Imam Syafi'i Brebes"
     };
 
     this.save();
   }
 };
 
-// Auto initialize Store
+// Inisialisasi Store
 Store.init();

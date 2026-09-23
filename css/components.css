@@ -1259,3 +1259,338 @@
   border-color: rgba(239, 68, 68, 0.3);
 }
 
+/* ==========================================================================
+   12. LIVE ARGO & REAL-TIME TIMER TICKER
+   ========================================================================== */
+.argo-ticker-box {
+  background: linear-gradient(135deg, #0F172A, #1E293B);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius-md);
+  padding: 1rem 1.25rem;
+  color: #F8FAFC;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+.argo-ticker-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #10B981, #F59E0B, #EF4444);
+}
+
+.argo-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.argo-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #FCA5A5;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.argo-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #EF4444;
+  box-shadow: 0 0 10px #EF4444;
+  animation: pulse-ring 1.5s infinite;
+}
+
+.argo-digital-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-family: 'Courier New', Courier, monospace, var(--font-main);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  margin-bottom: 0.75rem;
+}
+
+.argo-time-val {
+  font-size: 1.65rem;
+  font-weight: 900;
+  color: #34D399;
+  text-shadow: 0 0 12px rgba(52, 211, 153, 0.4);
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.argo-time-label {
+  font-size: 0.72rem;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.argo-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: #CBD5E1;
+}
+
+.argo-meta-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.argo-meta-item span {
+  display: block;
+  font-size: 0.68rem;
+  color: #94A3B8;
+  text-transform: uppercase;
+}
+
+.argo-meta-item strong {
+  color: #FFFFFF;
+  font-size: 0.85rem;
+}
+
+/* Status Badges */
+.badge-pending {
+  background: rgba(245, 158, 11, 0.12);
+  color: #D97706;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-approved {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563EB;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.badge-returned {
+  background: rgba(139, 92, 246, 0.12);
+  color: #7C3AED;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+/* ==========================================================================
+   13. FUEL, CLEANLINESS & PHOTO UPLOAD WIDGETS
+   ========================================================================== */
+/* Fuel Bar Visual Selector */
+.fuel-selector-group {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.fuel-btn {
+  background: var(--surface-secondary);
+  border: 1.5px solid var(--surface-border);
+  border-radius: 8px;
+  padding: 0.5rem 0.2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+.fuel-btn:hover {
+  background: var(--primary-50);
+  border-color: var(--primary-500);
+}
+
+.fuel-btn.active {
+  background: linear-gradient(135deg, var(--primary-700), var(--primary-600));
+  border-color: var(--primary-700);
+  color: #FFFFFF;
+  box-shadow: 0 3px 8px rgba(13, 92, 58, 0.25);
+}
+
+/* Cleanliness Selector */
+.cleanliness-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.clean-btn {
+  background: var(--surface-secondary);
+  border: 1.5px solid var(--surface-border);
+  border-radius: 8px;
+  padding: 0.5rem 0.4rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+.clean-btn:hover {
+  border-color: var(--primary-500);
+}
+
+.clean-btn.active {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #10B981;
+  color: #065F46;
+  font-weight: 700;
+}
+
+/* Photo Upload Multi-Side Grid */
+.photo-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.photo-slot {
+  background: var(--surface-secondary);
+  border: 2px dashed var(--surface-border);
+  border-radius: var(--border-radius-md);
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-slot:hover {
+  border-color: var(--primary-600);
+  background: var(--primary-50);
+}
+
+.photo-slot.has-image {
+  border-style: solid;
+  border-color: var(--primary-500);
+  padding: 0;
+  overflow: hidden;
+}
+
+.photo-slot img {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+  border-radius: calc(var(--border-radius-md) - 2px);
+}
+
+.photo-slot-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.photo-slot-btn-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(220, 38, 38, 0.9);
+  color: #FFFFFF;
+  border: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+}
+
+/* Payment Choice Cards */
+.payment-choice-box {
+  background: var(--surface-secondary);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--border-radius-md);
+  padding: 1rem;
+  margin-top: 0.75rem;
+}
+
+.bank-info-card {
+  background: linear-gradient(135deg, #005E54, #007A6C);
+  color: #FFFFFF;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 94, 84, 0.2);
+}
+
+.bank-number-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-top: 6px;
+  font-family: monospace;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.btn-copy-acc {
+  background: #FFFFFF;
+  color: #005E54;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Comparison side-by-side */
+.comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.comparison-col {
+  background: var(--surface-secondary);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--border-radius-md);
+  padding: 0.85rem;
+}
+
+.comparison-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--primary-700);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+

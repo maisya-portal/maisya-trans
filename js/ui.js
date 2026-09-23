@@ -34,21 +34,15 @@ const UI = {
    * Router Tampilan Halaman (SPA Switching dengan Riwayat Navigasi)
    */
   switchView(viewName, addToHistory = true) {
-    // 1. Jika pengguna SUDAH login dan mencoba mengakses login atau register, langsung arahkan ke dashboard!
-    // Ini memastikan saat aplikasi dibuka kembali, pengguna tidak akan pernah terlempar ke form login.
-    if (Auth.isLoggedIn() && (viewName === 'login' || viewName === 'register')) {
-      viewName = 'dashboard';
+    // 1. Jika pengguna SUDAH login sebagai admin dan mencoba mengakses login, arahkan ke admin dashboard
+    if (Auth.isAdmin() && (viewName === 'login' || viewName === 'register')) {
+      viewName = 'admin';
     }
 
-    // 2. Akses terkunci jika belum login: Pengguna WAJIB login, tidak boleh mengakses menu apapun
-    if (!Auth.isLoggedIn() && viewName !== 'login' && viewName !== 'register') {
-      viewName = 'login';
-    }
-
-    // Role protection untuk admin view
+    // 2. Proteksi khusus untuk view admin
     if (viewName === 'admin' && !Auth.isAdmin()) {
-      this.showToast('Halaman ini khusus untuk Admin Sarpras Pondok.', 'error');
-      viewName = 'dashboard';
+      this.showToast('Halaman ini khusus untuk Admin Sarpras Pondok. Silakan login.', 'info');
+      viewName = 'login';
     }
 
     this.currentView = viewName;
@@ -56,7 +50,6 @@ const UI = {
     // Stack Riwayat Halaman (Kembali & Lanjut)
     if (addToHistory && !this.isNavigatingHistory) {
       if (this.historyStack.length === 0 || this.historyStack[this.historyIndex] !== viewName) {
-        // Buang riwayat 'lanjut' jika berpindah ke cabang navigasi baru
         this.historyStack = this.historyStack.slice(0, this.historyIndex + 1);
         this.historyStack.push(viewName);
         this.historyIndex = this.historyStack.length - 1;
@@ -67,11 +60,11 @@ const UI = {
     }
     this.updateNavButtons();
 
-    // Mode Guest (Sembunyikan sidebar, header, dan bottom nav jika belum login)
+    // Mode Login (hanya aktif jika user secara eksplisit membuka form login/register)
     const appContainer = document.querySelector('.app-container');
-    const isGuest = !Auth.isLoggedIn() || (viewName === 'login' || viewName === 'register');
+    const isLoginView = (viewName === 'login' || viewName === 'register');
     if (appContainer) {
-      if (isGuest) {
+      if (isLoginView) {
         appContainer.classList.add('guest-mode');
       } else {
         appContainer.classList.remove('guest-mode');

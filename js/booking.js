@@ -1,11 +1,15 @@
 /**
- * MAISYA-TRANS - Booking & Quick Borrow Controller
+ * MAISYA-TRANS - Booking & Vehicle Check-In Controller
  * Pondok Pesantren Imam Syafi'i Brebes
+ * "Mobilitas Aman, Tertib, dan Terdata"
  */
 
 const BookingView = {
   vehicles: [],
   selectedVehicle: null,
+  selectedFuelCheckIn: '75%',
+  selectedCleanCheckIn: 'Bersih',
+  checkInPhotos: {},
 
   async load() {
     const res = await Api.request('getVehicles', 'GET');
@@ -17,387 +21,406 @@ const BookingView = {
     this.renderHistory();
   },
 
-  populateVehicleSelect() {
+  populateVehicleSelect(preselectId) {
     const select = document.getElementById('bookingVehicleSelect');
     if (!select) return;
 
     select.innerHTML = '<option value="">-- Pilih Armada Kendaraan --</option>';
     this.vehicles.forEach(v => {
-      const disabled = v.status !== 'AVAILABLE';
-      const label = `${v.jenis === 'MOTOR' ? '🏍️' : '🚗'} ${v.merk} ${v.model} (${v.nomorPolisi}) - ${v.status}`;
-      select.innerHTML += `<option value="${v.vehicleId}" ${disabled ? 'disabled' : ''}>${label}</option>`;
+      const isAvailable = v.status === 'AVAILABLE' || v.status === 'APPROVED';
+      const label = `${v.jenis === 'MOTOR' ? '🏍️' : '🚗'} ${v.merk} ${v.model} (${v.nomorPolisi}) - ${v.status === 'AVAILABLE' ? 'Tersedia' : (v.status === 'APPROVED' ? 'Disetujui' : 'Tidak Tersedia')}`;
+      const selected = v.vehicleId === preselectId ? 'selected' : '';
+      select.innerHTML += `<option value="${v.vehicleId}" ${selected} ${!isAvailable && v.vehicleId !== preselectId ? 'disabled' : ''}>${label}</option>`;
     });
   },
 
-  /**
-   * Pinjam Sekarang — harus ada booking APPROVED terlebih dahulu
-   * Alur: cek booking approved hari ini → ada? buka modal start trip → tidak ada? minta reservasi
-   */
-  async openQuickBorrow(type) {
-    UI.showToast('Memeriksa jadwal peminjaman Anda...', 'info');
+  openBookingModal() {
+    UI.switchView('booking');
+    const dateInput = document.getElementById('bookingDate');
+    if (dateInput && !dateInput.value) {
+      dateInput.value = new Date().toISOString().substring(0, 10);
+    }
+  },
 
-    try {
-      const res = await Api.request('getBookings', 'GET');
-      if (!res.success) throw new Error('Gagal mengambil data booking');
+  openBookingForVehicle(vehicleId) {
+    UI.switchView('booking');
+    this.populateVehicleSelect(vehicleId);
+    const select = document.getElementById('bookingVehicleSelect');
+    if (select) select.value = vehicleId;
 
-      const user = Auth.getUser();
-      const todayStr = new Date().toISOString().substring(0, 10);
-
-      // Cari booking milik user ini yang: APPROVED + tanggal hari ini + kendaraan sesuai jenis
-      let allVehicles = this.vehicles;
-      if ((!allVehicles || allVehicles.length === 0) && typeof Store !== 'undefined') {
-        allVehicles = Store.data.vehicles || [];
-      }
-
-      const vehicleIdsOfType = allVehicles
-        .filter(v => v.jenis === type)
-        .map(v => v.vehicleId);
-
-      const approvedBooking = (res.data || []).find(b =>
-        b.userId === user.userId &&
-        b.status === 'APPROVED' &&
-        String(b.tanggal).substring(0, 10) === todayStr &&
-        vehicleIdsOfType.includes(b.vehicleId)
-      );
-
-      if (!approvedBooking) {
-        // Tidak ada booking approved — tampilkan modal info & arahkan ke reservasi
-        this._showNeedBookingInfo(type);
-        return;
-      }
-
-      // Ada booking approved — pastikan kendaraannya AVAILABLE
-      const vehicle = allVehicles.find(v => v.vehicleId === approvedBooking.vehicleId);
-      if (!vehicle || vehicle.status !== 'AVAILABLE') {
-        UI.showToast(`Kendaraan sedang tidak tersedia (${vehicle ? vehicle.status : 'tidak ditemukan'}).`, 'error');
-        return;
-      }
-
-      // Simpan bookingId untuk dikirim ke backend saat startTrip
-      this._activeBookingId = approvedBooking.bookingId;
-      this.openQuickBorrowById(approvedBooking.vehicleId);
-    } catch (err) {
-      UI.showToast('Gagal memeriksa jadwal: ' + err.message, 'error');
+    const dateInput = document.getElementById('bookingDate');
+    if (dateInput && !dateInput.value) {
+      dateInput.value = new Date().toISOString().substring(0, 10);
     }
   },
 
   /**
-   * Tampilkan modal informasi bahwa user perlu reservasi dahulu
-   */
-  _showNeedBookingInfo(type) {
-    const typeLabel = type === 'MOTOR' ? 'Motor' : 'Mobil';
-    // Gunakan sweet-alert style modal via UI layer
-    const msg = `Untuk meminjam ${typeLabel}, Anda harus mengajukan <strong>Reservasi</strong> terlebih dahulu dan menunggu persetujuan Admin Sarpras.<br><br>` +
-      `Setelah pengajuan <span style="color:var(--primary-700);font-weight:700;">DISETUJUI</span>, tombol ini akan aktif pada hari peminjaman.`;
-
-    // Inject modal info dinamis jika belum ada
-    let overlay = document.getElementById('modalNeedBookingInfo');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'modalNeedBookingInfo';
-      overlay.className = 'modal-overlay';
-      overlay.innerHTML = `
-        <div class="modal-container" style="max-width:420px; text-align:center;">
-          <div style="font-size:2.5rem; margin-bottom:0.75rem;">📋</div>
-          <h3 style="margin-bottom:0.5rem; font-size:1.1rem;">Reservasi Diperlukan</h3>
-          <p id="needBookingMsg" style="font-size:0.88rem; color:var(--text-secondary); line-height:1.6; margin-bottom:1.25rem;"></p>
-          <div style="display:flex; gap:0.75rem; justify-content:center;">
-            <button class="btn btn-outline btn-sm" onclick="UI.closeModal('modalNeedBookingInfo')">Tutup</button>
-            <button class="btn btn-primary btn-sm" onclick="UI.closeModal('modalNeedBookingInfo'); UI.switchView('booking')">
-              📅 Buat Reservasi Sekarang
-            </button>
-          </div>
-        </div>
-      `;
-      document.body.appendChild(overlay);
-    }
-    document.getElementById('needBookingMsg').innerHTML = msg;
-    UI.openModal('modalNeedBookingInfo');
-  },
-
-  openQuickBorrowById(vehicleId) {
-    let v = this.vehicles.find(x => x.vehicleId === vehicleId);
-    if (!v && typeof VehiclesView !== 'undefined' && VehiclesView.vehicles.length > 0) {
-      v = VehiclesView.vehicles.find(x => x.vehicleId === vehicleId);
-    }
-    if (!v && typeof Store !== 'undefined') {
-      v = Store.data.vehicles.find(x => x.vehicleId === vehicleId);
-    }
-    if (!v) return;
-
-    this.selectedVehicle = v;
-    document.getElementById('startTripVehicleName').textContent = `${v.merk} ${v.model} (${v.nomorPolisi})`;
-    document.getElementById('startTripLastKmBadge').textContent = `Odometer Tercatat: ${v.currentKm.toLocaleString('id-ID')} KM`;
-    
-    // Set default KM awal ke odometer saat ini
-    const kmInput = document.getElementById('startTripKmInput');
-    if (kmInput) kmInput.value = v.currentKm;
-
-    // Reset checklist
-    document.querySelectorAll('.departure-check').forEach(ch => ch.checked = false);
-    document.getElementById('departureConsentCheck').checked = false;
-
-    UI.openModal('modalStartTrip');
-  },
-
-  /**
-   * Submit Mulai Pemakaian dari modal
-   */
-  async submitStartTrip() {
-    if (!this.selectedVehicle) return;
-
-    const kmInput = document.getElementById('startTripKmInput');
-    const purposeInput = document.getElementById('startTripPurposeInput');
-    const startKm = Number(kmInput.value);
-    const purpose = purposeInput.value.trim();
-
-    if (!startKm || isNaN(startKm)) {
-      UI.showToast('Harap masukkan angka kilometer awal yang valid.', 'error');
-      return;
-    }
-
-    if (startKm < this.selectedVehicle.currentKm) {
-      UI.showToast(`Kilometer awal tidak boleh lebih kecil dari ${this.selectedVehicle.currentKm.toLocaleString('id-ID')} KM!`, 'error');
-      return;
-    }
-
-    if (!purpose) {
-      UI.showToast('Harap sebutkan keperluan perjalanan dinas pondok.', 'error');
-      return;
-    }
-
-    // Validasi Checklist Sebelum Berangkat
-    const consent = document.getElementById('departureConsentCheck').checked;
-    if (!consent) {
-      UI.showToast('Harap centang pernyataan kelayakan kendaraan sebelum berangkat.', 'error');
-      return;
-    }
-
-    const checklist = {
-      ban: document.getElementById('checkBan')?.checked || false,
-      rem: document.getElementById('checkRem')?.checked || false,
-      lampu: document.getElementById('checkLampu')?.checked || false,
-      spion: document.getElementById('checkSpion')?.checked || false,
-      bbm: document.getElementById('checkBbm')?.checked || false
-    };
-
-    const submitBtn = document.getElementById('btnSubmitStartTrip');
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Memproses Mulai...';
-    }
-
-    try {
-      const res = await Api.request('startTrip', 'POST', {
-        vehicleId: this.selectedVehicle.vehicleId,
-        bookingId: this._activeBookingId || '',  // bookingId dari booking APPROVED
-        start_km: startKm,
-        purpose: purpose,
-        start_checklist: checklist
-      });
-      this._activeBookingId = null; // reset setelah dipakai
-
-      if (res.success) {
-        UI.showToast(res.message, 'success');
-        UI.closeModal('modalStartTrip');
-        // Arahkan ke Beranda untuk melihat progress pemakaian
-        UI.switchView('dashboard');
-      } else {
-        UI.showToast(res.message || 'Gagal memulai pemakaian kendaraan.', 'error');
-      }
-    } catch (err) {
-      UI.showToast('Terjadi kesalahan jaringan.', 'error');
-    } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = '▶ Bismillah, Mulai Pemakaian';
-      }
-    }
-  },
-
-  /**
-   * Submit Reservasi / Booking Masa Depan
+   * Submit Formulir Peminjaman Terbuka (Tanpa Login)
    */
   async submitBookingForm(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
+
     const vehicleId = document.getElementById('bookingVehicleSelect').value;
+    const userName = document.getElementById('bookingUserName').value.trim();
+    const divisi = document.getElementById('bookingDivisi').value.trim();
+    const purpose = document.getElementById('bookingPurpose').value.trim();
+    const tujuan = document.getElementById('bookingTujuan').value.trim();
     const tanggal = document.getElementById('bookingDate').value;
     const startTime = document.getElementById('bookingStartTime').value;
-    const endTime = document.getElementById('bookingEndTime').value;
-    const purpose = document.getElementById('bookingPurpose').value;
-    const kepentingan = document.getElementById('bookingKepentingan').value;
-    const notes = document.getElementById('bookingNotes').value;
+    const estimatedEndTime = document.getElementById('bookingEndTime').value;
+    const passengerCount = document.getElementById('bookingPassengers').value;
+    const noHp = document.getElementById('bookingNoHp').value.trim();
+    const notes = document.getElementById('bookingNotes')?.value.trim() || '';
 
-    if (!vehicleId || !tanggal || !startTime || !purpose || !kepentingan) {
+    if (!vehicleId) {
+      UI.showToast('Harap pilih kendaraan yang akan dipinjam.', 'error');
+      return;
+    }
+    if (!userName || !divisi || !tujuan || !tanggal || !startTime || !noHp) {
       UI.showToast('Harap lengkapi semua kolom bertanda bintang (*).', 'error');
       return;
     }
 
-    const submitBtn = document.getElementById('btnSubmitBooking');
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Mengajukan...';
+    const btnSubmit = document.getElementById('btnSubmitBooking');
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'Mengirim Permohonan...';
     }
 
     try {
       const res = await Api.request('createBooking', 'POST', {
         vehicleId,
-        tanggal,
-        start_time: startTime,
-        estimated_end_time: endTime,
+        userName,
+        divisi,
         purpose,
-        kepentingan,
+        tujuan,
+        tanggal,
+        startTime,
+        estimatedEndTime,
+        passengerCount,
+        noHp,
         notes
       });
 
       if (res.success) {
-        UI.showToast(res.message, 'success');
+        UI.showToast('Alhamdulillah, pengajuan peminjaman berhasil dikirim!', 'success');
+        
+        // Reset form
         document.getElementById('formBooking').reset();
-        this.renderBookingCalendar();
-        this.renderHistory();
+        
+        // Tampilkan modal dialog konfirmasi & link WhatsApp ke Admin Sarpras
+        this.showBookingSuccessModal(res.data);
+
+        // Segarkan antrean
+        this.load();
+        DashboardView.load();
       } else {
-        UI.showToast(res.message, 'error');
+        UI.showToast(res.message || 'Gagal mengirim pengajuan.', 'error');
       }
     } catch (err) {
-      UI.showToast('Terjadi kesalahan saat mengajukan peminjaman.', 'error');
+      UI.showToast('Terjadi kesalahan koneksi.', 'error');
     } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Ajukan Peminjaman';
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Ajukan Peminjaman';
       }
     }
   },
 
-  async renderHistory() {
+  showBookingSuccessModal(booking) {
+    const waText = encodeURIComponent(
+      `Assalamu'alaikum Admin Sarpras PP. Imam Syafi'i,\n` +
+      `Saya *${booking.userName}* (${booking.divisi}) telah mengajukan peminjaman kendaraan:\n` +
+      `🚗 *${booking.vehicleName}* (${booking.nomorPolisi})\n` +
+      `📅 Tanggal: ${booking.tanggal} (${booking.startTime} - ${booking.estimatedEndTime})\n` +
+      `📍 Tujuan: ${booking.tujuan}\n` +
+      `👥 Penumpang: ${booking.passengerCount} orang\n` +
+      `Mohon persetujuan Admin Sarpras. Syukron jazakumullah khairan.`
+    );
+    const waUrl = `https://wa.me/6281234567890?text=${waText}`;
+
+    const modalBody = document.getElementById('modalBookingSuccessContent');
+    if (modalBody) {
+      modalBody.innerHTML = `
+        <div style="text-align:center; padding:1rem 0;">
+          <div style="width:64px; height:64px; border-radius:50%; background:rgba(16,185,129,0.15); color:#10B981; display:flex; align-items:center; justify-content:center; font-size:2rem; margin:0 auto 1rem;">
+            ✓
+          </div>
+          <h3 style="font-size:1.2rem; font-weight:800; color:var(--primary-700); margin-bottom:0.4rem;">
+            Pengajuan Berhasil Terkirim!
+          </h3>
+          <p style="font-size:0.88rem; color:var(--text-secondary); line-height:1.6; margin-bottom:1.25rem;">
+            Status permohonan Anda kini <strong>Menunggu Persetujuan Admin Sarpras</strong>.<br>
+            Setelah disetujui, Anda dapat mengambil kunci kendaraan dan melakukan <strong>Check-In</strong> di aplikasi.
+          </p>
+
+          <div style="background:var(--surface-secondary); padding:1rem; border-radius:12px; text-align:left; font-size:0.82rem; margin-bottom:1.25rem;">
+            <div><strong>Peminjam:</strong> ${booking.userName} (${booking.divisi})</div>
+            <div style="margin-top:2px;"><strong>Kendaraan:</strong> ${booking.vehicleName} (${booking.nomorPolisi})</div>
+            <div style="margin-top:2px;"><strong>Jadwal:</strong> ${booking.tanggal} • ${booking.startTime} - ${booking.estimatedEndTime}</div>
+            <div style="margin-top:2px;"><strong>Tujuan:</strong> ${booking.tujuan}</div>
+          </div>
+
+          <a href="${waUrl}" target="_blank" class="btn btn-gold btn-block" style="font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px;">
+            <span>📱</span>
+            <span>Konfirmasi ke Admin via WhatsApp</span>
+          </a>
+        </div>
+      `;
+    }
+
+    UI.openModal('modalBookingSuccess');
+  },
+
+  /**
+   * =========================================================================
+   * CHECK-IN KENDARAAN (SERAH TERIMA KONDISI AWAL & MULAI ARGO)
+   * =========================================================================
+   */
+  openCheckInModal(vehicleId) {
+    const v = Store.data.vehicles.find(x => x.vehicleId === vehicleId);
+    if (!v) {
+      UI.showToast('Data armada tidak ditemukan.', 'error');
+      return;
+    }
+
+    this.selectedVehicle = v;
+    this.checkInPhotos = {};
+    this.selectedFuelCheckIn = '75%';
+    this.selectedCleanCheckIn = 'Bersih';
+
+    document.getElementById('checkInVehicleTitle').textContent = `${v.merk} ${v.model} (${v.nomorPolisi})`;
+    document.getElementById('checkInKmInput').value = v.currentKm || 0;
+    document.getElementById('checkInLastKmBadge').textContent = `Odometer Terakhir: ${(v.currentKm || 0).toLocaleString('id-ID')} KM`;
+    
+    // Prefill peminjam jika ada approved booking
+    const booking = v.approvedBooking || (Store.data.bookings.find(b => b.vehicleId === vehicleId && b.status === 'APPROVED'));
+    if (booking) {
+      document.getElementById('checkInUserNameInput').value = booking.userName || '';
+      document.getElementById('checkInDivisiInput').value = booking.divisi || '';
+      document.getElementById('checkInPurposeInput').value = booking.purpose || '';
+      document.getElementById('checkInTujuanInput').value = booking.tujuan || booking.purpose || '';
+      document.getElementById('checkInNoHpInput').value = booking.noHp || '';
+      this._activeBookingId = booking.bookingId;
+    } else {
+      document.getElementById('checkInUserNameInput').value = '';
+      document.getElementById('checkInDivisiInput').value = '';
+      document.getElementById('checkInPurposeInput').value = 'Operasional Pesantren';
+      document.getElementById('checkInTujuanInput').value = 'Brebes';
+      document.getElementById('checkInNoHpInput').value = '';
+      this._activeBookingId = '';
+    }
+
+    // Reset UI fuel & clean selector
+    this.setFuelCheckIn('75%');
+    this.setCleanCheckIn('Bersih');
+    this.resetPhotoSlots();
+
+    UI.openModal('modalCheckIn');
+  },
+
+  setFuelCheckIn(level) {
+    this.selectedFuelCheckIn = level;
+    document.querySelectorAll('.fuel-btn-checkin').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.level === level);
+    });
+  },
+
+  setCleanCheckIn(cleanliness) {
+    this.selectedCleanCheckIn = cleanliness;
+    document.querySelectorAll('.clean-btn-checkin').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.clean === cleanliness);
+    });
+  },
+
+  resetPhotoSlots() {
+    ['front', 'side', 'back', 'odometer'].forEach(side => {
+      const slot = document.getElementById(`photoSlotCheckIn_${side}`);
+      if (slot) {
+        slot.classList.remove('has-image');
+        slot.innerHTML = `
+          <div style="font-size:1.4rem;">📷</div>
+          <div class="photo-slot-label">${this.getSlotLabel(side)}</div>
+          <input type="file" accept="image/*" style="display:none;" onchange="BookingView.handlePhotoUpload(this, 'checkIn', '${side}')">
+        `;
+        slot.onclick = (e) => {
+          if (e.target.tagName !== 'INPUT' && !e.target.classList.contains('photo-slot-btn-remove')) {
+            slot.querySelector('input[type=file]')?.click();
+          }
+        };
+      }
+    });
+  },
+
+  getSlotLabel(side) {
+    const map = { front: 'Tampak Depan', side: 'Tampak Samping', back: 'Tampak Belakang', odometer: 'Foto Speedometer' };
+    return map[side] || side;
+  },
+
+  handlePhotoUpload(input, type, side) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target.result;
+      if (type === 'checkIn') {
+        this.checkInPhotos[side] = base64;
+        const slot = document.getElementById(`photoSlotCheckIn_${side}`);
+        if (slot) {
+          slot.classList.add('has-image');
+          slot.innerHTML = `
+            <img src="${base64}" alt="${side}">
+            <button type="button" class="photo-slot-btn-remove" onclick="event.stopPropagation(); BookingView.removePhoto('checkIn', '${side}')">✕</button>
+          `;
+        }
+      } else if (type === 'checkOut') {
+        TripsView.checkOutPhotos[side] = base64;
+        const slot = document.getElementById(`photoSlotCheckOut_${side}`);
+        if (slot) {
+          slot.classList.add('has-image');
+          slot.innerHTML = `
+            <img src="${base64}" alt="${side}">
+            <button type="button" class="photo-slot-btn-remove" onclick="event.stopPropagation(); TripsView.removePhoto('${side}')">✕</button>
+          `;
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  },
+
+  removePhoto(type, side) {
+    if (type === 'checkIn') {
+      delete this.checkInPhotos[side];
+      const slot = document.getElementById(`photoSlotCheckIn_${side}`);
+      if (slot) {
+        slot.classList.remove('has-image');
+        slot.innerHTML = `
+          <div style="font-size:1.4rem;">📷</div>
+          <div class="photo-slot-label">${this.getSlotLabel(side)}</div>
+          <input type="file" accept="image/*" style="display:none;" onchange="BookingView.handlePhotoUpload(this, 'checkIn', '${side}')">
+        `;
+      }
+    }
+  },
+
+  /**
+   * Submit Check-In: Mulai Menggunakan Kendaraan & Aktifkan Argo Real-time!
+   */
+  async submitCheckIn() {
+    if (!this.selectedVehicle) return;
+
+    const startKm = Number(document.getElementById('checkInKmInput').value);
+    const userName = document.getElementById('checkInUserNameInput').value.trim();
+    const divisi = document.getElementById('checkInDivisiInput').value.trim();
+    const purpose = document.getElementById('checkInPurposeInput').value.trim();
+    const tujuan = document.getElementById('checkInTujuanInput').value.trim();
+    const noHp = document.getElementById('checkInNoHpInput').value.trim();
+    const damageNotes = document.getElementById('checkInDamageNotesInput')?.value.trim() || '';
+    const exteriorCondition = document.getElementById('checkInExteriorSelect')?.value || 'Bagus / Tidak ada cacat';
+
+    if (!startKm || startKm < (this.selectedVehicle.currentKm || 0)) {
+      UI.showToast(`Kilometer awal (${startKm}) tidak boleh lebih kecil dari odometer tercatat (${this.selectedVehicle.currentKm}).`, 'error');
+      return;
+    }
+    if (!userName || !tujuan) {
+      UI.showToast('Harap lengkapi nama peminjam dan tujuan perjalanan.', 'error');
+      return;
+    }
+
+    const consentCheck = document.getElementById('checkInConsentCheck');
+    if (consentCheck && !consentCheck.checked) {
+      UI.showToast('Harap centang konfirmasi tanggung jawab serah terima kendaraan.', 'warning');
+      return;
+    }
+
+    const btn = document.getElementById('btnSubmitCheckIn');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Memulai Argo...';
+    }
+
+    try {
+      const res = await Api.request('checkInTrip', 'POST', {
+        vehicleId: this.selectedVehicle.vehicleId,
+        bookingId: this._activeBookingId || '',
+        startKm,
+        fuelLevel: this.selectedFuelCheckIn,
+        cleanliness: this.selectedCleanCheckIn,
+        exteriorCondition,
+        damageNotes,
+        photos: this.checkInPhotos,
+        userName,
+        divisi,
+        noHp,
+        purpose,
+        tujuan
+      });
+
+      if (res.success) {
+        UI.closeModal('modalCheckIn');
+        UI.showToast('Bismillah! Pemakaian dimulai dan argo aktif berjalan.', 'success');
+        
+        // Kembali ke dashboard agar pengguna langsung melihat argo berjalan
+        UI.switchView('dashboard');
+        DashboardView.load();
+      } else {
+        UI.showToast(res.message || 'Gagal memulai pemakaian.', 'error');
+      }
+    } catch (err) {
+      UI.showToast('Terjadi kesalahan koneksi server.', 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '▶ Bismillah, Mulai Menggunakan Kendaraan';
+      }
+    }
+  },
+
+  renderBookingCalendar() {
+    const container = document.getElementById('activeBookingsList');
+    if (!container) return;
+
+    const bookings = Store.data.bookings.filter(b => b.status === 'PENDING' || b.status === 'APPROVED');
+    if (bookings.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.85rem;">
+          Tidak ada jadwal reservasi aktif. Semua armada bebas dipinjam.
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = bookings.map(b => `
+      <div style="background:var(--surface-secondary); padding:0.75rem; border-radius:10px; margin-bottom:0.5rem; font-size:0.82rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <strong style="color:var(--text-primary);">${b.userName}</strong>
+          <span class="badge ${b.status === 'APPROVED' ? 'badge-approved' : 'badge-pending'}">${b.status === 'APPROVED' ? 'Disetujui' : 'Menunggu'}</span>
+        </div>
+        <div style="color:var(--primary-700); font-weight:700; margin-top:2px;">${b.vehicleName} (${b.nomorPolisi || '-'})</div>
+        <div style="color:var(--text-muted); margin-top:2px;">📅 ${b.tanggal} • 🕒 ${b.startTime} - ${b.estimatedEndTime}</div>
+        <div style="color:var(--text-secondary); margin-top:2px;">📍 Tujuan: ${b.tujuan || b.purpose}</div>
+      </div>
+    `).join('');
+  },
+
+  renderHistory() {
     const container = document.getElementById('bookingHistoryContainer');
     if (!container) return;
 
-    // Fetch user bookings. In mock mode, we can just get all bookings and filter by current user.
-    // For simplicity, we can just use Api.request('getDashboard') or write a new API endpoint.
-    // Since Store.data.bookings is accessible in local mode, but better to use an API request.
-    const res = await Api.request('getUserBookings', 'GET');
-    
-    if (res.success && res.data && res.data.length > 0) {
-      container.innerHTML = res.data.map(b => {
-        let badgeClass = 'badge-maintenance';
-        let badgeText = 'Menunggu';
-        if (b.status === 'APPROVED') { badgeClass = 'badge-available'; badgeText = 'Disetujui'; }
-        else if (b.status === 'REJECTED') { badgeClass = 'badge-danger'; badgeText = 'Ditolak'; }
-        else if (b.status === 'ACTIVE') { badgeClass = 'badge-in-use'; badgeText = 'Sedang Dipakai'; }
-        else if (b.status === 'FINISHED') { badgeClass = 'badge-booked'; badgeText = 'Selesai'; }
-
-        return `
-          <div style="background:var(--surface-secondary); padding:1rem; border-radius:var(--border-radius-md); border:1px solid var(--surface-border); display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <div style="font-weight:700; color:var(--text-primary);">${b.vehicleName}</div>
-              <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">
-                📅 ${b.tanggal} 🕒 ${b.startTime} - ${b.estimatedEndTime}
-              </div>
-              <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">Keperluan: ${b.kepentingan} - ${b.purpose}</div>
-            </div>
-            <div>
-              <span class="badge ${badgeClass}">${badgeText}</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-    } else {
-      container.innerHTML = '<div style="font-size:0.85rem; color:var(--text-muted);">Belum ada riwayat pengajuan peminjaman.</div>';
-    }
-  },
-
-  /**
-   * Render Kalender Jadwal Peminjaman
-   */
-  async renderBookingCalendar() {
-    const listContainer = document.getElementById('activeBookingsList');
-    if (!listContainer) return;
-
-    const res = await Api.request('getBookings', 'GET');
-    if (res.success && res.data) {
-      const bookings = res.data;
-      if (bookings.length === 0) {
-        listContainer.innerHTML = `
-          <div style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.85rem;">
-            <div style="font-size:2rem; margin-bottom:0.5rem;">📋</div>
-            Belum ada jadwal pengajuan peminjaman.<br>
-            <span style="font-size:0.78rem;">Gunakan form di atas untuk mengajukan reservasi kendaraan.</span>
-          </div>`;
-        return;
-      }
-
-      const user = Auth.getUser();
-      const todayStr = new Date().toISOString().substring(0, 10);
-
-      const statusLabel = {
-        'PENDING':  { text: '⏳ Menunggu Persetujuan', cls: 'badge-maintenance' },
-        'APPROVED': { text: '✅ Disetujui Admin',      cls: 'badge-available'   },
-        'REJECTED': { text: '❌ Ditolak',               cls: 'badge-in-use'      }
-      };
-
-      listContainer.innerHTML = bookings.map(b => {
-        const sl = statusLabel[b.status] || { text: b.status, cls: '' };
-        const isOwner = user && user.userId === b.userId;
-        const isToday = String(b.tanggal).substring(0, 10) === todayStr;
-        const canStart = isOwner && b.status === 'APPROVED' && isToday;
-
-        // Border kiri berwarna sesuai status
-        const borderColor = b.status === 'APPROVED' ? 'var(--primary-600)' :
-                            b.status === 'PENDING'  ? '#d97706' : '#ef4444';
-
-        return `
-          <div style="background:var(--surface); border:1px solid var(--surface-border); border-left:4px solid ${borderColor}; border-radius:var(--border-radius-md); padding:0.85rem; margin-bottom:0.6rem; display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
-            <div style="flex:1; min-width:0;">
-              <div style="font-weight:700; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                ${b.vehicleName} <span style="font-weight:400; color:var(--text-muted);">(${b.nomorPolisi})</span>
-              </div>
-              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px;">
-                📅 ${Utils.formatDate(b.tanggal)} &nbsp;•&nbsp; ⏰ ${b.startTime}${b.estimatedEndTime ? ' – ' + b.estimatedEndTime : ''}
-              </div>
-              <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">
-                ${b.userName} &nbsp;›&nbsp; ${b.purpose}
-              </div>
-              ${b.status === 'PENDING' ? `
-                <div style="font-size:0.72rem; color:#92400e; margin-top:4px; font-style:italic;">
-                  Menunggu persetujuan Admin Sarpras...
-                </div>` : ''}
-              ${b.status === 'APPROVED' && !isToday ? `
-                <div style="font-size:0.72rem; color:var(--primary-700); margin-top:4px;">
-                  Tombol mulai aktif pada hari peminjaman.
-                </div>` : ''}
-            </div>
-            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0;">
-              <span class="badge ${sl.cls}" style="font-size:0.7rem; white-space:nowrap;">${sl.text}</span>
-              ${canStart ? `
-                <button class="btn btn-primary btn-sm" style="font-size:0.75rem; white-space:nowrap;"
-                  onclick="BookingView._startFromBooking('${b.bookingId}', '${b.vehicleId}')">
-                  ▶ Mulai Sekarang
-                </button>` : ''}
-            </div>
-          </div>`;
-      }).join('');
-    }
-  },
-
-  /**
-   * Mulai pemakaian langsung dari daftar booking APPROVED
-   */
-  async _startFromBooking(bookingId, vehicleId) {
-    let allVehicles = this.vehicles;
-    if ((!allVehicles || allVehicles.length === 0) && typeof Store !== 'undefined') {
-      allVehicles = Store.data.vehicles || [];
-    }
-    const vehicle = allVehicles.find(v => v.vehicleId === vehicleId);
-    if (!vehicle) {
-      UI.showToast('Data kendaraan tidak ditemukan. Silakan segarkan halaman.', 'error');
+    const all = Store.data.bookings.slice(0, 5);
+    if (all.length === 0) {
+      container.innerHTML = `
+        <div style="color:var(--text-muted); font-size:0.82rem;">Belum ada riwayat permohonan.</div>
+      `;
       return;
     }
-    if (vehicle.status !== 'AVAILABLE') {
-      UI.showToast(`Kendaraan sedang tidak tersedia (${vehicle.status}).`, 'error');
-      return;
-    }
-    // Simpan bookingId dan buka modal start trip
-    this._activeBookingId = bookingId;
-    this.openQuickBorrowById(vehicleId);
+
+    container.innerHTML = all.map(b => `
+      <div style="border-left:3px solid var(--primary-600); padding-left:0.75rem; font-size:0.82rem;">
+        <div style="font-weight:700;">${b.vehicleName}</div>
+        <div style="color:var(--text-muted); font-size:0.75rem;">${b.tanggal} • ${b.purpose}</div>
+      </div>
+    `).join('');
   }
 };

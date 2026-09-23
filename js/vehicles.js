@@ -17,6 +17,17 @@ const VehiclesView = {
     }
   },
 
+  setFilter(type, status) {
+    if (type !== undefined) this.filterType = type;
+    if (status !== undefined) this.filterStatus = status;
+    this.render();
+  },
+
+  setSearch(query) {
+    this.searchQuery = query || '';
+    this.render();
+  },
+
   render() {
     const container = document.getElementById('vehiclesListContainer');
     if (!container) return;
@@ -39,44 +50,35 @@ const VehiclesView = {
     if (filtered.length === 0) {
       container.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
-          <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin:0 auto 1rem; display:block;">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
+          <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔍</div>
           <div style="font-weight:700; font-size:1.1rem; color:var(--text-primary);">Armada Tidak Ditemukan</div>
-          <p style="font-size:0.85rem; margin-top:4px;">Coba ubah kata kunci pencarian atau bersihkan filter Anda.</p>
+          <p style="font-size:0.85rem; margin-top:4px;">Coba ubah kata kunci pencarian atau sesuaikan filter Anda.</p>
         </div>
       `;
       return;
     }
 
     container.innerHTML = filtered.map(v => {
-      const isFav = UI.isFavorite(v.vehicleId);
       const isMotor = v.jenis === 'MOTOR';
 
       let badgeClass = 'badge-available';
-      let statusLabel = 'Tersedia';
-      if (v.status === 'IN_USE')        { badgeClass = 'badge-in-use';          statusLabel = 'Sedang Digunakan'; }
-      else if (v.status === 'MAINTENANCE') { badgeClass = 'badge-maintenance';  statusLabel = 'Dalam Perawatan'; }
-      else if (v.status === 'BOOKED')   { badgeClass = 'badge-booked';          statusLabel = 'Dipesan'; }
+      let statusLabel = '🟢 Tersedia';
+      if (v.status === 'IN_USE')            { badgeClass = 'badge-in-use';        statusLabel = '🔴 Sedang Digunakan'; }
+      else if (v.status === 'PENDING_APPROVAL') { badgeClass = 'badge-pending';   statusLabel = '🟡 Menunggu Persetujuan'; }
+      else if (v.status === 'APPROVED')     { badgeClass = 'badge-approved';      statusLabel = '🔵 Disetujui (Ambil Kunci)'; }
+      else if (v.status === 'MAINTENANCE')  { badgeClass = 'badge-maintenance';   statusLabel = '🟠 Dalam Perawatan'; }
 
-      const safeModel = (v.merk + ' ' + v.model).replace(/'/g, "\\'");
-      const safeNopol = v.nomorPolisi.replace(/'/g, "\\'");
+      const defaultImg = isMotor 
+        ? 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=600&auto=format&fit=crop&q=80'
+        : 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=600&auto=format&fit=crop&q=80';
 
       const adminActions = isAdmin ? `
         <div class="vehicle-admin-actions">
           <button class="veh-admin-btn veh-edit-btn" onclick="VehiclesView.openEditModal('${v.vehicleId}')" title="Edit Kendaraan">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-            </svg>
-            Edit
+            ✏️ Edit
           </button>
-          <button class="veh-admin-btn veh-delete-btn" onclick="VehiclesView.deleteVehicle('${v.vehicleId}', '${safeModel}', '${safeNopol}')" title="Hapus Kendaraan">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
-              <path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
-            </svg>
-            Hapus
+          <button class="veh-admin-btn veh-delete-btn" onclick="VehiclesView.deleteVehicle('${v.vehicleId}', '${v.merk} ${v.model}', '${v.nomorPolisi}')" title="Hapus Kendaraan">
+            🗑️ Hapus
           </button>
         </div>
       ` : '';
@@ -84,49 +86,53 @@ const VehiclesView = {
       return `
         <div class="vehicle-card" id="vcard-${v.vehicleId}">
           <div class="vehicle-card-image-wrap">
-            <button class="favorite-toggle-btn ${isFav ? 'active' : ''}"
-                    onclick="UI.toggleFavorite('${v.vehicleId}')"
-                    title="${isFav ? 'Hapus favorit' : 'Tandai favorit'}">★</button>
-            ${v.imageUrl ? `
-              <img src="${v.imageUrl}" alt="${v.merk} ${v.model}" style="width:100%; height:100%; object-fit:cover; display:block;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-              <div class="fallback-icon" style="display:none; width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
-                ${isMotor ? `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>` : `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>`}
-              </div>
-            ` : (isMotor ? `
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            ` : `
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
-            `)}
+            <img src="${v.imageUrl || defaultImg}" alt="${v.merk} ${v.model}" onerror="this.src='${defaultImg}'">
+            <div style="position:absolute; top:8px; left:8px;">
+              <span class="badge ${badgeClass}" style="font-size:0.75rem; font-weight:800; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
+                ${statusLabel}
+              </span>
+            </div>
+            <div style="position:absolute; bottom:8px; right:8px;">
+              <span class="vehicle-plate-badge" style="font-size:0.78rem;">${v.nomorPolisi}</span>
+            </div>
           </div>
 
           <div class="vehicle-card-body">
             <div class="vehicle-title-row">
               <div>
                 <div class="vehicle-name">${v.merk} ${v.model}</div>
-                <div style="font-size: 0.75rem; color: var(--text-muted); font-weight:600;">Tahun ${v.tahun || '-'} &bull; Warna ${v.warna || '-'}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); font-weight:600;">
+                  Tahun ${v.tahun || '-'} • Warna ${v.warna || '-'}
+                </div>
               </div>
-              <span class="vehicle-plate-badge">${v.nomorPolisi}</span>
             </div>
 
-            <div class="vehicle-meta-tags">
-              <span class="badge ${badgeClass}">${statusLabel}</span>
-              <span class="badge" style="background:var(--surface-secondary); color:var(--text-secondary);">
-                🛣️ ${v.currentKm.toLocaleString('id-ID')} KM
-              </span>
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface-secondary); padding:6px 10px; border-radius:8px; margin:0.4rem 0; font-size:0.78rem;">
+              <span style="color:var(--text-secondary);">Odometer Terkini:</span>
+              <strong style="color:var(--primary-700); font-size:0.85rem;">${(v.currentKm || 0).toLocaleString('id-ID')} KM</strong>
             </div>
 
+            <!-- Health status chip -->
             <div class="health-chip ${v.health === 'DANGER' ? 'danger' : (v.health === 'WARNING' ? 'warning' : 'good')}">
               <span>${v.health === 'DANGER' ? '🔴' : (v.health === 'WARNING' ? '🟡' : '🟢')}</span>
               <div style="display:flex; flex-direction:column; line-height:1.2;">
-                <span>Kondisi: <strong>${v.healthLabel}</strong></span>
+                <span>Kondisi Mesin: <strong>${v.healthLabel}</strong></span>
                 <span style="font-size:0.7rem; opacity:0.85;">
                   ${v.oilStatus !== 'OK' ? v.oilStatusText : (v.tuneupStatus !== 'OK' ? v.tuneupStatusText : 'Servis & Oli Terjaga')}
                 </span>
               </div>
             </div>
 
+            <!-- Live Argo Mini jika sedang digunakan -->
+            ${v.status === 'IN_USE' && v.activeTrip ? `
+              <div style="background:rgba(239,68,68,0.08); border:1px dashed rgba(239,68,68,0.3); border-radius:8px; padding:6px 8px; margin-top:0.4rem; display:flex; justify-content:space-between; align-items:center; font-size:0.75rem;">
+                <span style="color:#B91C1C; font-weight:700;">⏱️ Argo: <span data-argo-start="${v.activeTrip.startTime}" style="font-family:monospace; font-weight:800;">00:00:00</span></span>
+                <span style="color:var(--text-muted); font-size:0.7rem;">👤 ${v.activeTrip.userName.split(' ')[0]}</span>
+              </div>
+            ` : ''}
+
             ${v.notes ? `
-              <div style="font-size:0.75rem; color:var(--text-muted); background:var(--surface-secondary); padding:4px 8px; border-radius:6px;">
+              <div style="font-size:0.75rem; color:var(--text-muted); background:var(--surface-secondary); padding:4px 8px; border-radius:6px; margin-top:0.35rem;">
                 📝 ${v.notes}
               </div>
             ` : ''}
@@ -134,16 +140,24 @@ const VehiclesView = {
 
           <div class="vehicle-card-actions">
             ${v.status === 'AVAILABLE' ? `
-              <button class="btn btn-primary btn-sm btn-block" onclick="BookingView.openQuickBorrowById('${v.vehicleId}')">
-                ▶ Pinjam Sekarang
+              <button class="btn btn-primary btn-sm btn-block" onclick="BookingView.openBookingForVehicle('${v.vehicleId}')">
+                ▶ Ajukan Peminjaman
+              </button>
+            ` : (v.status === 'APPROVED' ? `
+              <button class="btn btn-gold btn-sm btn-block" onclick="BookingView.openCheckInModal('${v.vehicleId}')" style="font-weight:700;">
+                🔑 Check-In &amp; Ambil Kunci
               </button>
             ` : (v.status === 'IN_USE' ? `
-              <button class="btn btn-danger btn-sm btn-block" onclick="TripsView.openFinishByVehicleId('${v.vehicleId}')">
-                ⏹ Selesai Pakai
+              <button class="btn btn-danger btn-sm btn-block" onclick="TripsView.openCheckOutByVehicle('${v.vehicleId}')">
+                ⏹ Check-Out &amp; Pengembalian
+              </button>
+            ` : (v.status === 'PENDING_APPROVAL' ? `
+              <button class="btn btn-outline btn-sm btn-block" disabled style="opacity:0.8; color:var(--gold-700);">
+                ⏳ Menunggu Persetujuan
               </button>
             ` : `
               <button class="btn btn-outline btn-sm btn-block" disabled>Dalam Pemeliharaan</button>
-            `)}
+            `)))}
           </div>
 
           ${adminActions}
@@ -152,122 +166,73 @@ const VehiclesView = {
     }).join('');
   },
 
-  /** Buka modal edit dengan data kendaraan yang sudah ada */
   openEditModal(vehicleId) {
     const v = this.vehicles.find(x => x.vehicleId === vehicleId);
-    if (!v) { UI.showToast('Data kendaraan tidak ditemukan.', 'error'); return; }
+    if (!v) return;
 
-    document.getElementById('editVehicleId').value             = v.vehicleId;
-    document.getElementById('editVehicleJenis').value          = v.jenis;
-    document.getElementById('editVehicleMerk').value           = v.merk;
-    document.getElementById('editVehicleModel').value          = v.model;
-    document.getElementById('editVehicleNopol').value          = v.nomorPolisi;
-    document.getElementById('editVehicleTahun').value          = v.tahun || '';
-    document.getElementById('editVehicleWarna').value          = v.warna || '';
-    document.getElementById('editVehicleKm').value             = v.currentKm || 0;
-    document.getElementById('editVehicleOilInterval').value    = v.oilIntervalKm || (v.jenis === 'MOBIL' ? 5000 : 2000);
-    document.getElementById('editVehicleTuneupInterval').value = v.tuneupIntervalKm || (v.jenis === 'MOBIL' ? 10000 : 5000);
-    document.getElementById('editVehicleStatus').value         = v.status;
-    document.getElementById('editVehicleNotes').value          = v.notes || '';
-    document.getElementById('editVehicleImageUrl').value       = v.imageUrl || '';
-
-    const title = document.getElementById('editVehicleModalTitle');
-    if (title) title.textContent = `Edit: ${v.merk} ${v.model} (${v.nomorPolisi})`;
+    document.getElementById('editVehicleId').value = v.vehicleId;
+    document.getElementById('editVehicleJenis').value = v.jenis;
+    document.getElementById('editVehicleNopol').value = v.nomorPolisi;
+    document.getElementById('editVehicleMerk').value = v.merk;
+    document.getElementById('editVehicleModel').value = v.model;
+    document.getElementById('editVehicleTahun').value = v.tahun || '';
+    document.getElementById('editVehicleWarna').value = v.warna || '';
+    document.getElementById('editVehicleKm').value = v.currentKm || 0;
+    document.getElementById('editVehicleStatus').value = v.status;
+    document.getElementById('editVehicleOilInterval').value = v.oilIntervalKm || 2000;
+    document.getElementById('editVehicleTuneupInterval').value = v.tuneupIntervalKm || 5000;
+    document.getElementById('editVehicleImageUrl').value = v.imageUrl || '';
+    document.getElementById('editVehicleNotes').value = v.notes || '';
 
     UI.openModal('modalEditVehicle');
   },
 
-  /** Submit form edit kendaraan */
   async submitEdit(e) {
-    e.preventDefault();
-    const btn = document.getElementById('btnSubmitEditVehicle');
-    if (btn) { btn.disabled = true; btn.textContent = 'Menyimpan...'; }
-
-    const user = Auth.getUser();
+    if (e) e.preventDefault();
+    const vehicleId = document.getElementById('editVehicleId').value;
     const payload = {
-      vehicleId:          document.getElementById('editVehicleId').value,
-      jenis:              document.getElementById('editVehicleJenis').value,
-      merk:               document.getElementById('editVehicleMerk').value,
-      model:              document.getElementById('editVehicleModel').value,
-      nomor_polisi:       document.getElementById('editVehicleNopol').value,
-      tahun:              document.getElementById('editVehicleTahun').value,
-      warna:              document.getElementById('editVehicleWarna').value,
-      oil_interval_km:    document.getElementById('editVehicleOilInterval').value,
-      tuneup_interval_km: document.getElementById('editVehicleTuneupInterval').value,
-      status:             document.getElementById('editVehicleStatus').value,
-      notes:              document.getElementById('editVehicleNotes').value,
-      imageUrl:           document.getElementById('editVehicleImageUrl').value,
-      userId: user ? user.userId : '',
-      token:  Auth.getToken() || ''
+      vehicleId,
+      jenis: document.getElementById('editVehicleJenis').value,
+      nomorPolisi: document.getElementById('editVehicleNopol').value,
+      merk: document.getElementById('editVehicleMerk').value,
+      model: document.getElementById('editVehicleModel').value,
+      tahun: document.getElementById('editVehicleTahun').value,
+      warna: document.getElementById('editVehicleWarna').value,
+      currentKm: document.getElementById('editVehicleKm').value,
+      status: document.getElementById('editVehicleStatus').value,
+      oilIntervalKm: document.getElementById('editVehicleOilInterval').value,
+      tuneupIntervalKm: document.getElementById('editVehicleTuneupInterval').value,
+      imageUrl: document.getElementById('editVehicleImageUrl').value,
+      notes: document.getElementById('editVehicleNotes').value
     };
 
-    try {
-      const res = await Api.request('updateVehicle', 'POST', payload);
-      if (res.success) {
-        UI.showToast(res.message || 'Kendaraan berhasil diperbarui.', 'success');
-        UI.closeModal('modalEditVehicle');
-        await this.load();
-      } else {
-        UI.showToast(res.message || 'Gagal memperbarui kendaraan.', 'error');
-      }
-    } catch (err) {
-      UI.showToast('Gagal terhubung ke server.', 'error');
-    } finally {
-      if (btn) { btn.disabled = false; btn.textContent = 'Simpan Perubahan'; }
+    const res = await Api.request('updateVehicle', 'POST', payload);
+    if (res.success) {
+      UI.closeModal('modalEditVehicle');
+      UI.showToast('Data armada berhasil diperbarui!', 'success');
+      this.load();
+      if (UI.currentView === 'dashboard') DashboardView.load();
+    } else {
+      UI.showToast(res.message || 'Gagal memperbarui kendaraan.', 'error');
     }
   },
 
-  /** Tampilkan modal konfirmasi hapus kendaraan */
-  deleteVehicle(vehicleId, namaKendaraan, nopol) {
+  deleteVehicle(vehicleId, name, nopol) {
     document.getElementById('deleteVehicleId').value = vehicleId;
-    const nameEl = document.getElementById('deleteVehicleName');
-    if (nameEl) nameEl.textContent = `${namaKendaraan} (${nopol})`;
+    document.getElementById('deleteVehicleName').textContent = `${name} (${nopol})`;
     UI.openModal('modalDeleteVehicle');
   },
 
-  /** Eksekusi penghapusan setelah konfirmasi */
   async confirmDelete() {
     const vehicleId = document.getElementById('deleteVehicleId').value;
-    const btn = document.getElementById('btnConfirmDeleteVehicle');
-    if (!vehicleId) return;
-    if (btn) { btn.disabled = true; btn.textContent = 'Menghapus...'; }
-
-    const user = Auth.getUser();
-    try {
-      const res = await Api.request('deleteVehicle', 'POST', {
-        vehicleId,
-        userId: user ? user.userId : '',
-        token:  Auth.getToken() || ''
-      });
-      if (res.success) {
-        UI.showToast(res.message || 'Kendaraan berhasil dihapus.', 'success');
-        UI.closeModal('modalDeleteVehicle');
-        const card = document.getElementById(`vcard-${vehicleId}`);
-        if (card) {
-          card.style.transition = 'opacity 0.35s, transform 0.35s';
-          card.style.opacity = '0';
-          card.style.transform = 'scale(0.9)';
-          setTimeout(() => card.remove(), 360);
-        }
-        this.vehicles = this.vehicles.filter(v => v.vehicleId !== vehicleId);
-      } else {
-        UI.showToast(res.message || 'Gagal menghapus kendaraan.', 'error');
-      }
-    } catch (err) {
-      UI.showToast('Gagal terhubung ke server.', 'error');
-    } finally {
-      if (btn) { btn.disabled = false; btn.textContent = 'Ya, Hapus Permanen'; }
+    const res = await Api.request('deleteVehicle', 'POST', { vehicleId });
+    if (res.success) {
+      UI.closeModal('modalDeleteVehicle');
+      UI.showToast('Kendaraan berhasil dihapus.', 'success');
+      this.load();
+      if (UI.currentView === 'dashboard') DashboardView.load();
+    } else {
+      UI.showToast(res.message || 'Gagal menghapus kendaraan.', 'error');
     }
-  },
-
-  setFilter(type, status) {
-    if (type !== undefined) this.filterType = type;
-    if (status !== undefined) this.filterStatus = status;
-    this.render();
-  },
-
-  setSearch(q) {
-    this.searchQuery = q;
-    this.render();
   }
 };

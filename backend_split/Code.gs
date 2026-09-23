@@ -172,12 +172,23 @@ function doPost(e) {
         body.adminId = userId;
         return wrapResult(handleRejectBooking(body));
         
-      // 4. Trips (Start / Finish)
+      // 4. Trips (Start / Finish / Check-In / Check-Out / Verify)
       case 'startTrip':
         return wrapResult(handleStartTrip(body));
         
       case 'finishTrip':
         return wrapResult(handleFinishTrip(body));
+
+      case 'checkInTrip':
+        return wrapResult(handleCheckInTrip(body));
+
+      case 'checkOutTrip':
+        return wrapResult(handleCheckOutTrip(body));
+
+      case 'verifyReturnTrip':
+        if (role !== CONFIG.ROLES.ADMIN) return forbiddenResponse();
+        body.adminId = userId;
+        return wrapResult(handleVerifyReturnTrip(body));
         
       // 5. Maintenance & Tariff
       case 'createMaintenance':
