@@ -8,12 +8,19 @@ const HistoryView = {
   trips: [],
   filterType: 'ALL',
 
-  async load() {
-    const res = await Api.request('getTrips', 'GET');
-    if (res.success && res.data) {
-      this.trips = res.data;
-      this.render();
-    }
+  load() {
+    // 1. Render data lokal instan (0ms - tanpa menunggu jaringan)
+    const localRes = Api.getMockDataSync('getTrips', {}, Auth.getUser());
+    this.trips = (localRes && localRes.data) || Store.data.trips || [];
+    this.render();
+
+    // 2. Background Revalidation jika remote API tersedia
+    Api.request('getTrips', 'GET', {}, false).then(res => {
+      if (res && res.success && res.data) {
+        this.trips = res.data;
+        this.render();
+      }
+    }).catch(() => {});
   },
 
   render() {

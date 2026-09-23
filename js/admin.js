@@ -12,23 +12,34 @@ const AdminView = {
   stats: null,
   activeAdminTab: 'approval',
 
-  async load() {
+  load() {
     if (!Auth.isAdmin()) {
       UI.switchView('login');
       return;
     }
 
-    const res = await Api.request('getAdminDashboard', 'GET');
-
-    if (res.success && res.data) {
-      this.users = res.data.users || [];
-      this.pendingBookings = res.data.pendingBookings || [];
-      this.pendingReturns = res.data.pendingReturns || [];
-      this.vehicles = res.data.vehicles || [];
-      this.stats = res.data.stats || null;
+    // 1. Render data lokal instan (0ms)
+    const localRes = Api.getMockDataSync('getAdminDashboard', {}, Auth.getUser());
+    if (localRes && localRes.success && localRes.data) {
+      this.users = localRes.data.users || [];
+      this.pendingBookings = localRes.data.pendingBookings || [];
+      this.pendingReturns = localRes.data.pendingReturns || [];
+      this.vehicles = localRes.data.vehicles || [];
+      this.stats = localRes.data.stats || null;
+      this.render();
     }
 
-    this.render();
+    // 2. Background Revalidation
+    Api.request('getAdminDashboard', 'GET', {}, false).then(res => {
+      if (res && res.success && res.data) {
+        this.users = res.data.users || [];
+        this.pendingBookings = res.data.pendingBookings || [];
+        this.pendingReturns = res.data.pendingReturns || [];
+        this.vehicles = res.data.vehicles || [];
+        this.stats = res.data.stats || null;
+        this.render();
+      }
+    }).catch(() => {});
   },
 
   setTab(tab) {

@@ -9,12 +9,19 @@ const VehiclesView = {
   filterStatus: 'ALL',
   searchQuery: '',
 
-  async load() {
-    const res = await Api.request('getVehicles', 'GET');
-    if (res.success && res.data) {
-      this.vehicles = res.data;
-      this.render();
-    }
+  load() {
+    // 1. Render data lokal instan (0ms)
+    const localRes = Api.getMockDataSync('getVehicles', {}, Auth.getUser());
+    this.vehicles = (localRes && localRes.data) || Store.data.vehicles || [];
+    this.render();
+
+    // 2. Background Revalidation
+    Api.request('getVehicles', 'GET', {}, false).then(res => {
+      if (res && res.success && res.data) {
+        this.vehicles = res.data;
+        this.render();
+      }
+    }).catch(() => {});
   },
 
   setFilter(type, status) {

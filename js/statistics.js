@@ -7,12 +7,21 @@ const StatisticsView = {
   stats: null,
   activeTab: 'count', // 'count' | 'km' | 'cost'
 
-  async load() {
-    const res = await Api.request('getStatistics', 'GET');
-    if (res.success && res.data) {
-      this.stats = res.data;
+  load() {
+    // 1. Render data lokal instan (0ms)
+    const localRes = Api.getMockDataSync('getStatistics', {}, Auth.getUser());
+    if (localRes && localRes.success && localRes.data) {
+      this.stats = localRes.data;
       this.render();
     }
+
+    // 2. Background Revalidation
+    Api.request('getStatistics', 'GET', {}, false).then(res => {
+      if (res && res.success && res.data) {
+        this.stats = res.data;
+        this.render();
+      }
+    }).catch(() => {});
   },
 
   render() {

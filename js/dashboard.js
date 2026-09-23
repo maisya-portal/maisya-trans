@@ -8,15 +8,24 @@ const DashboardView = {
   data: null,
   activeFilter: 'ALL',
 
-  async load() {
+  load() {
     const container = document.getElementById('dashboardContent');
     if (!container) return;
 
-    const res = await Api.request('getDashboard', 'GET');
-    if (res.success && res.data) {
-      this.data = res.data;
+    // 1. Render data lokal instan (0ms - tanpa menunggu jaringan / zero blank screen)
+    const localRes = Api.getMockDataSync('getDashboard', {}, Auth.getUser());
+    if (localRes && localRes.success && localRes.data) {
+      this.data = localRes.data;
       this.render();
     }
+
+    // 2. Background Revalidation jika remote API aktif
+    Api.request('getDashboard', 'GET', {}, false).then(res => {
+      if (res && res.success && res.data) {
+        this.data = res.data;
+        this.render();
+      }
+    }).catch(() => {});
   },
 
   setFilter(filter) {

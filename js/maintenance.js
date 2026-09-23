@@ -7,17 +7,25 @@ const MaintenanceView = {
   maintenanceList: [],
   vehicles: [],
 
-  async load() {
-    // Jalankan satu request tunggal untuk efisiensi
-    const res = await Api.request('getMaintenanceDashboard', 'GET');
-
-    if (res.success && res.data) {
-      this.maintenanceList = res.data.maintenance || [];
-      this.vehicles = res.data.vehicles || [];
+  load() {
+    // 1. Render data lokal instan (0ms)
+    const localRes = Api.getMockDataSync('getMaintenanceDashboard', {}, Auth.getUser());
+    if (localRes && localRes.success && localRes.data) {
+      this.maintenanceList = localRes.data.maintenance || [];
+      this.vehicles = localRes.data.vehicles || [];
+      this.renderHealthSummary();
+      this.renderMaintenanceHistory();
     }
 
-    this.renderHealthSummary();
-    this.renderMaintenanceHistory();
+    // 2. Background Revalidation
+    Api.request('getMaintenanceDashboard', 'GET', {}, false).then(res => {
+      if (res && res.success && res.data) {
+        this.maintenanceList = res.data.maintenance || [];
+        this.vehicles = res.data.vehicles || [];
+        this.renderHealthSummary();
+        this.renderMaintenanceHistory();
+      }
+    }).catch(() => {});
   },
 
   renderHealthSummary() {

@@ -6,13 +6,21 @@
 const NotificationsView = {
   notifications: [],
 
-  async load() {
-    const res = await Api.request('getNotifications', 'GET');
-    if (res.success && res.data) {
-      this.notifications = res.data;
-      this.render();
-      this.updateHeaderBadge();
-    }
+  load() {
+    // 1. Render data lokal instan (0ms)
+    const localRes = Api.getMockDataSync('getNotifications', {}, Auth.getUser());
+    this.notifications = (localRes && localRes.data) || Store.data.notifications || [];
+    this.render();
+    this.updateHeaderBadge();
+
+    // 2. Background Revalidation
+    Api.request('getNotifications', 'GET', {}, false).then(res => {
+      if (res && res.success && res.data) {
+        this.notifications = res.data;
+        this.render();
+        this.updateHeaderBadge();
+      }
+    }).catch(() => {});
   },
 
   render() {
