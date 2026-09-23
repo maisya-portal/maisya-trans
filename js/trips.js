@@ -25,12 +25,13 @@ const TripsView = {
           vehicleId: v.vehicleId,
           vehicleName: `${v.merk} ${v.model}`,
           nomorPolisi: v.nomorPolisi,
+          jenis: v.jenis,
           userName: v.activeTrip.userName,
           divisi: v.activeTrip.divisi,
           startTime: v.activeTrip.startTime,
           startKm: v.activeTrip.startKm,
           purpose: v.activeTrip.purpose,
-          ratePerKm: Number(Store.data.settings.DEFAULT_TARIFF) || 1000
+          ratePerKm: Store.getTariff(v.jenis)
         };
       }
     }
@@ -53,12 +54,13 @@ const TripsView = {
           vehicleId: v.vehicleId,
           vehicleName: `${v.merk} ${v.model}`,
           nomorPolisi: v.nomorPolisi,
+          jenis: v.jenis,
           userName: v.activeTrip.userName,
           divisi: v.activeTrip.divisi,
           startTime: v.activeTrip.startTime,
           startKm: v.activeTrip.startKm,
           purpose: v.activeTrip.purpose,
-          ratePerKm: Number(Store.data.settings.DEFAULT_TARIFF) || 1000
+          ratePerKm: Store.getTariff(v.jenis)
         };
       }
     }

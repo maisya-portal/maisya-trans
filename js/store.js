@@ -12,6 +12,7 @@ const Store = {
     vehicles: [],
     bookings: [],
     trips: [],
+    invoices: [],
     tariffs: [],
     maintenance: [],
     notifications: [],
@@ -39,14 +40,30 @@ const Store = {
   },
 
   /**
+   * Mendapatkan tarif per KM berdasarkan jenis kendaraan
+   */
+  getTariff(jenis) {
+    if (jenis === 'MOBIL') {
+      return Number(this.data.settings?.TARIFF_MOBIL) || 1500;
+    }
+    return Number(this.data.settings?.TARIFF_MOTOR) || 500;
+  },
+
+  /**
    * Memastikan integritas data local DB
    */
   ensureSchemaIntegrity() {
     if (!this.data.bookings) this.data.bookings = [];
     if (!this.data.trips) this.data.trips = [];
+    if (!this.data.invoices) this.data.invoices = [];
     if (!this.data.maintenance) this.data.maintenance = [];
     if (!this.data.notifications) this.data.notifications = [];
     if (!this.data.settings) this.data.settings = {};
+
+    // Inisialisasi tarif terpisah motor vs mobil
+    if (!this.data.settings.TARIFF_MOTOR) this.data.settings.TARIFF_MOTOR = '500';
+    if (!this.data.settings.TARIFF_MOBIL) this.data.settings.TARIFF_MOBIL = '1500';
+    if (!this.data.settings.DEFAULT_TARIFF) this.data.settings.DEFAULT_TARIFF = '1500';
 
     // Perbarui rekening
     if (!this.data.settings.BANK_ACCOUNT_NO || this.data.settings.BANK_ACCOUNT_NO === '7192830192') {
@@ -76,11 +93,15 @@ const Store = {
       if (!t.vehicleName) t.vehicleName = v.merk ? `${v.merk} ${v.model}` : 'Kendaraan';
       if (!t.nomorPolisi) t.nomorPolisi = v.nomorPolisi || '-';
       if (!t.jenis) t.jenis = v.jenis || 'MOTOR';
+      if (!t.ratePerKm) t.ratePerKm = t.jenis === 'MOBIL' ? 1500 : 500;
     });
 
-    // Jika trips atau maintenance kosong pada localStorage lama, seed agar tampilan lengkap
+    // Jika trips atau maintenance atau invoices kosong pada localStorage lama, seed agar tampilan lengkap
     if (this.data.trips.length === 0) {
       this.seedTrips();
+    }
+    if (this.data.invoices.length === 0) {
+      this.seedInvoices();
     }
     if (this.data.maintenance.length === 0) {
       this.seedMaintenance();
@@ -455,13 +476,18 @@ const Store = {
     this.data.settings = {
       APP_NAME: 'MAISYA-TRANS',
       TAGLINE: 'Mobilitas Aman, Tertib, dan Terdata',
-      DEFAULT_TARIFF: '1000',
+      TARIFF_MOTOR: '500',
+      TARIFF_MOBIL: '1500',
+      DEFAULT_TARIFF: '1500',
       APPROVAL_REQUIRED: 'true',
       ALLOW_REGISTRATION: 'true',
       BANK_NAME: 'Bank Syariah Indonesia (BSI)',
       BANK_ACCOUNT_NO: '5221717173',
       BANK_ACCOUNT_NAME: "Pondok Pesantren Imam Syafi'i Brebes"
     };
+
+    // 8. Invoices
+    this.seedInvoices();
 
     this.save();
   },
@@ -625,6 +651,47 @@ const Store = {
         message: 'Odometer saat ini mendekati batas jadwal ganti oli berkala berikutnya (12.600 KM).',
         isRead: false,
         createdAt: new Date().toISOString()
+      }
+    ];
+  },
+
+  seedInvoices() {
+    const dueDate = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().substring(0, 10);
+    this.data.invoices = [
+      {
+        invoiceId: 'INV-2026-001',
+        invoiceNumber: 'INV/PPISB/2026/09/001',
+        userId: 'USR-STAF-02',
+        userName: 'Ustadz Muhammad Rizqi',
+        divisi: 'Tata Usaha & Logistik',
+        noHp: '085712345678',
+        invoiceDate: '2026-09-20',
+        dueDate: dueDate,
+        tripIds: ['TRP-HIST-02'],
+        items: [
+          {
+            tripId: 'TRP-HIST-02',
+            vehicleName: 'Toyota Grand New Avanza 1.3 G',
+            nomorPolisi: 'G 1420 SY',
+            jenis: 'MOBIL',
+            tanggal: '2026-09-19',
+            startKm: 35140,
+            endKm: 35200,
+            distanceKm: 60,
+            ratePerKm: 1500,
+            totalCost: 90000,
+            purpose: 'Belanja logistik dapur santri di Pasar Induk Brebes'
+          }
+        ],
+        totalDistanceKm: 60,
+        totalAmount: 90000,
+        status: 'UNPAID',
+        paymentMethod: 'TRANSFER_BSI',
+        notes: 'Tagihan operasional logistik dapur santri PPISB',
+        bankName: 'Bank Syariah Indonesia (BSI)',
+        bankAccountNo: '5221717173',
+        bankAccountName: "Pondok Pesantren Imam Syafi'i Brebes",
+        createdAt: '2026-09-20T08:00:00.000Z'
       }
     ];
   }

@@ -371,7 +371,7 @@ const Api = {
           startKm: startKmNum || targetVeh.currentKm,
           endKm: 0,
           distanceKm: 0,
-          ratePerKm: Number(Store.data.settings.DEFAULT_TARIFF) || 1000,
+          ratePerKm: Store.getTariff(targetVeh.jenis),
           totalCost: 0,
           purpose: purpose || targetVeh.approvedBooking?.purpose || 'Operasional Pondok',
           tujuan: tujuan || targetVeh.approvedBooking?.tujuan || 'Brebes',
@@ -444,12 +444,11 @@ const Api = {
           };
         }
 
+        const targetVeh = Store.data.vehicles.find(v => v.vehicleId === trip.vehicleId);
         const dist = endKmNum - trip.startKm;
-        const rate = trip.ratePerKm || 1000;
+        const rate = trip.ratePerKm || (targetVeh ? Store.getTariff(targetVeh.jenis) : 1000);
         const isWaived = Boolean(isBbmFilled);
         const cost = isWaived ? 0 : (dist * rate);
-
-        const targetVeh = Store.data.vehicles.find(v => v.vehicleId === trip.vehicleId);
 
         trip.endTime = now;
         trip.endKm = endKmNum;
@@ -548,6 +547,7 @@ const Api = {
         const pendingBookings = Store.data.bookings.filter(b => b.status === 'PENDING');
         const pendingReturns = Store.data.trips.filter(t => t.status === 'PENDING_VERIFICATION');
         const stats = this.buildMockStatistics();
+        const invoices = Store.data.invoices || [];
 
         return {
           success: true,
@@ -556,9 +556,155 @@ const Api = {
             vehicles,
             pendingBookings,
             pendingReturns,
+            invoices,
+            tariffs: {
+              motor: Store.getTariff('MOTOR'),
+              mobil: Store.getTariff('MOBIL')
+            },
             stats
           }
         };
+      }
+
+      // --- INVOICES / TAGIHAN AKUMULASI BIAYA ---
+      case 'getInvoices': {
+        return { success: true, data: Store.data.invoices || [] };
+      }
+
+      case 'createInvoice': {
+        const { userName, divisi, noHp, tripIds, notes, dueDate } = data;
+        const selectedTrips = (Store.data.trips || []).filter(t => (tripIds || []).includes(t.tripId));
+        
+        let totalDistanceKm = 0;
+        let totalAmount = 0;
+        const items = selectedTrips.map(t => {
+          const dist = Number(t.distanceKm) || 0;
+          const cost = Number(t.totalCost) || 0;
+          totalDistanceKm += dist;
+          totalAmount += cost;
+          return {
+            tripId: t.tripId,
+            vehicleName: t.vehicleName,
+            nomorPolisi: t.nomorPolisi,
+            jenis: t.jenis,
+            tanggal: t.startTime ? t.startTime.substring(0, 10) : now.substring(0, 10),
+            startKm: t.startKm || 0,
+            endKm: t.endKm || 0,
+            distanceKm: dist,
+            ratePerKm: t.ratePerKm || (t.jenis === 'MOBIL' ? 1500 : 500),
+            totalCost: cost,
+            purpose: t.purpose || t.tujuan || 'Operasional'
+          };
+        });
+
+        const invoiceId = 'INV-' + Date.now().toString(36).toUpperCase();
+        const invCount = (Store.data.invoices || []).length + 1;
+        const invYear = new Date().getFullYear();
+        const invMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+        const invoiceNumber = `INV/PPISB/${invYear}/${invMonth}/${String(invCount).padStart(3, '0')}`;
+
+        const newInvoice = {
+          invoiceId,
+          invoiceNumber,
+          userId: selectedTrips[0]?.userId || (currentUser ? currentUser.userId : 'GUEST'),
+          userName: userName || selectedTrips[0]?.userName || 'Peminjam',
+          divisi: divisi || selectedTrips[0]?.divisi || 'Pesantren',
+          noHp: noHp || selectedTrips[0]?.noHp || '',
+          invoiceDate: now.substring(0, 10),
+          dueDate: dueDate || new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().substring(0, 10),
+          tripIds: tripIds || [],
+          items,
+          totalDistanceKm,
+          totalAmount,
+          status: 'UNPAID',
+          paymentMethod: 'TRANSFER_BSI',
+          notes: notes || 'Akumulasi biaya peminjaman operasional pesantren',
+          bankName: 'Bank Syariah Indonesia (BSI)',
+          bankAccountNo: '5221717173',
+          bankAccountName: "Pondok Pesantren Imam Syafi'i Brebes",
+          createdAt: now
+        };
+
+        selectedTrips.forEach(t => {
+          t.invoiceId = invoiceId;
+        });
+
+        if (!Store.data.invoices) Store.data.invoices = [];
+        Store.data.invoices.unshift(newInvoice);
+
+        Store.data.notifications.unshift({
+          notificationId: 'NTF-' + Date.now(),
+          userId: 'ALL',
+          type: 'TAGIHAN_BARU',
+          title: `Tagihan Baru Diterbitkan: ${newInvoice.invoiceNumber}`,
+          message: `Tagihan sebesar Rp${totalAmount.toLocaleString('id-ID')} a.n. ${newInvoice.userName} (${newInvoice.divisi}) telah diterbitkan.`,
+          isRead: false,
+          createdAt: now
+        });
+
+        Store.save();
+        return {
+          success: true,
+          message: 'Alhamdulillah, tagihan akumulasi peminjaman berhasil diterbitkan!',
+          data: newInvoice
+        };
+      }
+
+      case 'payInvoice': {
+        const { invoiceId, paymentMethod, paidAmount, notes } = data;
+        const inv = (Store.data.invoices || []).find(i => i.invoiceId === invoiceId);
+        if (!inv) return { success: false, message: 'Data tagihan tidak ditemukan.' };
+
+        inv.status = 'PAID';
+        inv.paidAt = now;
+        inv.paymentMethod = paymentMethod || inv.paymentMethod || 'TRANSFER_BSI';
+        inv.paidAmount = Number(paidAmount) || inv.totalAmount;
+        inv.verifiedBy = currentUser ? currentUser.nama : 'Admin Sarpras';
+        if (notes) inv.adminNotes = notes;
+
+        if (inv.tripIds && inv.tripIds.length > 0) {
+          Store.data.trips.forEach(t => {
+            if (inv.tripIds.includes(t.tripId)) {
+              t.isPaid = true;
+            }
+          });
+        }
+
+        Store.data.notifications.unshift({
+          notificationId: 'NTF-' + Date.now(),
+          userId: 'ADMIN',
+          type: 'TAGIHAN_LUNAS',
+          title: `Tagihan Lunas: ${inv.invoiceNumber}`,
+          message: `Pembayaran tagihan ${inv.invoiceNumber} sebesar Rp${inv.totalAmount.toLocaleString('id-ID')} (${inv.userName}) telah diverifikasi lunas.`,
+          isRead: false,
+          createdAt: now
+        });
+
+        Store.save();
+        return {
+          success: true,
+          message: `Tagihan ${inv.invoiceNumber} berhasil diverifikasi LUNAS!`,
+          data: inv
+        };
+      }
+
+      case 'deleteInvoice': {
+        const { invoiceId } = data;
+        const idx = (Store.data.invoices || []).findIndex(i => i.invoiceId === invoiceId);
+        if (idx === -1) return { success: false, message: 'Data tagihan tidak ditemukan.' };
+
+        const inv = Store.data.invoices[idx];
+        if (inv.tripIds) {
+          Store.data.trips.forEach(t => {
+            if (inv.tripIds.includes(t.tripId)) {
+              delete t.invoiceId;
+            }
+          });
+        }
+
+        Store.data.invoices.splice(idx, 1);
+        Store.save();
+        return { success: true, message: 'Tagihan berhasil dihapus.' };
       }
 
       // --- RIWAYAT PERJALANAN ---
@@ -621,12 +767,19 @@ const Api = {
         return { success: true, message: 'Catatan servis berhasil disimpan!', data: newMnt };
       }
 
-      // --- TARIFF ---
+      // --- TARIFF (MOTOR & MOBIL) ---
       case 'updateTariff': {
-        const r = Number(data.newRate);
-        Store.data.settings.DEFAULT_TARIFF = String(r);
+        const motorRate = Number(data.tariffMotor !== undefined ? data.tariffMotor : (data.newRate || 500));
+        const mobilRate = Number(data.tariffMobil !== undefined ? data.tariffMobil : (data.newRate || 1500));
+        
+        Store.data.settings.TARIFF_MOTOR = String(motorRate);
+        Store.data.settings.TARIFF_MOBIL = String(mobilRate);
+        Store.data.settings.DEFAULT_TARIFF = String(mobilRate);
         Store.save();
-        return { success: true, message: `Tarif berhasil diubah menjadi Rp${r.toLocaleString('id-ID')} / KM.` };
+        return {
+          success: true,
+          message: `Tarif berhasil disimpan: Motor Rp${motorRate.toLocaleString('id-ID')}/KM & Mobil Rp${mobilRate.toLocaleString('id-ID')}/KM.`
+        };
       }
 
       // --- NOTIFIKASI ---

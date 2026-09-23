@@ -1933,5 +1933,50 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ==========================================================================
+   PRINT STYLES FOR OFFICIAL RECEIPT / INVOICE KUITANSI
+   ========================================================================== */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #modalInvoiceReceipt,
+  #modalInvoiceReceipt .modal-card,
+  #modalInvoiceReceipt .modal-body,
+  #invoiceReceiptContent,
+  #invoiceReceiptContent * {
+    visibility: visible !important;
+  }
+  #modalInvoiceReceipt {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+  #modalInvoiceReceipt .modal-card {
+    max-width: 100% !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  #modalInvoiceReceipt .modal-header,
+  #modalInvoiceReceipt .modal-footer,
+  #modalInvoiceReceipt .modal-close-btn,
+  .app-sidebar,
+  .app-header,
+  #appSplashLoading {
+    display: none !important;
+  }
+  .receipt-print-wrapper {
+    border: none !important;
+    padding: 0 !important;
+  }
+}
+
 
 

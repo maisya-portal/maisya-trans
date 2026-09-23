@@ -47,6 +47,20 @@ const HistoryView = {
       const cIn = t.checkIn || {};
       const cOut = t.checkOut || {};
       const isWaived = cOut.isBbmFilled || t.totalCost === 0;
+      const rate = t.ratePerKm || (t.jenis === 'MOBIL' ? Store.getTariff('MOBIL') : Store.getTariff('MOTOR'));
+      
+      // Invoice resolution
+      const inv = (Store.data.invoices || []).find(i => i.invoiceId === t.invoiceId || (i.tripIds && i.tripIds.includes(t.tripId)));
+      let billingBadge = '';
+      if (isWaived) {
+        billingBadge = '<span class="badge badge-available" style="font-size:0.75rem;">⛽ BBM Diisi Sendiri</span>';
+      } else if (t.isPaid || (inv && inv.status === 'PAID')) {
+        billingBadge = '<span class="badge badge-available" style="font-size:0.75rem;">✓ Lunas</span>';
+      } else if (inv) {
+        billingBadge = `<span class="badge badge-pending" style="font-size:0.75rem;">📄 Tagihan: ${inv.invoiceNumber}</span>`;
+      } else {
+        billingBadge = '<span class="badge" style="background:#FEF3C7; color:#92400E; font-size:0.75rem;">⏳ Belum Ditagihkan</span>';
+      }
 
       return `
         <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-md); padding:1.25rem; margin-bottom:1rem; box-shadow:var(--shadow-sm);">
@@ -54,16 +68,19 @@ const HistoryView = {
             <div>
               <div style="font-weight:800; font-size:1.05rem; color:var(--text-primary);">${t.vehicleName}</div>
               <div style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">
-                ${t.jenis === 'MOTOR' ? '🏍️ Motor' : '🚗 Mobil'} • <span style="font-family:monospace; font-weight:700; background:var(--surface-secondary); padding:1px 6px; border-radius:4px;">${t.nomorPolisi}</span>
+                ${t.jenis === 'MOTOR' ? '🏍️ Sepeda Motor' : '🚗 Mobil Operasional'} • <span style="font-family:monospace; font-weight:700; background:var(--surface-secondary); padding:1px 6px; border-radius:4px;">${t.nomorPolisi}</span> • Tarif: <strong>Rp${rate.toLocaleString('id-ID')}/KM</strong>
               </div>
             </div>
             <div style="text-align:right;">
               <div style="font-weight:800; font-size:1.15rem; color:${isWaived ? '#10B981' : 'var(--primary-700)'};">
                 ${isWaived ? 'Rp 0 (BEBAS BIAYA)' : `Rp${(t.totalCost || 0).toLocaleString('id-ID')}`}
               </div>
-              <span class="badge ${t.status === 'FINISHED' ? 'badge-available' : (t.status === 'PENDING_VERIFICATION' ? 'badge-returned' : 'badge-in-use')}">
-                ${t.status === 'FINISHED' ? '✓ Selesai & Terverifikasi' : (t.status === 'PENDING_VERIFICATION' ? 'Menunggu Verifikasi Admin' : '🔴 Sedang Berjalan')}
-              </span>
+              <div style="display:flex; gap:4px; justify-content:flex-end; margin-top:2px; flex-wrap:wrap;">
+                <span class="badge ${t.status === 'FINISHED' ? 'badge-available' : (t.status === 'PENDING_VERIFICATION' ? 'badge-returned' : 'badge-in-use')}">
+                  ${t.status === 'FINISHED' ? '✓ Selesai' : (t.status === 'PENDING_VERIFICATION' ? 'Menunggu Verifikasi' : '🔴 Sedang Berjalan')}
+                </span>
+                ${billingBadge}
+              </div>
             </div>
           </div>
 
@@ -81,8 +98,8 @@ const HistoryView = {
               <strong>🛣️ ${t.distanceKm || 0} KM</strong> (${(t.startKm || 0).toLocaleString('id-ID')} → ${(t.endKm || t.startKm || 0).toLocaleString('id-ID')})
             </div>
             <div>
-              <span style="color:var(--text-muted);">Laporan BBM:</span><br>
-              <strong>${isWaived ? '⛽ Diisi Sendiri (Gratis)' : `💵 Bayar (${cOut.paymentMethod || 'TUNAI'})`}</strong>
+              <span style="color:var(--text-muted);">Biaya &amp; Tarif:</span><br>
+              <strong>${isWaived ? '⛽ Diisi Sendiri (Rp 0)' : `${t.distanceKm || 0} KM × Rp${rate.toLocaleString('id-ID')}`}</strong>
             </div>
           </div>
 

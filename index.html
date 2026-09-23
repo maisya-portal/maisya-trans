@@ -1687,8 +1687,160 @@
   </div>
 
   <!-- ============================================================
-       LOGOUT CONFIRMATION MODAL (Elegant Custom Dialog)
+       MODAL: BUAT TAGIHAN AKUMULASI (Admin Only)
+       ============================================================ -->
+  <div id="modalCreateInvoice" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 620px;">
+      <div class="modal-header">
+        <div class="modal-title">🧾 Terbitkan Tagihan Akumulasi Peminjaman</div>
+        <button class="modal-close-btn" data-close-modal="modalCreateInvoice">✕</button>
+      </div>
+      <form id="formCreateInvoice" onsubmit="AdminView.submitCreateInvoice(event)">
+        <div class="modal-body">
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;">
+            Pilih perjalanan selesai yang akan diakumulasikan ke dalam satu nota tagihan resmi pesantren.
+          </p>
 
+          <!-- Checklist Perjalanan -->
+          <div class="form-group">
+            <label class="form-label" style="font-weight:700;">1. Pilih Riwayat Perjalanan Belum Lunas *</label>
+            <div id="createInvoiceTripList" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; padding-right: 4px;">
+              <!-- Dynamic Trip Checkboxes -->
+            </div>
+          </div>
+
+          <!-- Live Totals Box -->
+          <div style="background:var(--primary-50); border:1px solid var(--primary-100); border-radius:8px; padding:0.85rem 1rem; margin:1rem 0; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-size:0.75rem; color:var(--primary-800); text-transform:uppercase; font-weight:700;">Total Akumulasi Terpilih:</div>
+              <div id="createInvoiceTotalKm" style="font-size:0.85rem; color:var(--primary-700); font-weight:600;">0 KM</div>
+            </div>
+            <div style="text-align:right;">
+              <div id="createInvoiceTotalAmount" style="font-size:1.35rem; font-weight:900; color:var(--primary-700);">
+                Rp0
+              </div>
+            </div>
+          </div>
+
+          <!-- Identitas Peminjam & Tagihan -->
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem;">
+            <div class="form-group">
+              <label class="form-label">Nama Peminjam / Penanggung Jawab *</label>
+              <input type="text" id="createInvoiceUserName" class="form-control" placeholder="Ustadz Ahmad..." required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Divisi / Bagian</label>
+              <input type="text" id="createInvoiceDivisi" class="form-control" placeholder="Pendidikan / Logistik / Asrama">
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem;">
+            <div class="form-group">
+              <label class="form-label">No. WhatsApp</label>
+              <input type="tel" id="createInvoiceNoHp" class="form-control" placeholder="081234567890">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tanggal Jatuh Tempo *</label>
+              <input type="date" id="createInvoiceDueDate" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Catatan Tagihan (Opsional)</label>
+            <input type="text" id="createInvoiceNotes" class="form-control" placeholder="Tagihan operasional kegiatan santri...">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close-modal="modalCreateInvoice">Batal</button>
+          <button type="submit" id="btnSubmitCreateInvoice" class="btn btn-primary" style="font-weight:700;">
+            ✓ Terbitkan Tagihan Resmi
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: VERIFIKASI PELUNASAN TAGIHAN (Admin Only)
+       ============================================================ -->
+  <div id="modalPayInvoice" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-title">💳 Verifikasi Pelunasan Tagihan</div>
+        <button class="modal-close-btn" data-close-modal="modalPayInvoice">✕</button>
+      </div>
+      <form id="formPayInvoice" onsubmit="AdminView.submitPayInvoice(event)">
+        <div class="modal-body">
+          <input type="hidden" id="payInvoiceId">
+
+          <div style="background:var(--surface-secondary); padding:1rem; border-radius:8px; margin-bottom:1rem;">
+            <div style="font-size:0.8rem; color:var(--text-muted);">No. Tagihan:</div>
+            <div id="payInvoiceNumber" style="font-family:monospace; font-weight:800; font-size:1.05rem; color:var(--primary-700);">INV/PPISB/2026/...</div>
+            
+            <div style="margin-top:0.5rem; font-size:0.85rem;">
+              <span style="color:var(--text-muted);">Peminjam:</span> <strong id="payInvoiceUserName">-</strong>
+            </div>
+
+            <div style="margin-top:0.75rem; border-top:1px solid var(--surface-border); padding-top:0.5rem; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-weight:700;">Nominal Tagihan:</span>
+              <span id="payInvoiceAmount" style="font-size:1.25rem; font-weight:900; color:var(--primary-700);">Rp0</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Metode Pembayaran *</label>
+            <select id="payInvoiceMethod" class="form-control" required>
+              <option value="TRANSFER_BSI">Transfer BSI (5221717173 a.n. PPISB)</option>
+              <option value="TUNAI">Tunai ke Admin Sarpras</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Catatan Pelunasan / No. Referensi Transfer</label>
+            <input type="text" id="payInvoiceNotes" class="form-control" placeholder="Contoh: Sudah transfer via BSI Mobile pk 10:30">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close-modal="modalPayInvoice">Batal</button>
+          <button type="submit" class="btn btn-primary" style="font-weight:700;">
+            ✓ Konfirmasi &amp; Tandai LUNAS
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: KUITANSI & NOTA TAGIHAN RESMI (Printable)
+       ============================================================ -->
+  <div id="modalInvoiceReceipt" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 780px;">
+      <div class="modal-header">
+        <div class="modal-title">📄 Kuitansi / Nota Tagihan Resmi PPISB</div>
+        <button class="modal-close-btn" data-close-modal="modalInvoiceReceipt">✕</button>
+      </div>
+      <div class="modal-body" style="padding:1rem; max-height:75vh; overflow-y:auto;">
+        <input type="hidden" id="receiptInvoiceId">
+        <div id="invoiceReceiptContent">
+          <!-- Dynamic Receipt HTML -->
+        </div>
+      </div>
+      <div class="modal-footer" style="display:flex; justify-content:space-between;">
+        <div style="display:flex; gap:0.5rem;">
+          <button type="button" class="btn btn-primary" onclick="window.print()" style="font-weight:700; display:flex; align-items:center; gap:6px;">
+            <span>🖨️</span> Cetak / Simpan PDF
+          </button>
+          <button type="button" class="btn btn-outline" onclick="AdminView.shareInvoiceWhatsApp(document.getElementById('receiptInvoiceId').value)" style="display:flex; align-items:center; gap:6px;">
+            <span>📱</span> Kirim WA
+          </button>
+        </div>
+        <button type="button" class="btn btn-outline" data-close-modal="modalInvoiceReceipt">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       LOGOUT CONFIRMATION MODAL (Elegant Custom Dialog)
        ============================================================ -->
   <div id="logoutConfirmModal" class="logout-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
     <div class="logout-modal-card">
