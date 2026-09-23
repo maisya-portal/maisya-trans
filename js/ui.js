@@ -103,12 +103,14 @@ const UI = {
     const titles = {
       dashboard: 'Beranda Monitoring',
       vehicles: 'Daftar Armada Kendaraan',
-      booking: 'Peminjaman Kendaraan',
-      history: 'Riwayat Pemakaian',
-      notifications: 'Pusat Notifikasi',
-      profile: 'Profil Pengguna',
-      admin: 'Dashboard Admin Sarpras',
-      login: 'Masuk Aplikasi',
+      booking: 'Formulir Peminjaman Kendaraan',
+      history: 'Riwayat Peminjaman & Biaya',
+      maintenance: 'Monitoring Servis & Oli',
+      statistics: 'Statistik & Efisiensi Armada',
+      notifications: 'Pusat Pemberitahuan',
+      profile: 'Profil & Pengaturan Admin',
+      admin: 'Panel Kontrol Admin Sarpras',
+      login: 'Masuk Admin Sarpras',
       register: 'Pendaftaran Akun'
     };
     if (titleEl) {
@@ -129,6 +131,12 @@ const UI = {
         break;
       case 'history':
         HistoryView.load();
+        break;
+      case 'maintenance':
+        MaintenanceView.load();
+        break;
+      case 'statistics':
+        StatisticsView.load();
         break;
       case 'notifications':
         NotificationsView.load();

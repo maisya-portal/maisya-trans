@@ -44,13 +44,51 @@ const Store = {
   ensureSchemaIntegrity() {
     if (!this.data.bookings) this.data.bookings = [];
     if (!this.data.trips) this.data.trips = [];
+    if (!this.data.maintenance) this.data.maintenance = [];
     if (!this.data.notifications) this.data.notifications = [];
     if (!this.data.settings) this.data.settings = {};
+
+    // Perbarui rekening
     if (!this.data.settings.BANK_ACCOUNT_NO || this.data.settings.BANK_ACCOUNT_NO === '7192830192') {
       this.data.settings.BANK_NAME = 'Bank Syariah Indonesia (BSI)';
       this.data.settings.BANK_ACCOUNT_NO = '5221717173';
       this.data.settings.BANK_ACCOUNT_NAME = "Pondok Pesantren Imam Syafi'i Brebes";
     }
+
+    // Backfill bookings
+    this.data.bookings.forEach(b => {
+      const v = this.data.vehicles.find(x => x.vehicleId === b.vehicleId) || {};
+      const u = (this.data.users && this.data.users.find(x => x.userId === b.userId)) || {};
+      if (!b.userName) b.userName = b.nama_peminjam || u.nama || 'Ustadz Pesantren';
+      if (!b.divisi) b.divisi = u.divisi || 'Pendidikan & Asrama';
+      if (!b.vehicleName) b.vehicleName = v.merk ? `${v.merk} ${v.model}` : 'Kendaraan Pondok';
+      if (!b.nomorPolisi) b.nomorPolisi = v.nomorPolisi || '-';
+      if (!b.tujuan) b.tujuan = b.purpose || 'Brebes';
+      if (!b.status) b.status = 'APPROVED';
+    });
+
+    // Backfill trips
+    this.data.trips.forEach(t => {
+      const v = this.data.vehicles.find(x => x.vehicleId === t.vehicleId) || {};
+      const u = (this.data.users && this.data.users.find(x => x.userId === t.userId)) || {};
+      if (!t.userName) t.userName = u.nama || 'Pengguna Pesantren';
+      if (!t.divisi) t.divisi = u.divisi || 'Pondok';
+      if (!t.vehicleName) t.vehicleName = v.merk ? `${v.merk} ${v.model}` : 'Kendaraan';
+      if (!t.nomorPolisi) t.nomorPolisi = v.nomorPolisi || '-';
+      if (!t.jenis) t.jenis = v.jenis || 'MOTOR';
+    });
+
+    // Jika trips atau maintenance kosong pada localStorage lama, seed agar tampilan lengkap
+    if (this.data.trips.length === 0) {
+      this.seedTrips();
+    }
+    if (this.data.maintenance.length === 0) {
+      this.seedMaintenance();
+    }
+    if (this.data.notifications.length === 0) {
+      this.seedNotifications();
+    }
+
     this.save();
   },
 
@@ -426,6 +464,169 @@ const Store = {
     };
 
     this.save();
+  },
+
+  seedTrips() {
+    this.data.trips = [
+      {
+        tripId: 'TRP-HIST-01',
+        bookingId: 'BKG-HIST-01',
+        userId: 'USR-GURU-01',
+        userName: 'Ustadz Ahmad Fauzi',
+        divisi: 'Pendidikan & Asrama',
+        noHp: '081298765432',
+        vehicleId: 'VEH-MTR-01',
+        vehicleName: 'Honda Vario 160 CBS',
+        nomorPolisi: 'G 2841 QX',
+        jenis: 'MOTOR',
+        startTime: '2026-09-20T08:00:00.000Z',
+        endTime: '2026-09-20T10:15:00.000Z',
+        startKm: 12422,
+        endKm: 12450,
+        distanceKm: 28,
+        ratePerKm: 1000,
+        totalCost: 0,
+        purpose: 'Keperluan koordinasi dinas luar pondok',
+        tujuan: 'Dinas Pendidikan Brebes',
+        passengerCount: 1,
+        checkIn: {
+          startKm: 12422,
+          fuelLevel: '50%',
+          cleanliness: 'Bersih',
+          exteriorCondition: 'Baik'
+        },
+        checkOut: {
+          endKm: 12450,
+          fuelLevel: '75%',
+          cleanliness: 'Bersih',
+          isBbmFilled: true,
+          bbmCost: 35000,
+          bbmReceiptUrl: '',
+          paymentMethod: 'BBM_WAIVED',
+          isPaid: true
+        },
+        damageNotes: '',
+        status: 'FINISHED',
+        verifiedBy: 'USR-ADMIN-01',
+        verifiedAt: '2026-09-20T10:30:00.000Z',
+        createdAt: '2026-09-20T10:15:00.000Z'
+      },
+      {
+        tripId: 'TRP-HIST-02',
+        bookingId: 'BKG-HIST-02',
+        userId: 'USR-STAF-02',
+        userName: 'Ustadz Muhammad Rizqi',
+        divisi: 'Tata Usaha & Logistik',
+        noHp: '085712345678',
+        vehicleId: 'VEH-MBL-01',
+        vehicleName: 'Toyota Grand New Avanza 1.3 G',
+        nomorPolisi: 'G 1420 SY',
+        jenis: 'MOBIL',
+        startTime: '2026-09-19T09:00:00.000Z',
+        endTime: '2026-09-19T12:30:00.000Z',
+        startKm: 35140,
+        endKm: 35200,
+        distanceKm: 60,
+        ratePerKm: 1000,
+        totalCost: 60000,
+        purpose: 'Belanja logistik dapur santri di Pasar Induk Brebes',
+        tujuan: 'Pasar Induk Brebes',
+        passengerCount: 3,
+        checkIn: {
+          startKm: 35140,
+          fuelLevel: '50%',
+          cleanliness: 'Bersih',
+          exteriorCondition: 'Baik'
+        },
+        checkOut: {
+          endKm: 35200,
+          fuelLevel: '50%',
+          cleanliness: 'Bersih',
+          isBbmFilled: false,
+          paymentMethod: 'TRANSFER',
+          transferProofUrl: '',
+          isPaid: true
+        },
+        damageNotes: '',
+        status: 'FINISHED',
+        verifiedBy: 'USR-ADMIN-01',
+        verifiedAt: '2026-09-19T12:45:00.000Z',
+        createdAt: '2026-09-19T12:30:00.000Z'
+      }
+    ];
+  },
+
+  seedMaintenance() {
+    this.data.maintenance = [
+      {
+        maintenanceId: 'MNT-001',
+        vehicleId: 'VEH-MTR-01',
+        vehicleName: 'Honda Vario 160 CBS',
+        nomorPolisi: 'G 2841 QX',
+        jenis: 'MOTOR',
+        type: 'GANTI_OLI',
+        date: '2026-08-15',
+        km: 10600,
+        description: 'Ganti oli mesin AHM SPX2 dan oli gardan',
+        cost: 95000,
+        nextDueKm: 12600,
+        nextDueDate: '2026-10-15',
+        createdBy: 'USR-ADMIN-01'
+      },
+      {
+        maintenanceId: 'MNT-002',
+        vehicleId: 'VEH-MBL-01',
+        vehicleName: 'Toyota Grand New Avanza 1.3 G',
+        nomorPolisi: 'G 1420 SY',
+        jenis: 'MOBIL',
+        type: 'TUNE_UP',
+        date: '2026-07-10',
+        km: 30000,
+        description: 'Tune-up mesin berkala 30.000 KM & rotasi ban',
+        cost: 450000,
+        nextDueKm: 40000,
+        nextDueDate: '2026-12-10',
+        createdBy: 'USR-ADMIN-01'
+      },
+      {
+        maintenanceId: 'MNT-003',
+        vehicleId: 'VEH-MBL-02',
+        vehicleName: 'Daihatsu Gran Max Blind Van',
+        nomorPolisi: 'G 8192 ZA',
+        jenis: 'MOBIL',
+        type: 'SERVIS_REM',
+        date: '2026-09-22',
+        km: 62100,
+        description: 'Penggantian kampas rem depan dan kuras minyak rem',
+        cost: 380000,
+        nextDueKm: 70000,
+        nextDueDate: '2027-03-22',
+        createdBy: 'USR-ADMIN-01'
+      }
+    ];
+  },
+
+  seedNotifications() {
+    this.data.notifications = [
+      {
+        notificationId: 'NTF-001',
+        userId: 'ALL',
+        type: 'INFO',
+        title: 'Sistem Peminjaman Kendaraan Terbuka Aktif',
+        message: 'Pengguna dapat langsung mengajukan peminjaman kendaraan tanpa login. Kunci diambil setelah disetujui Admin Sarpras.',
+        isRead: false,
+        createdAt: new Date().toISOString()
+      },
+      {
+        notificationId: 'NTF-002',
+        userId: 'ADMIN',
+        type: 'GANTI_OLI',
+        title: 'Pengingat Ganti Oli: Honda Vario 160 (G 2841 QX)',
+        message: 'Odometer saat ini mendekati batas jadwal ganti oli berkala berikutnya (12.600 KM).',
+        isRead: false,
+        createdAt: new Date().toISOString()
+      }
+    ];
   }
 };
 

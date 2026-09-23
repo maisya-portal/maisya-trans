@@ -53,6 +53,52 @@ const App = {
 
     // 5. Gentle Polling (15 Detik) untuk Sinkronisasi Data Real-time
     this.startPolling();
+
+    // 6. Jalankan Animasi Kendaraan Melaju (Splash Loading)
+    this.runSplashLoading();
+  },
+
+  /**
+   * Animasi Kendaraan Melaju pada Pembukaan Aplikasi
+   */
+  runSplashLoading() {
+    const splash = document.getElementById('appSplashLoading');
+    if (!splash) return;
+
+    const bar = document.getElementById('splashProgressBar');
+    const text = document.getElementById('splashStatusText');
+
+    const steps = [
+      { progress: 25, label: 'Bismillah, memeriksa status armada...' },
+      { progress: 55, label: 'Menghubungkan sistem Live Argo real-time...' },
+      { progress: 85, label: 'Memuat kesiapan motor & mobil pesantren...' },
+      { progress: 100, label: 'Mobilitas Aman, Tertib, dan Terdata ✓' }
+    ];
+
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      if (currentStep < steps.length) {
+        const item = steps[currentStep];
+        if (bar) bar.style.width = `${item.progress}%`;
+        if (text) text.textContent = item.label;
+        currentStep++;
+      } else {
+        clearInterval(interval);
+        setTimeout(() => {
+          this.dismissSplash();
+        }, 350);
+      }
+    }, 420);
+  },
+
+  dismissSplash() {
+    const splash = document.getElementById('appSplashLoading');
+    if (splash) {
+      splash.classList.add('fade-out');
+      setTimeout(() => {
+        splash.style.display = 'none';
+      }, 600);
+    }
   },
 
   /**

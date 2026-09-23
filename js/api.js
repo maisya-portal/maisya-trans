@@ -556,13 +556,29 @@ const Api = {
           }
 
           // --- RIWAYAT PERJALANAN ---
-          case 'getTrips': {
+          case 'getTrips':
+          case 'getHistory': {
             return resolve({ success: true, data: Store.data.trips });
+          }
+
+          // --- STATISTIK & EFISIENSI ARMADA ---
+          case 'getStatistics': {
+            return resolve({ success: true, data: this.buildMockStatistics() });
           }
 
           // --- PENGINGAT SERVIS & PEMELIHARAAN ---
           case 'getMaintenance': {
-            return resolve({ success: true, data: Store.data.maintenance });
+            return resolve({ success: true, data: Store.data.maintenance || [] });
+          }
+
+          case 'getMaintenanceDashboard': {
+            return resolve({
+              success: true,
+              data: {
+                maintenance: Store.data.maintenance || [],
+                vehicles: this.calculateVehicleHealth(Store.data.vehicles)
+              }
+            });
           }
 
           case 'createMaintenance': {

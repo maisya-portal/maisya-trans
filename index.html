@@ -46,6 +46,95 @@
 </head>
 <body>
 
+  <!-- =========================================================================
+       ANIMATED VEHICLE SPEEDING SPLASH SCREEN (PONDOK PESANTREN IMAM SYAFI'I)
+       ========================================================================= -->
+  <div id="appSplashLoading">
+    <div class="splash-bg-decor"></div>
+    <div class="splash-speed-lines"></div>
+
+    <!-- Branding Header -->
+    <div class="splash-brand-wrap">
+      <img src="./assets/logo/logo.png?v=2.0.0" alt="Logo PP. Imam Syafi'i Brebes" class="splash-logo-img">
+      <h1 class="splash-title">MAISYA-TRANS</h1>
+      <div class="splash-subtitle">PP. IMAM SYAFI'I BREBES</div>
+    </div>
+
+    <!-- Road & Speeding Vehicle Stage -->
+    <div class="splash-stage-container">
+      <!-- Vehicle Animation Wrapper -->
+      <div class="splash-vehicle-wrapper">
+        <!-- Headlight Projection Beam -->
+        <div class="splash-headlight-cone"></div>
+
+        <!-- Exhaust Smoke -->
+        <div class="splash-exhaust-smoke">
+          <div class="smoke-puff"></div>
+          <div class="smoke-puff"></div>
+          <div class="smoke-puff"></div>
+        </div>
+
+        <!-- Custom SVG Vehicle (Pesantren Operasional Van) -->
+        <svg viewBox="0 0 240 100" width="240" height="100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Minibus / Van Body -->
+          <path d="M25 65 L20 45 Q20 30 35 28 L145 28 Q175 30 190 45 L215 52 Q225 56 225 68 L225 76 L25 76 Z" fill="#0D5C3A" />
+          <!-- Roof & Aerodynamic Curve -->
+          <path d="M35 28 L145 28 Q170 30 185 45 L145 45 L35 45 Z" fill="#10B981" opacity="0.4" />
+          <!-- Windshield & Windows -->
+          <path d="M150 33 L182 46 L148 46 Z" fill="#93C5FD" opacity="0.85" />
+          <rect x="95" y="33" width="45" height="13" rx="2" fill="#BAE6FD" opacity="0.85" />
+          <rect x="42" y="33" width="45" height="13" rx="2" fill="#BAE6FD" opacity="0.85" />
+          <!-- Islamic Gold Stripe Accent -->
+          <path d="M20 54 L220 54 L215 58 L20 58 Z" fill="#D4AF37" />
+          <!-- Emblem "MAISYA" -->
+          <text x="75" y="66" fill="#FFFFFF" font-size="9" font-weight="900" letter-spacing="1" font-family="sans-serif">MAISYA-TRANS</text>
+          <!-- Front Bumper & Headlight -->
+          <rect x="220" y="56" width="6" height="8" rx="2" fill="#FBBF24" filter="drop-shadow(0 0 6px #FDE047)" />
+          <!-- Rear Taillight -->
+          <rect x="18" y="50" width="4" height="12" rx="1" fill="#EF4444" filter="drop-shadow(0 0 4px #EF4444)" />
+          
+          <!-- Wheel Well Cutouts -->
+          <circle cx="65" cy="76" r="19" fill="#041E13" />
+          <circle cx="180" cy="76" r="19" fill="#041E13" />
+
+          <!-- Back Wheel (Rotating) -->
+          <g class="splash-wheel" style="transform-origin: 65px 76px;">
+            <circle cx="65" cy="76" r="16" fill="#1F2937" stroke="#374151" stroke-width="2" />
+            <circle cx="65" cy="76" r="10" fill="#111827" stroke="#D4AF37" stroke-width="1.5" />
+            <line x1="65" y1="62" x2="65" y2="90" stroke="#E5E7EB" stroke-width="1.5" />
+            <line x1="51" y1="76" x2="79" y2="76" stroke="#E5E7EB" stroke-width="1.5" />
+            <circle cx="65" cy="76" r="3" fill="#D4AF37" />
+          </g>
+
+          <!-- Front Wheel (Rotating) -->
+          <g class="splash-wheel" style="transform-origin: 180px 76px;">
+            <circle cx="180" cy="76" r="16" fill="#1F2937" stroke="#374151" stroke-width="2" />
+            <circle cx="180" cy="76" r="10" fill="#111827" stroke="#D4AF37" stroke-width="1.5" />
+            <line x1="180" y1="62" x2="180" y2="90" stroke="#E5E7EB" stroke-width="1.5" />
+            <line x1="166" y1="76" x2="194" y2="76" stroke="#E5E7EB" stroke-width="1.5" />
+            <circle cx="180" cy="76" r="3" fill="#D4AF37" />
+          </g>
+        </svg>
+      </div>
+
+      <!-- Asphalt Road Track -->
+      <div class="splash-road-box">
+        <div class="splash-road-stripes"></div>
+      </div>
+    </div>
+
+    <!-- Progress Tracker & Live Status -->
+    <div class="splash-progress-wrapper">
+      <div class="splash-progress-track">
+        <div id="splashProgressBar" class="splash-progress-fill"></div>
+      </div>
+      <div id="splashStatusText" class="splash-status-text">Bismillah, menyiapkan armada...</div>
+      <button type="button" class="splash-skip-btn" onclick="App.dismissSplash()">
+        Langsung ke Beranda ❯
+      </button>
+    </div>
+  </div>
+
   <!-- Offline Notice Bar -->
   <div id="offlineNoticeBar" class="offline-notice-bar"></div>
 
@@ -58,7 +147,7 @@
     <aside id="appSidebar" class="app-sidebar">
       <div class="sidebar-header">
         <div style="display:flex; align-items:center; gap:0.75rem; flex:1; min-width:0;">
-          <img src="./assets/logo/logo.png?v=1.0.6" alt="Logo PP. Imam Syafi'i Brebes" class="sidebar-logo">
+          <img src="./assets/logo/logo.png?v=2.0.0" alt="Logo PP. Imam Syafi'i Brebes" class="sidebar-logo">
           <div style="min-width:0;">
             <div class="sidebar-brand-title">MAISYA-TRANS</div>
             <div class="sidebar-brand-sub">PP. IMAM SYAFI'I BREBES</div>
@@ -77,6 +166,7 @@
         </button>
       </div>
 
+      <!-- Navigasi Menu Ringkas & Terstruktur -->
       <nav class="sidebar-nav">
         <div class="sidebar-section-title">Menu Utama</div>
         <button class="nav-link active" data-view="dashboard">
@@ -84,53 +174,41 @@
           <span>Beranda Monitoring</span>
         </button>
 
+        <button class="nav-link" data-view="booking">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <span>Pinjam Kendaraan</span>
+        </button>
+
         <button class="nav-link" data-view="vehicles">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
           <span>Armada Kendaraan</span>
         </button>
 
-        <button class="nav-link" data-view="booking">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-          <span>Pinjam & Reservasi</span>
-        </button>
-
         <button class="nav-link" data-view="history">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-          <span>Riwayat & Biaya</span>
+          <span>Riwayat Peminjaman</span>
         </button>
 
-        <button class="nav-link" data-view="notifications">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-          <span>Notifikasi</span>
-        </button>
-
-        <div class="sidebar-section-title">Monitoring & Laporan</div>
         <button class="nav-link" data-view="maintenance">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-          <span>Monitoring Servis & Oli</span>
+          <span>Status Servis & Oli</span>
         </button>
 
         <button class="nav-link" data-view="statistics">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-          <span>Statistik Pemakaian</span>
+          <span>Statistik Armada</span>
         </button>
 
-        <!-- Admin Only Section -->
-        <div class="admin-only-nav sidebar-section-title">Khusus Admin Sarpras</div>
+        <!-- Khusus Pengelola / Admin Sarpras (Hanya tampil saat Admin login) -->
+        <div class="admin-only-nav sidebar-section-title">Pengelola Sarpras</div>
         <button class="admin-only-nav nav-link" data-view="admin">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-          <span>Kelola & Approval</span>
+          <span>Panel Admin Sarpras</span>
         </button>
 
-        <div class="sidebar-section-title">Akun & Sesi</div>
-        <button class="nav-link" data-view="profile">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-          <span>Profil Pengguna</span>
-        </button>
-
-        <button id="sidebarLogoutBtn" class="nav-link logout-link-btn" onclick="Auth.logout()" style="color:#DC2626; font-weight:700;">
+        <button class="admin-only-nav nav-link logout-link-btn" onclick="Auth.logout()" style="color:#DC2626; font-weight:700;">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-          <span>Keluar (Logout)</span>
+          <span>Keluar Admin</span>
         </button>
       </nav>
 
@@ -675,14 +753,14 @@
           <span>Beranda</span>
         </button>
 
-        <button class="bottom-nav-item" data-view="vehicles">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-          <span>Armada</span>
-        </button>
-
         <button class="bottom-nav-item" data-view="booking">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
           <span>Pinjam</span>
+        </button>
+
+        <button class="bottom-nav-item" data-view="vehicles">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          <span>Armada</span>
         </button>
 
         <button class="bottom-nav-item" data-view="history">
@@ -690,9 +768,9 @@
           <span>Riwayat</span>
         </button>
 
-        <button class="bottom-nav-item" data-view="profile">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-          <span>Profil</span>
+        <button class="bottom-nav-item" data-view="maintenance">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span>Servis</span>
         </button>
       </div>
     </nav>

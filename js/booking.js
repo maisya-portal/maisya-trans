@@ -391,17 +391,27 @@ const BookingView = {
       return;
     }
 
-    container.innerHTML = bookings.map(b => `
-      <div style="background:var(--surface-secondary); padding:0.75rem; border-radius:10px; margin-bottom:0.5rem; font-size:0.82rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <strong style="color:var(--text-primary);">${b.userName}</strong>
-          <span class="badge ${b.status === 'APPROVED' ? 'badge-approved' : 'badge-pending'}">${b.status === 'APPROVED' ? 'Disetujui' : 'Menunggu'}</span>
+    container.innerHTML = bookings.map(b => {
+      const v = Store.data.vehicles.find(x => x.vehicleId === b.vehicleId) || {};
+      const u = (Store.data.users && Store.data.users.find(x => x.userId === b.userId)) || {};
+      const borrower = b.userName || b.nama_peminjam || u.nama || 'Pengguna Pesantren';
+      const division = b.divisi || u.divisi || 'Pondok';
+      const vehName = b.vehicleName || (v.merk ? `${v.merk} ${v.model}` : 'Kendaraan Pondok');
+      const plate = b.nomorPolisi || v.nomorPolisi || '-';
+      const destination = b.tujuan || b.purpose || 'Operasional Pondok';
+
+      return `
+        <div style="background:var(--surface-secondary); padding:0.75rem; border-radius:10px; margin-bottom:0.5rem; font-size:0.82rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:var(--text-primary);">${borrower} (${division})</strong>
+            <span class="badge ${b.status === 'APPROVED' ? 'badge-approved' : 'badge-pending'}">${b.status === 'APPROVED' ? 'Disetujui' : 'Menunggu'}</span>
+          </div>
+          <div style="color:var(--primary-700); font-weight:700; margin-top:2px;">${vehName} (${plate})</div>
+          <div style="color:var(--text-muted); margin-top:2px;">📅 ${b.tanggal || '-'} • 🕒 ${b.startTime || '08:00'} - ${b.estimatedEndTime || 'Selesai'}</div>
+          <div style="color:var(--text-secondary); margin-top:2px;">📍 Tujuan: ${destination}</div>
         </div>
-        <div style="color:var(--primary-700); font-weight:700; margin-top:2px;">${b.vehicleName} (${b.nomorPolisi || '-'})</div>
-        <div style="color:var(--text-muted); margin-top:2px;">📅 ${b.tanggal} • 🕒 ${b.startTime} - ${b.estimatedEndTime}</div>
-        <div style="color:var(--text-secondary); margin-top:2px;">📍 Tujuan: ${b.tujuan || b.purpose}</div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   },
 
   renderHistory() {
