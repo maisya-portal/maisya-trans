@@ -54,47 +54,65 @@ const DashboardView = {
 
     container.innerHTML = `
       <!-- 1. Hero Banner: Informasi Real-time Pondok -->
-      <div class="welcome-banner" style="background: linear-gradient(135deg, var(--primary-800), var(--primary-700)); color:#FFFFFF; border-radius:var(--border-radius-lg); padding:1.5rem; margin-bottom:1.5rem; position:relative; overflow:hidden; box-shadow:var(--shadow-lg);">
-        <div style="position:relative; z-index:2; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:1rem;">
-          <div>
-            <div style="font-size:0.8rem; font-weight:700; color:var(--gold-400); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">
-              Pondok Pesantren Imam Syafi'i Brebes
-            </div>
-            <h2 style="font-size:1.4rem; font-weight:800; color:#FFFFFF; margin-bottom:4px;">
-              ${isAdmin ? `Assalamu'alaikum, ${user?.nama || 'Admin Sarpras'} 🛡️` : 'Sistem Peminjaman Kendaraan Operasional'}
-            </h2>
-            <p style="font-size:0.88rem; color:rgba(255,255,255,0.85); max-width:620px;">
-              Akses peminjaman mudah untuk seluruh asatidzah, guru, staf, dan santri. Pantau status armada dan argo pemakaian real-time secara transparan.
-            </p>
-          </div>
+      <div class="welcome-card">
+        <div class="welcome-card-content">
+          <div class="welcome-tag">PONDOK PESANTREN IMAM SYAFI'I BREBES</div>
+          <h2 class="welcome-title">
+            ${isAdmin ? `Assalamu'alaikum, ${user?.nama || 'Admin Sarpras'} 🛡️` : 'Sistem Peminjaman Kendaraan Operasional'}
+          </h2>
+          <p class="welcome-desc">
+            Akses peminjaman terpadu, tertib, dan transparan untuk asatidzah, guru, staf, dan santri.
+          </p>
+        </div>
+        <div class="welcome-actions">
+          <button class="btn btn-gold btn-sm" onclick="BookingView.openBookingModal()" style="font-weight:700;">
+            ➕ Ajukan Peminjaman
+          </button>
+          <button class="btn btn-outline-white btn-sm" onclick="DashboardView.load()" title="Segarkan Data">
+            🔄 Segarkan
+          </button>
+        </div>
+      </div>
 
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-            <button class="btn btn-gold btn-sm" onclick="BookingView.openBookingModal()" style="font-weight:700; box-shadow:0 4px 12px rgba(217,119,6,0.3);">
-              ➕ Ajukan Peminjaman
-            </button>
-            <button class="btn btn-outline btn-sm" onclick="DashboardView.load()" style="background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.3); color:#FFFFFF;" title="Segarkan Data">
-              🔄 Segarkan
-            </button>
+      <!-- 2. Ringkasan Status Armada Real-time (KPI Strip Proposional) -->
+      <div class="kpi-grid" style="margin-bottom: 1.5rem;">
+        <div class="kpi-card" style="border-left: 3px solid var(--primary-600);">
+          <div class="kpi-icon-wrap" style="background: rgba(13, 92, 58, 0.1); color: var(--primary-700);">
+            🚗
+          </div>
+          <div class="kpi-meta">
+            <span class="kpi-value">${overview.totalVehicles || 0} <span class="kpi-unit">Unit</span></span>
+            <span class="kpi-label">Total Armada</span>
           </div>
         </div>
 
-        <!-- Mini Stats Counters -->
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:0.75rem; margin-top:1.25rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.15); position:relative; z-index:2;">
-          <div style="background:rgba(255,255,255,0.1); padding:0.6rem 0.8rem; border-radius:10px;">
-            <div style="font-size:0.72rem; color:rgba(255,255,255,0.75); text-transform:uppercase;">Total Armada</div>
-            <div style="font-size:1.25rem; font-weight:800; color:#FFFFFF;">${overview.totalVehicles || 0} <span style="font-size:0.75rem; font-weight:500;">Unit</span></div>
+        <div class="kpi-card" style="border-left: 3px solid #10B981;">
+          <div class="kpi-icon-wrap" style="background: #ECFDF5; color: #059669;">
+            🟢
           </div>
-          <div style="background:rgba(16,185,129,0.25); padding:0.6rem 0.8rem; border-radius:10px; border:1px solid rgba(16,185,129,0.4);">
-            <div style="font-size:0.72rem; color:#A7F3D0; text-transform:uppercase;">Tersedia</div>
-            <div style="font-size:1.25rem; font-weight:800; color:#34D399;">${(overview.motorAvailableCount || 0) + (overview.mobilAvailableCount || 0)} <span style="font-size:0.75rem; font-weight:500;">Unit</span></div>
+          <div class="kpi-meta">
+            <span class="kpi-value" style="color: #059669;">${(overview.motorAvailableCount || 0) + (overview.mobilAvailableCount || 0)} <span class="kpi-unit">Unit</span></span>
+            <span class="kpi-label">Tersedia</span>
           </div>
-          <div style="background:rgba(239,68,68,0.25); padding:0.6rem 0.8rem; border-radius:10px; border:1px solid rgba(239,68,68,0.4);">
-            <div style="font-size:0.72rem; color:#FCA5A5; text-transform:uppercase;">Sedang Dipakai</div>
-            <div style="font-size:1.25rem; font-weight:800; color:#F87171;">${overview.totalInUse || 0} <span style="font-size:0.75rem; font-weight:500;">Unit</span></div>
+        </div>
+
+        <div class="kpi-card" style="border-left: 3px solid #EF4444;">
+          <div class="kpi-icon-wrap" style="background: #FEF2F2; color: #DC2626;">
+            🔴
           </div>
-          <div style="background:rgba(245,158,11,0.25); padding:0.6rem 0.8rem; border-radius:10px; border:1px solid rgba(245,158,11,0.4);">
-            <div style="font-size:0.72rem; color:#FDE68A; text-transform:uppercase;">Menunggu Persetujuan</div>
-            <div style="font-size:1.25rem; font-weight:800; color:#FBBF24;">${overview.pendingBookingsCount || 0} <span style="font-size:0.75rem; font-weight:500;">Pengajuan</span></div>
+          <div class="kpi-meta">
+            <span class="kpi-value" style="color: #DC2626;">${overview.totalInUse || 0} <span class="kpi-unit">Unit</span></span>
+            <span class="kpi-label">Sedang Dipakai</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" style="border-left: 3px solid #F59E0B;">
+          <div class="kpi-icon-wrap" style="background: #FFFBEB; color: #D97706;">
+            ⏳
+          </div>
+          <div class="kpi-meta">
+            <span class="kpi-value" style="color: #D97706;">${overview.pendingBookingsCount || 0} <span class="kpi-unit">Pengajuan</span></span>
+            <span class="kpi-label">Menunggu Persetujuan</span>
           </div>
         </div>
       </div>

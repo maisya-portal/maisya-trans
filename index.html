@@ -417,16 +417,16 @@
              VIEW: BOOKING & QUICK BORROW
              =============================================================== -->
         <section id="view-booking" class="view-section" style="display:none;">
-          <div style="margin-bottom:1.5rem;">
-            <h2 style="font-size:1.25rem; font-weight:800; color:var(--text-primary);">Formulir Pengajuan Peminjaman Kendaraan</h2>
-            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+          <div style="margin-bottom:1.15rem;">
+            <h2 style="font-size:1.15rem; font-weight:800; color:var(--text-primary);">Formulir Pengajuan Peminjaman Kendaraan</h2>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">
               Terbuka untuk guru, asatidzah, staf, dan santri PP. Imam Syafi'i Brebes. Tanpa perlu login.
             </p>
           </div>
 
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:1.5rem;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap:1rem;">
             <!-- Form Input Booking -->
-            <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-lg); padding:1.5rem; box-shadow:var(--shadow-md);">
+            <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-lg); padding:1.15rem; box-shadow:var(--shadow-sm);">
               <form id="formBooking" onsubmit="BookingView.submitBookingForm(event)">
                 <div class="form-group">
                   <label class="form-label">Pilih Kendaraan *</label>
@@ -435,7 +435,7 @@
                   </select>
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
                   <div class="form-group">
                     <label class="form-label">Nama Peminjam *</label>
                     <input type="text" id="bookingUserName" class="form-control" placeholder="Nama Lengkap" required>
@@ -446,7 +446,7 @@
                   </div>
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
                   <div class="form-group">
                     <label class="form-label">Nomor WhatsApp *</label>
                     <input type="tel" id="bookingNoHp" class="form-control" placeholder="081234567890" required>
@@ -467,7 +467,7 @@
                   <textarea id="bookingPurpose" class="form-control" rows="2" placeholder="Contoh: Antar berkas santri / Belanja kebutuhan dapur" required></textarea>
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
                   <div class="form-group">
                     <label class="form-label">Tanggal Pakai *</label>
                     <input type="date" id="bookingDate" class="form-control" required>
@@ -488,7 +488,7 @@
                   <input type="text" id="bookingNotes" class="form-control" placeholder="Contoh: Membawa barang muatan / perlu helm">
                 </div>
 
-                <div style="background:var(--primary-50); border:1px solid var(--primary-100); border-radius:8px; padding:10px 12px; font-size:0.78rem; color:var(--primary-700); margin-bottom:1rem; line-height:1.5;">
+                <div style="background:var(--primary-50); border:1px solid var(--primary-100); border-radius:8px; padding:8px 10px; font-size:0.75rem; color:var(--primary-700); margin-bottom:0.85rem; line-height:1.4;">
                   ℹ️ Setelah permohonan dikirim, status akan menjadi <strong>Menunggu Persetujuan Admin</strong>. Setelah disetujui, Anda dapat mengambil kunci dan melakukan <strong>Check-In</strong> sebelum berangkat.
                 </div>
 
@@ -499,11 +499,11 @@
             </div>
 
             <!-- Jadwal Booking & Kalender -->
-            <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-lg); padding:1.5rem; box-shadow:var(--shadow-md);">
-              <h3 style="font-size:1.05rem; font-weight:800; margin-bottom:0.75rem; display:flex; align-items:center; gap:6px;">
+            <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-lg); padding:1.15rem; box-shadow:var(--shadow-sm);">
+              <h3 style="font-size:0.95rem; font-weight:800; margin-bottom:0.5rem; display:flex; align-items:center; gap:6px;">
                 <span>📅</span> Jadwal Reservasi Terdaftar
               </h3>
-              <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">
+              <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:0.75rem;">
                 Pastikan jadwal peminjaman tidak bentrok dengan permohonan lainnya.
               </p>
               <div id="activeBookingsList">
@@ -517,14 +517,14 @@
              VIEW: HISTORY & COSTS
              =============================================================== -->
         <section id="view-history" class="view-section" style="display:none;">
-          <div style="margin-bottom:1.5rem; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:1rem;">
+          <div style="margin-bottom:1.15rem; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:0.75rem;">
             <div>
-              <h2 style="font-size:1.25rem;">Riwayat & Rekapitulasi Biaya</h2>
-              <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+              <h2 style="font-size:1.15rem; font-weight:800; color:var(--text-primary);">Riwayat &amp; Rekapitulasi Biaya</h2>
+              <p style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">
                 Catatan detail odometer, kilometer tempuh, dan biaya pemakaian
               </p>
             </div>
-            <div style="display:flex; gap:0.5rem;">
+            <div style="display:flex; gap:0.4rem;">
               <button class="btn btn-sm btn-outline" onclick="HistoryView.setFilter('ALL')">Semua</button>
               <button class="btn btn-sm btn-outline" onclick="HistoryView.setFilter('MOTOR')">Motor</button>
               <button class="btn btn-sm btn-outline" onclick="HistoryView.setFilter('MOBIL')">Mobil</button>
@@ -540,9 +540,9 @@
              VIEW: NOTIFICATIONS
              =============================================================== -->
         <section id="view-notifications" class="view-section" style="display:none;">
-          <div style="margin-bottom:1.5rem;">
-            <h2 style="font-size:1.25rem;">Pusat Pemberitahuan</h2>
-            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+          <div style="margin-bottom:1.15rem;">
+            <h2 style="font-size:1.15rem; font-weight:800; color:var(--text-primary);">Pusat Pemberitahuan</h2>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">
               Notifikasi status peminjaman, pengingat servis, dan aktivitas penting armada
             </p>
           </div>
@@ -556,21 +556,21 @@
              VIEW: MAINTENANCE
              =============================================================== -->
         <section id="view-maintenance" class="view-section" style="display:none;">
-          <div style="margin-bottom:1.5rem;">
-            <h2 style="font-size:1.25rem;">Monitoring Pemeliharaan & Servis</h2>
-            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+          <div style="margin-bottom:1.15rem;">
+            <h2 style="font-size:1.15rem; font-weight:800; color:var(--text-primary);">Monitoring Pemeliharaan &amp; Servis</h2>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">
               Pengawasan otomatis jadwal ganti oli, tune-up mesin, dan catatan servis berkala
             </p>
           </div>
 
-          <h3 style="font-size:1rem; margin-bottom:0.75rem;">Status Kesehatan Kendaraan</h3>
-          <div id="maintenanceHealthContainer" class="monitoring-grid" style="margin-bottom:1.75rem;">
+          <h3 style="font-size:0.95rem; font-weight:800; margin-bottom:0.75rem;">Status Kesehatan Kendaraan</h3>
+          <div id="maintenanceHealthContainer" class="monitoring-grid" style="margin-bottom:1.25rem;">
             <!-- Rendered by js/maintenance.js -->
           </div>
 
-          <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-lg); padding:1.25rem; overflow-x:auto;">
-            <h3 style="font-size:1rem; margin-bottom:1rem;">Riwayat Servis & Ganti Oli</h3>
-            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+          <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-lg); padding:1rem; overflow-x:auto;">
+            <h3 style="font-size:0.95rem; font-weight:800; margin-bottom:0.75rem;">Riwayat Servis &amp; Ganti Oli</h3>
+            <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
               <thead>
                 <tr style="border-bottom:2px solid var(--surface-border); text-align:left;">
                   <th style="padding:8px;">Tanggal</th>
@@ -592,9 +592,9 @@
              VIEW: STATISTICS
              =============================================================== -->
         <section id="view-statistics" class="view-section" style="display:none;">
-          <div style="margin-bottom:1.5rem;">
-            <h2 style="font-size:1.25rem;">Statistik & Efisiensi Armada</h2>
-            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+          <div style="margin-bottom:1.15rem;">
+            <h2 style="font-size:1.15rem; font-weight:800; color:var(--text-primary);">Statistik &amp; Efisiensi Armada</h2>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">
               Analitik pemanfaatan kendaraan, ranking pengguna aktif, dan pemakaian bahan bakar
             </p>
           </div>
@@ -608,9 +608,9 @@
              VIEW: ADMIN SARPRAS
              =============================================================== -->
         <section id="view-admin" class="view-section" style="display:none;">
-          <div style="margin-bottom:1.5rem;">
-            <h2 style="font-size:1.25rem;">Panel Kontrol Sarpras Pondok</h2>
-            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+          <div style="margin-bottom:1.15rem;">
+            <h2 style="font-size:1.15rem; font-weight:800; color:var(--text-primary);">Panel Kontrol Sarpras Pondok</h2>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">
               Kelola persetujuan pengguna baru, tarif kilometer, dan integrasi Google Sheets
             </p>
           </div>
@@ -624,9 +624,9 @@
              VIEW: PROFILE & SETTINGS
              =============================================================== -->
         <section id="view-profile" class="view-section" style="display:none;">
-          <div style="margin-bottom:1.5rem;">
-            <h2 style="font-size:1.25rem;">Profil Akun Pegawai</h2>
-            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+          <div style="margin-bottom:1.15rem;">
+            <h2 style="font-size:1.15rem; font-weight:800; color:var(--text-primary);">Profil Akun Pegawai</h2>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">
               Informasi identitas guru/karyawan dan pengaturan sesi aplikasi
             </p>
           </div>
