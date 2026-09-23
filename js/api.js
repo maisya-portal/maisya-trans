@@ -241,6 +241,7 @@ const Api = {
                 activeMobil,
                 vehicles,
                 recentTrips: Store.data.trips.slice(0, 5),
+                activeBookings: Store.data.bookings.filter(b => b.status === 'PENDING' || b.status === 'APPROVED').sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5),
                 notifications: Store.data.notifications.slice(0, 5)
               }
             });
@@ -298,19 +299,24 @@ const Api = {
               startTime: data.start_time,
               estimatedEndTime: data.estimated_end_time,
               purpose: data.purpose,
+              kepentingan: data.kepentingan || 'Pondok',
               notes: data.notes || '',
-              status: 'APPROVED', // Di set APPROVED agar langsung siap mulai
-              approvedBy: 'SYSTEM',
-              approvedAt: now,
+              status: 'PENDING',
               createdAt: now
             };
-            Store.data.bookings.unshift(newBkg);
+            Store.data.bookings.push(newBkg);
             Store.save();
             return resolve({
               success: true,
-              message: 'Peminjaman berhasil disetujui! Silakan tekan MULAI PEMAKAIAN saat siap berangkat.',
+              message: 'Pengajuan peminjaman berhasil dibuat dan menunggu persetujuan.',
               data: newBkg
             });
+          }
+
+          case 'getUserBookings': {
+            const uid = currentUser ? currentUser.userId : data.userId;
+            const userBookings = Store.data.bookings.filter(b => b.userId === uid).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            return resolve({ success: true, data: userBookings });
           }
 
           case 'getBookings': {

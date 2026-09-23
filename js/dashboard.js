@@ -32,7 +32,7 @@ const DashboardView = {
     const container = document.getElementById('dashboardContent');
     if (!container || !this.data) return;
 
-    const { overview, activeMotor, activeMobil, recentTrips, vehicles } = this.data;
+    const { overview, activeMotor, activeMobil, recentTrips, activeBookings, vehicles } = this.data;
     const user = Auth.getUser() || { nama: 'Guru / Karyawan' };
 
     // Saring pengingat servis yang mendekati / terlambat
@@ -100,6 +100,33 @@ const DashboardView = {
           </div>
           <span class="quick-action-label">Notifikasi (${overview.unreadNotifCount || 0})</span>
         </div>
+      </div>
+
+      <!-- DAFTAR PENGAJUAN AKTIF -->
+      <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-md); padding:1.25rem; margin-bottom:1.5rem;">
+        <h4 style="font-size: 0.95rem; margin-bottom: 1rem; display:flex; align-items:center; gap:6px;">
+          <span>📅</span> Pengajuan Peminjaman Aktif
+        </h4>
+        ${activeBookings && activeBookings.length > 0 ? `
+          <div style="display:flex; flex-direction:column; gap:0.75rem;">
+            ${activeBookings.map(b => `
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0; border-bottom:1px solid var(--surface-border-subtle); font-size:0.85rem;">
+                <div>
+                  <span style="font-weight:700;">${b.userName}</span> mengajukan <strong>${b.vehicleName}</strong>
+                  <div style="color:var(--text-muted); margin-top:2px;">📅 ${b.tanggal} 🕒 ${b.startTime} - ${b.estimatedEndTime}</div>
+                  <div style="font-size:0.75rem; color:var(--text-muted);">Keperluan: ${b.kepentingan} - ${b.purpose}</div>
+                </div>
+                <div>
+                  <span class="badge ${b.status === 'APPROVED' ? 'badge-available' : 'badge-maintenance'}">${b.status === 'APPROVED' ? 'Disetujui' : 'Menunggu'}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        ` : `
+          <div style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.88rem;">
+            Tidak ada pengajuan peminjaman saat ini.
+          </div>
+        `}
       </div>
 
       <!-- 4. Smart Maintenance Alerts (Jika ada yang mendekati / overdue) -->

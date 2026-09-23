@@ -14,6 +14,7 @@ const BookingView = {
       this.populateVehicleSelect();
     }
     this.renderBookingCalendar();
+    this.renderHistory();
   },
 
   populateVehicleSelect() {
@@ -224,9 +225,10 @@ const BookingView = {
     const startTime = document.getElementById('bookingStartTime').value;
     const endTime = document.getElementById('bookingEndTime').value;
     const purpose = document.getElementById('bookingPurpose').value;
+    const kepentingan = document.getElementById('bookingKepentingan').value;
     const notes = document.getElementById('bookingNotes').value;
 
-    if (!vehicleId || !tanggal || !startTime || !purpose) {
+    if (!vehicleId || !tanggal || !startTime || !purpose || !kepentingan) {
       UI.showToast('Harap lengkapi semua kolom bertanda bintang (*).', 'error');
       return;
     }
@@ -244,6 +246,7 @@ const BookingView = {
         start_time: startTime,
         estimated_end_time: endTime,
         purpose,
+        kepentingan,
         notes
       });
 
@@ -251,6 +254,7 @@ const BookingView = {
         UI.showToast(res.message, 'success');
         document.getElementById('formBooking').reset();
         this.renderBookingCalendar();
+        this.renderHistory();
       } else {
         UI.showToast(res.message, 'error');
       }
@@ -261,6 +265,44 @@ const BookingView = {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Ajukan Peminjaman';
       }
+    }
+  },
+
+  async renderHistory() {
+    const container = document.getElementById('bookingHistoryContainer');
+    if (!container) return;
+
+    // Fetch user bookings. In mock mode, we can just get all bookings and filter by current user.
+    // For simplicity, we can just use Api.request('getDashboard') or write a new API endpoint.
+    // Since Store.data.bookings is accessible in local mode, but better to use an API request.
+    const res = await Api.request('getUserBookings', 'GET');
+    
+    if (res.success && res.data && res.data.length > 0) {
+      container.innerHTML = res.data.map(b => {
+        let badgeClass = 'badge-maintenance';
+        let badgeText = 'Menunggu';
+        if (b.status === 'APPROVED') { badgeClass = 'badge-available'; badgeText = 'Disetujui'; }
+        else if (b.status === 'REJECTED') { badgeClass = 'badge-danger'; badgeText = 'Ditolak'; }
+        else if (b.status === 'ACTIVE') { badgeClass = 'badge-in-use'; badgeText = 'Sedang Dipakai'; }
+        else if (b.status === 'FINISHED') { badgeClass = 'badge-booked'; badgeText = 'Selesai'; }
+
+        return `
+          <div style="background:var(--surface-secondary); padding:1rem; border-radius:var(--border-radius-md); border:1px solid var(--surface-border); display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:700; color:var(--text-primary);">${b.vehicleName}</div>
+              <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">
+                📅 ${b.tanggal} 🕒 ${b.startTime} - ${b.estimatedEndTime}
+              </div>
+              <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">Keperluan: ${b.kepentingan} - ${b.purpose}</div>
+            </div>
+            <div>
+              <span class="badge ${badgeClass}">${badgeText}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } else {
+      container.innerHTML = '<div style="font-size:0.85rem; color:var(--text-muted);">Belum ada riwayat pengajuan peminjaman.</div>';
     }
   },
 
