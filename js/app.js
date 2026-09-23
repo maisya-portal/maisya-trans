@@ -58,8 +58,11 @@ const App = {
     this.runSplashLoading();
   },
 
+  splashIntervalId: null,
+
   /**
    * Animasi Kendaraan Melaju pada Pembukaan Aplikasi
+   * Berputar secara looping terus menerus sampai pengguna menekan tombol Masuk / Beranda
    */
   runSplashLoading() {
     const splash = document.getElementById('appSplashLoading');
@@ -69,29 +72,47 @@ const App = {
     const text = document.getElementById('splashStatusText');
 
     const steps = [
-      { progress: 25, label: 'Bismillah, memeriksa status armada...' },
-      { progress: 55, label: 'Menghubungkan sistem Live Argo real-time...' },
-      { progress: 85, label: 'Memuat kesiapan motor & mobil pesantren...' },
+      { progress: 25, label: 'Bismillah...' },
+      { progress: 50, label: 'Memeriksa Status Armada (Luxio & Supra X)...' },
+      { progress: 75, label: 'Sinkronisasi Live Argo & Jadwal Peminjaman...' },
       { progress: 100, label: 'Mobilitas Aman, Tertib, dan Terdata ✓' }
     ];
 
     let currentStep = 0;
-    const interval = setInterval(() => {
-      if (currentStep < steps.length) {
-        const item = steps[currentStep];
-        if (bar) bar.style.width = `${item.progress}%`;
-        if (text) text.textContent = item.label;
-        currentStep++;
-      } else {
-        clearInterval(interval);
+    if (bar) bar.style.width = '25%';
+    if (text) text.textContent = steps[0].label;
+
+    if (this.splashIntervalId) clearInterval(this.splashIntervalId);
+
+    // Looping status secara kontinu sampai user menekan tombol
+    this.splashIntervalId = setInterval(() => {
+      currentStep = (currentStep + 1) % steps.length;
+      const item = steps[currentStep];
+      if (bar) bar.style.width = `${item.progress}%`;
+      if (text) {
+        text.style.opacity = '0.3';
         setTimeout(() => {
-          this.dismissSplash();
-        }, 350);
+          text.textContent = item.label;
+          text.style.opacity = '1';
+        }, 150);
       }
-    }, 420);
+    }, 1400);
+
+    // Event listener keyboard shortcut (Enter / Space)
+    const handleKey = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        this.dismissSplash();
+        window.removeEventListener('keydown', handleKey);
+      }
+    };
+    window.addEventListener('keydown', handleKey);
   },
 
   dismissSplash() {
+    if (this.splashIntervalId) {
+      clearInterval(this.splashIntervalId);
+      this.splashIntervalId = null;
+    }
     const splash = document.getElementById('appSplashLoading');
     if (splash) {
       splash.classList.add('fade-out');

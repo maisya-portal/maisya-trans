@@ -60,12 +60,13 @@
       <div class="splash-subtitle">PP. IMAM SYAFI'I BREBES</div>
     </div>
 
-    <!-- Road & Speeding Vehicle Stage -->
+    <!-- Road & Speeding Vehicle Stage (Daihatsu Luxio + Honda Supra X) -->
     <div class="splash-stage-container">
       <!-- Vehicle Animation Wrapper -->
       <div class="splash-vehicle-wrapper">
-        <!-- Headlight Projection Beam -->
+        <!-- Dual Headlight Projection Beams -->
         <div class="splash-headlight-cone"></div>
+        <div class="splash-headlight-cone supra-beam"></div>
 
         <!-- Exhaust Smoke -->
         <div class="splash-exhaust-smoke">
@@ -74,45 +75,121 @@
           <div class="smoke-puff"></div>
         </div>
 
-        <!-- Custom SVG Vehicle (Pesantren Operasional Van) -->
-        <svg viewBox="0 0 240 100" width="240" height="100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Minibus / Van Body -->
-          <path d="M25 65 L20 45 Q20 30 35 28 L145 28 Q175 30 190 45 L215 52 Q225 56 225 68 L225 76 L25 76 Z" fill="#0D5C3A" />
-          <!-- Roof & Aerodynamic Curve -->
-          <path d="M35 28 L145 28 Q170 30 185 45 L145 45 L35 45 Z" fill="#10B981" opacity="0.4" />
-          <!-- Windshield & Windows -->
-          <path d="M150 33 L182 46 L148 46 Z" fill="#93C5FD" opacity="0.85" />
-          <rect x="95" y="33" width="45" height="13" rx="2" fill="#BAE6FD" opacity="0.85" />
-          <rect x="42" y="33" width="45" height="13" rx="2" fill="#BAE6FD" opacity="0.85" />
-          <!-- Islamic Gold Stripe Accent -->
-          <path d="M20 54 L220 54 L215 58 L20 58 Z" fill="#D4AF37" />
-          <!-- Emblem "MAISYA" -->
-          <text x="75" y="66" fill="#FFFFFF" font-size="9" font-weight="900" letter-spacing="1" font-family="sans-serif">MAISYA-TRANS</text>
-          <!-- Front Bumper & Headlight -->
-          <rect x="220" y="56" width="6" height="8" rx="2" fill="#FBBF24" filter="drop-shadow(0 0 6px #FDE047)" />
-          <!-- Rear Taillight -->
-          <rect x="18" y="50" width="4" height="12" rx="1" fill="#EF4444" filter="drop-shadow(0 0 4px #EF4444)" />
-          
-          <!-- Wheel Well Cutouts -->
-          <circle cx="65" cy="76" r="19" fill="#041E13" />
-          <circle cx="180" cy="76" r="19" fill="#041E13" />
+        <!-- Custom SVG: Daihatsu Luxio & Honda Supra X 125 -->
+        <svg viewBox="0 0 320 105" width="320" height="105" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="luxioBodyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#063520"/>
+              <stop offset="40%" stop-color="#0D5C3A"/>
+              <stop offset="100%" stop-color="#14754B"/>
+            </linearGradient>
+            <linearGradient id="luxioGlassGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#BAE6FD" stop-opacity="0.95"/>
+              <stop offset="100%" stop-color="#60A5FA" stop-opacity="0.6"/>
+            </linearGradient>
+          </defs>
 
-          <!-- Back Wheel (Rotating) -->
-          <g class="splash-wheel" style="transform-origin: 65px 76px;">
-            <circle cx="65" cy="76" r="16" fill="#1F2937" stroke="#374151" stroke-width="2" />
-            <circle cx="65" cy="76" r="10" fill="#111827" stroke="#D4AF37" stroke-width="1.5" />
-            <line x1="65" y1="62" x2="65" y2="90" stroke="#E5E7EB" stroke-width="1.5" />
-            <line x1="51" y1="76" x2="79" y2="76" stroke="#E5E7EB" stroke-width="1.5" />
-            <circle cx="65" cy="76" r="3" fill="#D4AF37" />
+          <!-- ==================== 1. DAIHATSU LUXIO (MINIBUS) ==================== -->
+          <g class="luxio-group">
+            <!-- Luxio Boxy Body with subtle curve -->
+            <path d="M12 68 L8 44 Q8 24 22 22 L132 22 Q160 24 172 38 L196 44 Q206 48 206 62 L206 78 L12 78 Z" fill="url(#luxioBodyGrad)" />
+            <!-- Luxio Roof Aerodynamic Tint -->
+            <path d="M22 22 L134 22 Q156 24 168 36 L130 36 L22 36 Z" fill="#10B981" opacity="0.35" />
+            
+            <!-- Tinted Glass Windows -->
+            <!-- Front Windshield -->
+            <path d="M136 26 L164 39 L134 39 Z" fill="url(#luxioGlassGrad)" />
+            <!-- Middle Sliding Window -->
+            <rect x="80" y="26" width="50" height="13" rx="2" fill="url(#luxioGlassGrad)" />
+            <!-- Rear Window -->
+            <path d="M25 26 L74 26 L74 39 L18 39 Q18 29 25 26 Z" fill="url(#luxioGlassGrad)" />
+            
+            <!-- Window Pillars & Door Panel Lines -->
+            <line x1="77" y1="26" x2="77" y2="74" stroke="#042F1C" stroke-width="1.5" />
+            <line x1="133" y1="26" x2="133" y2="74" stroke="#042F1C" stroke-width="1.5" />
+            <rect x="85" y="48" width="9" height="2.5" rx="1" fill="#D4AF37" />
+            
+            <!-- Islamic Gold Line & Branding -->
+            <path d="M10 52 L200 52 L196 55.5 L10 55.5 Z" fill="#D4AF37" />
+            <text x="48" y="65" fill="#FFFFFF" font-size="8" font-weight="900" letter-spacing="1.2" font-family="sans-serif">LUXIO • PPISB</text>
+
+            <!-- Luxio Front Grille & Chrome Louver -->
+            <path d="M196 48 L204 50 L204 62 L194 62 Z" fill="#1F2937" />
+            <line x1="196" y1="54" x2="204" y2="54" stroke="#E5E7EB" stroke-width="1.5" />
+            <rect x="200" y="49" width="6" height="8" rx="2" fill="#FBBF24" filter="drop-shadow(0 0 6px #FDE047)" />
+            <!-- Vertical Taillight -->
+            <rect x="7" y="38" width="4" height="18" rx="1.5" fill="#EF4444" filter="drop-shadow(0 0 4px #EF4444)" />
+
+            <!-- Wheel Arches -->
+            <circle cx="50" cy="78" r="16" fill="#041E13" />
+            <circle cx="158" cy="78" r="16" fill="#041E13" />
+
+            <!-- Rear Wheel -->
+            <g class="splash-wheel" style="transform-origin: 50px 78px;">
+              <circle cx="50" cy="78" r="14" fill="#1F2937" stroke="#475569" stroke-width="2" />
+              <circle cx="50" cy="78" r="8.5" fill="#0F172A" stroke="#D4AF37" stroke-width="1.5" />
+              <line x1="50" y1="66" x2="50" y2="90" stroke="#E2E8F0" stroke-width="1.2" />
+              <line x1="38" y1="78" x2="62" y2="78" stroke="#E2E8F0" stroke-width="1.2" />
+              <circle cx="50" cy="78" r="3" fill="#D4AF37" />
+            </g>
+
+            <!-- Front Wheel -->
+            <g class="splash-wheel" style="transform-origin: 158px 78px;">
+              <circle cx="158" cy="78" r="14" fill="#1F2937" stroke="#475569" stroke-width="2" />
+              <circle cx="158" cy="78" r="8.5" fill="#0F172A" stroke="#D4AF37" stroke-width="1.5" />
+              <line x1="158" y1="66" x2="158" y2="90" stroke="#E2E8F0" stroke-width="1.2" />
+              <line x1="146" y1="78" x2="170" y2="78" stroke="#E2E8F0" stroke-width="1.2" />
+              <circle cx="158" cy="78" r="3" fill="#D4AF37" />
+            </g>
           </g>
 
-          <!-- Front Wheel (Rotating) -->
-          <g class="splash-wheel" style="transform-origin: 180px 76px;">
-            <circle cx="180" cy="76" r="16" fill="#1F2937" stroke="#374151" stroke-width="2" />
-            <circle cx="180" cy="76" r="10" fill="#111827" stroke="#D4AF37" stroke-width="1.5" />
-            <line x1="180" y1="62" x2="180" y2="90" stroke="#E5E7EB" stroke-width="1.5" />
-            <line x1="166" y1="76" x2="194" y2="76" stroke="#E5E7EB" stroke-width="1.5" />
-            <circle cx="180" cy="76" r="3" fill="#D4AF37" />
+          <!-- ==================== 2. HONDA SUPRA X 125 (MOTOR BEBEK) ==================== -->
+          <g class="supra-group">
+            <!-- Rider Silhouette with Peci / Helmet -->
+            <circle cx="248" cy="35" r="6.5" fill="#0F172A" stroke="#D4AF37" stroke-width="1" />
+            <path d="M251 34 Q256 35 254 39 L249 38 Z" fill="#38BDF8" />
+            <path d="M241 42 Q248 40 252 45 L247 62 L236 60 Z" fill="#0D5C3A" />
+            <path d="M246 47 L260 54 L257 57" stroke="#0D5C3A" stroke-width="3" stroke-linecap="round" fill="none" />
+            
+            <!-- Supra X Curved Leg Shields / Sayap Bebek -->
+            <path d="M254 52 Q267 58 269 70 L262 72 Q258 62 250 59 Z" fill="#DC2626" stroke="#991B1B" stroke-width="0.5" />
+            <path d="M234 60 L258 60 L253 70 L228 66 Z" fill="#1E293B" />
+            <path d="M232 61 L254 61 L250 64 L230 64 Z" fill="#D4AF37" />
+            <!-- Dual Seat (Jok) -->
+            <path d="M224 56 Q239 54 251 58 L248 61 L223 60 Z" fill="#0F172A" />
+            <!-- Sporty Handlebar & Headlight -->
+            <path d="M258 50 L264 53 L270 53 L265 58 Z" fill="#1E293B" />
+            <polygon points="268,52 274,53 270,57" fill="#FBBF24" filter="drop-shadow(0 0 5px #FDE047)" />
+            
+            <!-- Slender Supra X Exhaust Pipe -->
+            <path d="M236 72 L218 74 L212 70" stroke="#475569" stroke-width="2.8" stroke-linecap="round" fill="none" />
+            <path d="M220 73 L213 70" stroke="#D4AF37" stroke-width="3.2" stroke-linecap="round" fill="none" />
+
+            <!-- Front Fork & Rear Shock -->
+            <line x1="264" y1="56" x2="277" y2="80" stroke="#94A3B8" stroke-width="2.2" />
+            <line x1="236" y1="66" x2="226" y2="80" stroke="#94A3B8" stroke-width="2" />
+
+            <!-- Rear Spoke Wheel -->
+            <g class="splash-wheel" style="transform-origin: 226px 80px;">
+              <circle cx="226" cy="80" r="12" fill="none" stroke="#1E293B" stroke-width="2.8" />
+              <circle cx="226" cy="80" r="10" fill="none" stroke="#94A3B8" stroke-width="0.8" />
+              <circle cx="226" cy="80" r="3.5" fill="#D4AF37" />
+              <line x1="226" y1="69" x2="226" y2="91" stroke="#E2E8F0" stroke-width="0.8" />
+              <line x1="215" y1="80" x2="237" y2="80" stroke="#E2E8F0" stroke-width="0.8" />
+              <line x1="218" y1="72" x2="234" y2="88" stroke="#E2E8F0" stroke-width="0.8" />
+              <line x1="234" y1="72" x2="218" y2="88" stroke="#E2E8F0" stroke-width="0.8" />
+            </g>
+
+            <!-- Front Spoke Wheel -->
+            <g class="splash-wheel" style="transform-origin: 277px 80px;">
+              <circle cx="277" cy="80" r="12" fill="none" stroke="#1E293B" stroke-width="2.8" />
+              <circle cx="277" cy="80" r="10" fill="none" stroke="#94A3B8" stroke-width="0.8" />
+              <circle cx="277" cy="80" r="3.5" fill="#D4AF37" />
+              <line x1="277" y1="69" x2="277" y2="91" stroke="#E2E8F0" stroke-width="0.8" />
+              <line x1="266" y1="80" x2="288" y2="80" stroke="#E2E8F0" stroke-width="0.8" />
+              <line x1="269" y1="72" x2="285" y2="88" stroke="#E2E8F0" stroke-width="0.8" />
+              <line x1="285" y1="72" x2="269" y2="88" stroke="#E2E8F0" stroke-width="0.8" />
+            </g>
           </g>
         </svg>
       </div>
@@ -123,14 +200,16 @@
       </div>
     </div>
 
-    <!-- Progress Tracker & Live Status -->
+    <!-- Progress Tracker, Looping Status, & Prominent Action Button -->
     <div class="splash-progress-wrapper">
       <div class="splash-progress-track">
         <div id="splashProgressBar" class="splash-progress-fill"></div>
       </div>
-      <div id="splashStatusText" class="splash-status-text">Bismillah, menyiapkan armada...</div>
-      <button type="button" class="splash-skip-btn" onclick="App.dismissSplash()">
-        Langsung ke Beranda ❯
+      <div id="splashStatusText" class="splash-status-text">Bismillah, Daihatsu Luxio &amp; Honda Supra X Siap Melaju...</div>
+      
+      <!-- Tombol Cepat Langsung ke Beranda (Looping Sampai Ditekan User) -->
+      <button type="button" id="btnEnterApp" class="splash-enter-btn" onclick="App.dismissSplash()">
+        <span>Langsung ke Beranda ❯</span>
       </button>
     </div>
   </div>

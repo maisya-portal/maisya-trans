@@ -1710,10 +1710,10 @@
 
 /* Animated Vehicle Road Stage */
 .splash-stage-container {
-  width: min(92vw, 460px);
+  width: min(94vw, 480px);
   position: relative;
   z-index: 2;
-  margin-bottom: 2rem;
+  margin-bottom: 1.75rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1722,33 +1722,57 @@
 /* Vehicle Chassis with Suspension Bounce */
 .splash-vehicle-wrapper {
   position: relative;
-  width: 240px;
-  height: 110px;
-  animation: vehicleBounce 0.4s ease-in-out infinite alternate;
+  width: 320px;
+  height: 115px;
 }
 
-@keyframes vehicleBounce {
+/* Independent suspensions for Luxio and Supra X */
+.luxio-group {
+  animation: luxioBounce 0.45s ease-in-out infinite alternate;
+  transform-origin: bottom center;
+}
+
+.supra-group {
+  animation: supraBounce 0.32s ease-in-out infinite alternate;
+  transform-origin: bottom center;
+}
+
+@keyframes luxioBounce {
   0% { transform: translateY(0px) rotate(0deg); }
-  100% { transform: translateY(-2.5px) rotate(-0.4deg); }
+  100% { transform: translateY(-2.5px) rotate(-0.3deg); }
 }
 
-/* Headlight Light Beam */
+@keyframes supraBounce {
+  0% { transform: translateY(0px) rotate(0deg); }
+  100% { transform: translateY(-3.2px) rotate(0.6deg); }
+}
+
+/* Headlight Light Beams */
 .splash-headlight-cone {
   position: absolute;
-  right: -130px;
-  top: 48px;
-  width: 150px;
-  height: 45px;
-  background: linear-gradient(90deg, rgba(255, 235, 150, 0.7) 0%, rgba(255, 220, 100, 0.25) 50%, transparent 100%);
+  right: -90px;
+  top: 50px;
+  width: 140px;
+  height: 40px;
+  background: linear-gradient(90deg, rgba(255, 235, 150, 0.75) 0%, rgba(255, 220, 100, 0.25) 55%, transparent 100%);
   clip-path: polygon(0% 25%, 100% 0%, 100% 100%, 0% 75%);
   pointer-events: none;
   filter: blur(1px);
   animation: beamFlicker 1.8s ease-in-out infinite alternate;
 }
 
+.splash-headlight-cone.supra-beam {
+  right: -130px;
+  top: 58px;
+  width: 120px;
+  height: 32px;
+  background: linear-gradient(90deg, rgba(254, 240, 138, 0.8) 0%, rgba(250, 204, 21, 0.2) 60%, transparent 100%);
+  clip-path: polygon(0% 20%, 100% 0%, 100% 100%, 0% 80%);
+}
+
 @keyframes beamFlicker {
   0% { opacity: 0.85; transform: scaleY(1); }
-  100% { opacity: 1; transform: scaleY(1.08); }
+  100% { opacity: 1; transform: scaleY(1.1); }
 }
 
 /* Wheels spin */
@@ -1773,7 +1797,7 @@
   overflow: hidden;
   display: flex;
   align-items: center;
-  margin-top: -6px;
+  margin-top: -8px;
   border-top: 2px solid #374151;
 }
 
@@ -1784,22 +1808,22 @@
   height: 4px;
   background: repeating-linear-gradient(90deg,
     #F59E0B,
-    #F59E0B 24px,
-    transparent 24px,
-    transparent 48px
+    #F59E0B 28px,
+    transparent 28px,
+    transparent 56px
   );
-  animation: roadStripesMove 0.35s linear infinite;
+  animation: roadStripesMove 0.3s linear infinite;
 }
 
 @keyframes roadStripesMove {
   from { transform: translateX(0); }
-  to { transform: translateX(-48px); }
+  to { transform: translateX(-56px); }
 }
 
 /* Exhaust Smoke Particles */
 .splash-exhaust-smoke {
   position: absolute;
-  left: -20px;
+  left: -22px;
   bottom: 12px;
   width: 30px;
   height: 20px;
@@ -1810,12 +1834,12 @@
   background: rgba(255, 255, 255, 0.4);
   border-radius: 50%;
   filter: blur(2px);
-  animation: smokePuff 0.7s ease-out infinite;
+  animation: smokePuff 0.65s ease-out infinite;
 }
 
 .smoke-puff:nth-child(1) { width: 10px; height: 10px; animation-delay: 0s; }
-.smoke-puff:nth-child(2) { width: 14px; height: 14px; animation-delay: 0.25s; }
-.smoke-puff:nth-child(3) { width: 8px; height: 8px; animation-delay: 0.45s; }
+.smoke-puff:nth-child(2) { width: 14px; height: 14px; animation-delay: 0.22s; }
+.smoke-puff:nth-child(3) { width: 8px; height: 8px; animation-delay: 0.42s; }
 
 @keyframes smokePuff {
   0% { transform: scale(0.4) translate(0, 0); opacity: 0.8; }
@@ -1824,58 +1848,84 @@
 
 /* Progress Status Bar */
 .splash-progress-wrapper {
-  width: min(88vw, 360px);
+  width: min(90vw, 400px);
   z-index: 2;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .splash-progress-track {
   width: 100%;
-  height: 7px;
+  height: 6px;
   background: rgba(255, 255, 255, 0.12);
   border-radius: 99px;
   overflow: hidden;
   position: relative;
   border: 1px solid rgba(212, 175, 55, 0.3);
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.85rem;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
 }
 
 .splash-progress-fill {
   height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #10B981, #D4AF37, #F59E0B);
+  width: 100%;
+  background: linear-gradient(90deg, #10B981, #D4AF37, #F59E0B, #10B981);
+  background-size: 200% 100%;
   border-radius: 99px;
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.8);
-  transition: width 0.15s ease-out;
+  box-shadow: 0 0 14px rgba(212, 175, 55, 0.8);
+  animation: progressGradientMove 2s linear infinite;
+}
+
+@keyframes progressGradientMove {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
 }
 
 .splash-status-text {
-  font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.85rem;
+  color: #FEF3C7;
   font-weight: 600;
   letter-spacing: 0.3px;
-  min-height: 20px;
-  transition: opacity 0.2s;
+  min-height: 24px;
+  margin-bottom: 1.25rem;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  transition: opacity 0.3s;
 }
 
-.splash-skip-btn {
-  margin-top: 1rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.75);
-  border-radius: 99px;
-  padding: 6px 14px;
-  font-size: 0.75rem;
-  font-weight: 600;
+/* Prominent Glowing CTA Button */
+.splash-enter-btn {
+  background: linear-gradient(135deg, #10B981 0%, #0D5C3A 60%, #064E3B 100%);
+  border: 2px solid #D4AF37;
+  color: #FFFFFF;
+  border-radius: 50px;
+  padding: 0.85rem 2rem;
+  font-size: 0.98rem;
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4), 0 0 15px rgba(212, 175, 55, 0.4);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: enterBtnPulse 2s infinite alternate;
 }
 
-.splash-skip-btn:hover {
-  background: rgba(212, 175, 55, 0.2);
-  color: #D4AF37;
-  border-color: #D4AF37;
+.splash-enter-btn:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 10px 28px rgba(16, 185, 129, 0.6), 0 0 25px rgba(212, 175, 55, 0.7);
+  background: linear-gradient(135deg, #059669 0%, #10B981 60%, #047857 100%);
+  color: #FEF08A;
+}
+
+.splash-enter-btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+@keyframes enterBtnPulse {
+  0% { box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35), 0 0 10px rgba(212, 175, 55, 0.3); }
+  100% { box-shadow: 0 8px 24px rgba(16, 185, 129, 0.55), 0 0 20px rgba(212, 175, 55, 0.6); }
 }
 
 @keyframes splashFadeDown {
