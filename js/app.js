@@ -62,7 +62,7 @@ const App = {
 
   /**
    * Animasi Kendaraan Melaju pada Pembukaan Aplikasi
-   * Berputar secara looping terus menerus sampai pengguna menekan tombol Masuk / Beranda
+   * Kemajuan progress bar berjalan bertahap hingga selesai (100%) dan berhenti
    */
   runSplashLoading() {
     const splash = document.getElementById('appSplashLoading');
@@ -72,7 +72,7 @@ const App = {
     const text = document.getElementById('splashStatusText');
 
     const steps = [
-      { progress: 25, label: 'Bismillah...' },
+      { progress: 25, label: 'Bismillah, memeriksa sistem...' },
       { progress: 50, label: 'Memeriksa Status Armada (Luxio & Supra X)...' },
       { progress: 75, label: 'Sinkronisasi Live Argo & Jadwal Peminjaman...' },
       { progress: 100, label: 'Mobilitas Aman, Tertib, dan Terdata ✓' }
@@ -84,19 +84,30 @@ const App = {
 
     if (this.splashIntervalId) clearInterval(this.splashIntervalId);
 
-    // Looping status secara kontinu sampai user menekan tombol
+    // Jalankan kemajuan progress sampai 100% lalu berhenti (tidak looping ulang)
     this.splashIntervalId = setInterval(() => {
-      currentStep = (currentStep + 1) % steps.length;
-      const item = steps[currentStep];
-      if (bar) bar.style.width = `${item.progress}%`;
-      if (text) {
-        text.style.opacity = '0.3';
-        setTimeout(() => {
-          text.textContent = item.label;
-          text.style.opacity = '1';
-        }, 150);
+      currentStep++;
+      if (currentStep < steps.length) {
+        const item = steps[currentStep];
+        if (bar) bar.style.width = `${item.progress}%`;
+        if (text) {
+          text.style.opacity = '0.3';
+          setTimeout(() => {
+            text.textContent = item.label;
+            text.style.opacity = '1';
+          }, 150);
+        }
+
+        // Ketika mencapai 100%, berhenti dan tetap di 100%
+        if (currentStep === steps.length - 1) {
+          clearInterval(this.splashIntervalId);
+          this.splashIntervalId = null;
+        }
+      } else {
+        clearInterval(this.splashIntervalId);
+        this.splashIntervalId = null;
       }
-    }, 1400);
+    }, 900);
 
     // Event listener keyboard shortcut (Enter / Space)
     const handleKey = (e) => {
