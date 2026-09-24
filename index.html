@@ -280,6 +280,12 @@
 
         <!-- Khusus Pengelola / Admin Sarpras (Hanya tampil saat Admin login) -->
         <div class="admin-only-nav sidebar-section-title">Pengelola Sarpras</div>
+        <button class="admin-only-nav nav-link" data-view="approvals">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+          <span>Daftar Pengajuan</span>
+          <span id="sidebarPendingBadge" class="badge" style="margin-left:auto; display:none; background:#F59E0B; color:#FFFFFF; font-weight:800; font-size:0.75rem; padding:2px 7px; border-radius:10px;">0</span>
+        </button>
+
         <button class="admin-only-nav nav-link" data-view="admin">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
           <span>Panel Admin Sarpras</span>
@@ -601,6 +607,44 @@
 
           <div id="statisticsContentContainer">
             <!-- Rendered by js/statistics.js -->
+          </div>
+        </section>
+
+        <!-- ===============================================================
+             VIEW: APPROVALS (DAFTAR PENGAJUAN PINJAM - ADMIN ONLY)
+             =============================================================== -->
+        <section id="view-approvals" class="view-section" style="display:none;">
+          <div style="margin-bottom:1.15rem; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:0.75rem;">
+            <div>
+              <h2 style="font-size:1.15rem; font-weight:800; color:var(--text-primary);">Daftar Pengajuan Peminjaman Armada</h2>
+              <p style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">
+                Tinjau, setujui, tolak, edit, atau hubungi peminjam kendaraan operasional pondok
+              </p>
+            </div>
+            <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+              <button class="btn btn-sm btn-outline" onclick="ApprovalsView.setFilter('PENDING')">⏳ Menunggu</button>
+              <button class="btn btn-sm btn-outline" onclick="ApprovalsView.setFilter('APPROVED')">✓ Disetujui</button>
+              <button class="btn btn-sm btn-outline" onclick="ApprovalsView.setFilter('REJECTED')">✕ Ditolak</button>
+              <button class="btn btn-sm btn-outline" onclick="ApprovalsView.setFilter('ALL')">Semua</button>
+            </div>
+          </div>
+
+          <!-- KPI Summary Cards -->
+          <div id="approvalsCountSummary">
+            <!-- Rendered by js/approvals.js -->
+          </div>
+
+          <!-- Search Bar -->
+          <div style="background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--border-radius-md); padding:0.75rem 1rem; margin-bottom:1rem; display:flex; gap:0.75rem; align-items:center;">
+            <div class="input-with-icon" style="flex:1;">
+              <span class="input-icon">🔍</span>
+              <input type="text" class="form-control" placeholder="Cari nama peminjam, divisi, tujuan, plat nomor..." oninput="ApprovalsView.setSearch(this.value)">
+            </div>
+          </div>
+
+          <!-- List of Requests -->
+          <div id="approvalsListContainer">
+            <!-- Rendered by js/approvals.js -->
           </div>
         </section>
 
@@ -1883,6 +1927,205 @@
     </div>
   </div>
 
+  <!-- ============================================================
+       MODAL: EDIT JADWAL RESERVASI (Admin Only)
+       ============================================================ -->
+  <div id="modalEditBooking" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 540px;">
+      <div class="modal-header">
+        <div class="modal-title">✏️ Edit Jadwal Reservasi Peminjaman</div>
+        <button class="modal-close-btn" data-close-modal="modalEditBooking">✕</button>
+      </div>
+      <form id="formEditBooking" onsubmit="BookingView.submitEditBooking(event)">
+        <div class="modal-body">
+          <input type="hidden" id="editBookingId">
+
+          <div class="form-group">
+            <label class="form-label">Pilih Kendaraan *</label>
+            <select id="editBookingVehicleSelect" class="form-control" required>
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
+            <div class="form-group">
+              <label class="form-label">Nama Peminjam *</label>
+              <input type="text" id="editBookingUserName" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Divisi / Bagian *</label>
+              <input type="text" id="editBookingDivisi" class="form-control" required>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
+            <div class="form-group">
+              <label class="form-label">No. WhatsApp / HP</label>
+              <input type="tel" id="editBookingNoHp" class="form-control" placeholder="08xxxxxxxxxx">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Jumlah Penumpang</label>
+              <input type="number" id="editBookingPassengers" class="form-control" min="1" max="50">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Tanggal Peminjaman *</label>
+            <input type="date" id="editBookingDate" class="form-control" required>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
+            <div class="form-group">
+              <label class="form-label">Jam Berangkat *</label>
+              <input type="time" id="editBookingStartTime" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Jam Kembali (Estimasi) *</label>
+              <input type="time" id="editBookingEndTime" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Tujuan / Keperluan *</label>
+            <input type="text" id="editBookingTujuan" class="form-control" required>
+          </div>
+
+          <div class="form-group" style="display:none;">
+            <input type="text" id="editBookingPurpose" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Status Permohonan *</label>
+            <select id="editBookingStatus" class="form-control" required>
+              <option value="PENDING">⏳ Menunggu Persetujuan</option>
+              <option value="APPROVED">✓ Disetujui (Siap Check-In)</option>
+              <option value="REJECTED">✕ Ditolak</option>
+              <option value="IN_USE">🔴 Sedang Digunakan (Argo Aktif)</option>
+              <option value="COMPLETED">✓ Selesai</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Catatan Tambahan</label>
+            <textarea id="editBookingNotes" class="form-control" rows="2" placeholder="Catatan khusus..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close-modal="modalEditBooking">Batal</button>
+          <button type="submit" class="btn btn-primary" style="font-weight:700;">
+            ✓ Simpan Perubahan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: EDIT RIWAYAT & REKAP BIAYA (Admin Only)
+       ============================================================ -->
+  <div id="modalEditTrip" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 560px;">
+      <div class="modal-header">
+        <div class="modal-title">✏️ Edit Riwayat Perjalanan &amp; Biaya</div>
+        <button class="modal-close-btn" data-close-modal="modalEditTrip">✕</button>
+      </div>
+      <form id="formEditTrip" onsubmit="HistoryView.submitEditTrip(event)">
+        <div class="modal-body">
+          <input type="hidden" id="editTripId">
+
+          <div style="background:var(--surface-secondary); padding:0.75rem 1rem; border-radius:8px; margin-bottom:1rem;">
+            <div style="font-size:0.75rem; color:var(--text-muted);">Armada Kendaraan:</div>
+            <strong id="editTripVehicleTitle" style="font-size:1rem; color:var(--primary-700);">-</strong>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
+            <div class="form-group">
+              <label class="form-label">Nama Peminjam *</label>
+              <input type="text" id="editTripUserName" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Divisi / Bagian</label>
+              <input type="text" id="editTripDivisi" class="form-control">
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
+            <div class="form-group">
+              <label class="form-label">No. WhatsApp / HP</label>
+              <input type="tel" id="editTripNoHp" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tujuan / Keperluan *</label>
+              <input type="text" id="editTripPurpose" class="form-control" required>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem;">
+            <div class="form-group">
+              <label class="form-label">KM Awal (Check-In) *</label>
+              <input type="number" id="editTripStartKm" class="form-control" min="0" required oninput="HistoryView.recalculateEditModal()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">KM Akhir (Check-Out) *</label>
+              <input type="number" id="editTripEndKm" class="form-control" min="0" required oninput="HistoryView.recalculateEditModal()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tarif/KM (Rp) *</label>
+              <input type="number" id="editTripRatePerKm" class="form-control" min="0" step="100" required oninput="HistoryView.recalculateEditModal()">
+            </div>
+          </div>
+
+          <!-- Live Cost Box -->
+          <div style="background:var(--primary-50); border:1px solid var(--primary-200); border-radius:8px; padding:0.85rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <span style="font-size:0.75rem; color:var(--primary-700);">Jarak Dihitung:</span>
+              <div id="editTripCalcDistance" style="font-size:1.1rem; font-weight:800; color:var(--primary-800);">0 KM</div>
+            </div>
+            <div style="text-align:right;">
+              <span style="font-size:0.75rem; color:var(--primary-700);">Total Biaya Pemakaian:</span>
+              <div id="editTripCalcCost" style="font-size:1.25rem; font-weight:900; color:var(--primary-800);">Rp0</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.85rem; font-weight:600; color:var(--text-primary);">
+              <input type="checkbox" id="editTripBbmWaived" onchange="HistoryView.recalculateEditModal()" style="width:18px; height:18px; accent-color:var(--primary-700);">
+              <span>⛽ BBM Diisi Mandiri oleh Peminjam (Bebas Biaya / Rp 0)</span>
+            </label>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">
+            <div class="form-group">
+              <label class="form-label">Status Perjalanan *</label>
+              <select id="editTripStatus" class="form-control" required>
+                <option value="FINISHED">✓ Selesai</option>
+                <option value="PENDING_VERIFICATION">Menunggu Verifikasi Kunci</option>
+                <option value="ACTIVE">🔴 Sedang Berjalan</option>
+              </select>
+            </div>
+            <div class="form-group" style="display:flex; flex-direction:column; justify-content:flex-end;">
+              <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.85rem; font-weight:700; color:var(--text-primary); margin-bottom:8px;">
+                <input type="checkbox" id="editTripIsPaid" style="width:18px; height:18px; accent-color:#10B981;">
+                <span>✓ Sudah Lunas</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Catatan Kerusakan / Kendala</label>
+            <textarea id="editTripDamageNotes" class="form-control" rows="2" placeholder="Catatan kondisi atau kendala..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close-modal="modalEditTrip">Batal</button>
+          <button type="submit" class="btn btn-primary" style="font-weight:700;">
+            ✓ Simpan Perubahan Riwayat
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- JavaScript Scripts (Modular Execution) -->
   <script src="./js/config.js?v=2.0.0"></script>
   <script src="./js/utils.js?v=2.0.0"></script>
@@ -1897,6 +2140,7 @@
   <script src="./js/history.js?v=2.0.0"></script>
   <script src="./js/maintenance.js?v=2.0.0"></script>
   <script src="./js/statistics.js?v=2.0.0"></script>
+  <script src="./js/approvals.js?v=2.0.0"></script>
   <script src="./js/admin.js?v=2.0.0"></script>
   <script src="./js/notifications.js?v=2.0.0"></script>
   <script src="./js/profile.js?v=2.0.0"></script>

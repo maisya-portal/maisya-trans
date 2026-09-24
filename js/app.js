@@ -150,6 +150,10 @@ const App = {
       adminNavItems.forEach(el => {
         el.style.display = 'flex';
       });
+
+      if (typeof ApprovalsView !== 'undefined' && ApprovalsView.updateBadge) {
+        ApprovalsView.updateBadge();
+      }
     } else {
       // Public User Mode
       if (profileBtn) profileBtn.style.display = 'none';
@@ -408,10 +412,15 @@ const App = {
           DashboardView.load();
         } else if (UI.currentView === 'vehicles') {
           VehiclesView.load();
+        } else if (UI.currentView === 'approvals' && Auth.isAdmin()) {
+          ApprovalsView.load();
         } else if (UI.currentView === 'admin' && Auth.isAdmin()) {
           AdminView.load();
         }
         NotificationsView.load();
+        if (typeof ApprovalsView !== 'undefined' && ApprovalsView.updateBadge) {
+          ApprovalsView.updateBadge();
+        }
       }
     }, 15000);
   }

@@ -399,6 +399,8 @@ const BookingView = {
       return;
     }
 
+    const isAdmin = Auth.isAdmin();
+
     container.innerHTML = bookings.map(b => {
       const v = Store.data.vehicles.find(x => x.vehicleId === b.vehicleId) || {};
       const u = (Store.data.users && Store.data.users.find(x => x.userId === b.userId)) || {};
@@ -409,14 +411,25 @@ const BookingView = {
       const destination = b.tujuan || b.purpose || 'Operasional Pondok';
 
       return `
-        <div style="background:var(--surface-secondary); padding:0.75rem; border-radius:10px; margin-bottom:0.5rem; font-size:0.82rem;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <strong style="color:var(--text-primary);">${borrower} (${division})</strong>
+        <div style="background:var(--surface-secondary); padding:0.85rem; border-radius:10px; margin-bottom:0.6rem; font-size:0.82rem; border-left:3px solid ${b.status === 'APPROVED' ? '#10B981' : '#F59E0B'};">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
+            <strong style="color:var(--text-primary); font-size:0.88rem;">${borrower} (${division})</strong>
             <span class="badge ${b.status === 'APPROVED' ? 'badge-approved' : 'badge-pending'}">${b.status === 'APPROVED' ? 'Disetujui' : 'Menunggu'}</span>
           </div>
           <div style="color:var(--primary-700); font-weight:700; margin-top:2px;">${vehName} (${plate})</div>
           <div style="color:var(--text-muted); margin-top:2px;">📅 ${b.tanggal || '-'} • 🕒 ${b.startTime || '08:00'} - ${b.estimatedEndTime || 'Selesai'}</div>
           <div style="color:var(--text-secondary); margin-top:2px;">📍 Tujuan: ${destination}</div>
+          
+          ${isAdmin ? `
+            <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:8px; border-top:1px dashed var(--surface-border); padding-top:6px;">
+              <button type="button" class="btn btn-sm btn-outline" style="padding:2px 8px; font-size:0.75rem;" onclick="BookingView.openEditModal('${b.bookingId}')">
+                ✏️ Edit
+              </button>
+              <button type="button" class="btn btn-sm btn-outline" style="padding:2px 8px; font-size:0.75rem; color:#DC2626; border-color:#FCA5A5;" onclick="BookingView.deleteBooking('${b.bookingId}')">
+                🗑️ Hapus
+              </button>
+            </div>
+          ` : ''}
         </div>
       `;
     }).join('');
@@ -440,5 +453,127 @@ const BookingView = {
         <div style="color:var(--text-muted); font-size:0.75rem;">${b.tanggal} • ${b.purpose}</div>
       </div>
     `).join('');
+  },
+
+  /**
+   * Modal Edit Reservasi (Admin Only)
+   */
+  openEditModal(bookingId) {
+    if (!Auth.isAdmin()) {
+      UI.showToast('Fitur ini hanya dapat diakses oleh Admin Sarpras.', 'warning');
+      return;
+    }
+
+    const bkg = Store.data.bookings.find(b => b.bookingId === bookingId);
+    if (!bkg) {
+      UI.showToast('Data reservasi tidak ditemukan.', 'error');
+      return;
+    }
+
+    // Populate form
+    document.getElementById('editBookingId').value = bkg.bookingId;
+    document.getElementById('editBookingUserName').value = bkg.userName || '';
+    document.getElementById('editBookingDivisi').value = bkg.divisi || '';
+    document.getElementById('editBookingNoHp').value = bkg.noHp || '';
+    document.getElementById('editBookingDate').value = bkg.tanggal || '';
+    document.getElementById('editBookingStartTime').value = bkg.startTime || '08:00';
+    document.getElementById('editBookingEndTime').value = bkg.estimatedEndTime || '12:00';
+    document.getElementById('editBookingPassengers').value = bkg.passengerCount || 1;
+    document.getElementById('editBookingPurpose').value = bkg.purpose || '';
+    document.getElementById('editBookingTujuan').value = bkg.tujuan || bkg.purpose || '';
+    document.getElementById('editBookingNotes').value = bkg.notes || '';
+    document.getElementById('editBookingStatus').value = bkg.status || 'PENDING';
+
+    // Populate vehicle selection
+    const vehSelect = document.getElementById('editBookingVehicleSelect');
+    if (vehSelect) {
+      vehSelect.innerHTML = '';
+      Store.data.vehicles.forEach(v => {
+        const isSelected = v.vehicleId === bkg.vehicleId ? 'selected' : '';
+        vehSelect.innerHTML += `<option value="${v.vehicleId}" ${isSelected}>${v.jenis === 'MOTOR' ? '🏍️' : '🚗'} ${v.merk} ${v.model} (${v.nomorPolisi})</option>`;
+      });
+    }
+
+    UI.openModal('modalEditBooking');
+  },
+
+  async submitEditBooking(e) {
+    if (e) e.preventDefault();
+
+    const bookingId = document.getElementById('editBookingId').value;
+    const vehicleId = document.getElementById('editBookingVehicleSelect').value;
+    const userName = document.getElementById('editBookingUserName').value.trim();
+    const divisi = document.getElementById('editBookingDivisi').value.trim();
+    const noHp = document.getElementById('editBookingNoHp').value.trim();
+    const tanggal = document.getElementById('editBookingDate').value;
+    const startTime = document.getElementById('editBookingStartTime').value;
+    const estimatedEndTime = document.getElementById('editBookingEndTime').value;
+    const passengerCount = Number(document.getElementById('editBookingPassengers').value) || 1;
+    const purpose = document.getElementById('editBookingPurpose').value.trim();
+    const tujuan = document.getElementById('editBookingTujuan').value.trim();
+    const notes = document.getElementById('editBookingNotes').value.trim();
+    const status = document.getElementById('editBookingStatus').value;
+
+    if (!userName || !tanggal || !startTime || !tujuan) {
+      UI.showToast('Harap lengkapi data peminjam, tanggal, dan tujuan.', 'error');
+      return;
+    }
+
+    try {
+      UI.showLoading('Memperbarui jadwal reservasi...');
+      const res = await Api.request('updateBooking', 'POST', {
+        bookingId,
+        vehicleId,
+        userName,
+        divisi,
+        noHp,
+        tanggal,
+        startTime,
+        estimatedEndTime,
+        passengerCount,
+        purpose,
+        tujuan,
+        notes,
+        status
+      });
+      UI.hideLoading();
+
+      if (res.success) {
+        UI.closeModal('modalEditBooking');
+        UI.showToast('Alhamdulillah, data reservasi berhasil diperbarui!', 'success');
+        this.load();
+        DashboardView.load();
+        if (typeof ApprovalsView !== 'undefined') ApprovalsView.load();
+        if (typeof AdminView !== 'undefined') AdminView.load();
+      } else {
+        UI.showToast(res.message || 'Gagal memperbarui reservasi.', 'error');
+      }
+    } catch (err) {
+      UI.hideLoading();
+      UI.showToast('Terjadi kesalahan sistem.', 'error');
+    }
+  },
+
+  async deleteBooking(bookingId) {
+    if (!confirm('Apakah Anda yakin ingin MENGHAPUS jadwal reservasi ini?')) return;
+
+    try {
+      UI.showLoading('Menghapus jadwal reservasi...');
+      const res = await Api.request('deleteBooking', 'POST', { bookingId });
+      UI.hideLoading();
+
+      if (res.success) {
+        UI.showToast('Jadwal reservasi berhasil dihapus.', 'success');
+        this.load();
+        DashboardView.load();
+        if (typeof ApprovalsView !== 'undefined') ApprovalsView.load();
+        if (typeof AdminView !== 'undefined') AdminView.load();
+      } else {
+        UI.showToast(res.message || 'Gagal menghapus reservasi.', 'error');
+      }
+    } catch (err) {
+      UI.hideLoading();
+      UI.showToast('Terjadi kesalahan koneksi.', 'error');
+    }
   }
 };

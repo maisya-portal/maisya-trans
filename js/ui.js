@@ -39,8 +39,8 @@ const UI = {
       viewName = 'admin';
     }
 
-    // 2. Proteksi khusus untuk view admin
-    if (viewName === 'admin' && !Auth.isAdmin()) {
+    // 2. Proteksi khusus untuk view admin & approvals
+    if ((viewName === 'admin' || viewName === 'approvals') && !Auth.isAdmin()) {
       this.showToast('Halaman ini khusus untuk Admin Sarpras Pondok. Silakan login.', 'info');
       viewName = 'login';
     }
@@ -109,6 +109,7 @@ const UI = {
       statistics: 'Statistik & Efisiensi Armada',
       notifications: 'Pusat Pemberitahuan',
       profile: 'Profil & Pengaturan Admin',
+      approvals: 'Daftar Pengajuan Peminjaman',
       admin: 'Panel Kontrol Admin Sarpras',
       login: 'Masuk Admin Sarpras',
       register: 'Pendaftaran Akun'
@@ -143,6 +144,9 @@ const UI = {
         break;
       case 'profile':
         ProfileView.load();
+        break;
+      case 'approvals':
+        if (typeof ApprovalsView !== 'undefined') ApprovalsView.load();
         break;
       case 'admin':
         AdminView.load();

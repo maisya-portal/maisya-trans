@@ -43,6 +43,8 @@ const HistoryView = {
       return;
     }
 
+    const isAdmin = Auth.isAdmin();
+
     container.innerHTML = filtered.map(t => {
       const cIn = t.checkIn || {};
       const cOut = t.checkOut || {};
@@ -113,6 +115,17 @@ const HistoryView = {
               ⚠️ <strong>Laporan Kendala / Kerusakan:</strong> ${t.damageNotes || cOut.damageNotes}
             </div>
           ` : ''}
+
+          ${isAdmin ? `
+            <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:0.75rem; border-top:1px dashed var(--surface-border); padding-top:0.6rem;">
+              <button type="button" class="btn btn-sm btn-outline" style="font-size:0.75rem;" onclick="HistoryView.openEditModal('${t.tripId}')">
+                ✏️ Edit Riwayat &amp; Biaya
+              </button>
+              <button type="button" class="btn btn-sm btn-outline" style="font-size:0.75rem; color:#DC2626; border-color:#FCA5A5;" onclick="HistoryView.deleteTrip('${t.tripId}')">
+                🗑️ Hapus
+              </button>
+            </div>
+          ` : ''}
         </div>
       `;
     }).join('');
@@ -121,5 +134,133 @@ const HistoryView = {
   setFilter(type) {
     this.filterType = type;
     this.render();
+  },
+
+  /**
+   * Modal Edit Riwayat & Rekap Biaya (Admin Only)
+   */
+  openEditModal(tripId) {
+    if (!Auth.isAdmin()) {
+      UI.showToast('Fitur ini hanya dapat diakses oleh Admin Sarpras.', 'warning');
+      return;
+    }
+
+    const trip = Store.data.trips.find(t => t.tripId === tripId);
+    if (!trip) {
+      UI.showToast('Data riwayat perjalanan tidak ditemukan.', 'error');
+      return;
+    }
+
+    document.getElementById('editTripId').value = trip.tripId;
+    document.getElementById('editTripUserName').value = trip.userName || '';
+    document.getElementById('editTripDivisi').value = trip.divisi || '';
+    document.getElementById('editTripNoHp').value = trip.noHp || '';
+    document.getElementById('editTripVehicleTitle').textContent = `${trip.vehicleName} (${trip.nomorPolisi})`;
+    document.getElementById('editTripPurpose').value = trip.tujuan || trip.purpose || '';
+    
+    document.getElementById('editTripStartKm').value = trip.startKm || 0;
+    document.getElementById('editTripEndKm').value = trip.endKm || trip.startKm || 0;
+    document.getElementById('editTripRatePerKm').value = trip.ratePerKm || (trip.jenis === 'MOBIL' ? Store.getTariff('MOBIL') : Store.getTariff('MOTOR'));
+    
+    const isWaived = trip.checkOut?.isBbmFilled || trip.totalCost === 0;
+    document.getElementById('editTripBbmWaived').checked = isWaived;
+    document.getElementById('editTripStatus').value = trip.status || 'FINISHED';
+    document.getElementById('editTripIsPaid').checked = Boolean(trip.isPaid);
+    document.getElementById('editTripDamageNotes').value = trip.damageNotes || trip.checkOut?.damageNotes || '';
+
+    this.recalculateEditModal();
+    UI.openModal('modalEditTrip');
+  },
+
+  recalculateEditModal() {
+    const startKm = Number(document.getElementById('editTripStartKm').value) || 0;
+    const endKm = Number(document.getElementById('editTripEndKm').value) || 0;
+    const ratePerKm = Number(document.getElementById('editTripRatePerKm').value) || 0;
+    const isWaived = document.getElementById('editTripBbmWaived').checked;
+
+    const distance = Math.max(0, endKm - startKm);
+    const totalCost = isWaived ? 0 : (distance * ratePerKm);
+
+    const distEl = document.getElementById('editTripCalcDistance');
+    const costEl = document.getElementById('editTripCalcCost');
+    if (distEl) distEl.textContent = `${distance.toLocaleString('id-ID')} KM`;
+    if (costEl) costEl.textContent = isWaived ? 'Rp 0 (BBM Diisi Sendiri)' : `Rp${totalCost.toLocaleString('id-ID')}`;
+  },
+
+  async submitEditTrip(e) {
+    if (e) e.preventDefault();
+
+    const tripId = document.getElementById('editTripId').value;
+    const userName = document.getElementById('editTripUserName').value.trim();
+    const divisi = document.getElementById('editTripDivisi').value.trim();
+    const noHp = document.getElementById('editTripNoHp').value.trim();
+    const tujuan = document.getElementById('editTripPurpose').value.trim();
+    const startKm = Number(document.getElementById('editTripStartKm').value) || 0;
+    const endKm = Number(document.getElementById('editTripEndKm').value) || 0;
+    const ratePerKm = Number(document.getElementById('editTripRatePerKm').value) || 0;
+    const isBbmFilled = document.getElementById('editTripBbmWaived').checked;
+    const status = document.getElementById('editTripStatus').value;
+    const isPaid = document.getElementById('editTripIsPaid').checked;
+    const damageNotes = document.getElementById('editTripDamageNotes').value.trim();
+
+    if (endKm < startKm) {
+      UI.showToast(`KM Akhir (${endKm}) tidak boleh lebih kecil dari KM awal (${startKm}).`, 'error');
+      return;
+    }
+
+    try {
+      UI.showLoading('Menyimpan perubahan riwayat trip...');
+      const res = await Api.request('updateTrip', 'POST', {
+        tripId,
+        userName,
+        divisi,
+        noHp,
+        tujuan,
+        purpose: tujuan,
+        startKm,
+        endKm,
+        ratePerKm,
+        isBbmFilled,
+        status,
+        isPaid,
+        damageNotes
+      });
+      UI.hideLoading();
+
+      if (res.success) {
+        UI.closeModal('modalEditTrip');
+        UI.showToast('Alhamdulillah, data riwayat dan rekap biaya berhasil diperbarui!', 'success');
+        this.load();
+        DashboardView.load();
+        if (typeof AdminView !== 'undefined') AdminView.load();
+      } else {
+        UI.showToast(res.message || 'Gagal memperbarui riwayat perjalanan.', 'error');
+      }
+    } catch (err) {
+      UI.hideLoading();
+      UI.showToast('Terjadi kesalahan koneksi.', 'error');
+    }
+  },
+
+  async deleteTrip(tripId) {
+    if (!confirm('Apakah Anda yakin ingin MENGHAPUS riwayat peminjaman ini secara permanen?')) return;
+
+    try {
+      UI.showLoading('Menghapus data riwayat...');
+      const res = await Api.request('deleteTrip', 'POST', { tripId });
+      UI.hideLoading();
+
+      if (res.success) {
+        UI.showToast('Riwayat peminjaman berhasil dihapus.', 'success');
+        this.load();
+        DashboardView.load();
+        if (typeof AdminView !== 'undefined') AdminView.load();
+      } else {
+        UI.showToast(res.message || 'Gagal menghapus riwayat.', 'error');
+      }
+    } catch (err) {
+      UI.hideLoading();
+      UI.showToast('Terjadi kesalahan koneksi.', 'error');
+    }
   }
 };

@@ -342,6 +342,94 @@ const Api = {
         };
       }
 
+      // --- ADMIN EDIT & DELETE BOOKING / JADWAL RESERVASI ---
+      case 'updateBooking': {
+        const bkg = Store.data.bookings.find(b => b.bookingId === data.bookingId);
+        if (!bkg) return { success: false, message: 'Data reservasi tidak ditemukan.' };
+
+        const oldVehicleId = bkg.vehicleId;
+        const newVehicleId = data.vehicleId || oldVehicleId;
+        const targetV = Store.data.vehicles.find(v => v.vehicleId === newVehicleId);
+
+        // Update fields
+        bkg.userName = data.userName || bkg.userName;
+        bkg.divisi = data.divisi || bkg.divisi;
+        bkg.noHp = data.noHp !== undefined ? data.noHp : bkg.noHp;
+        bkg.tanggal = data.tanggal || bkg.tanggal;
+        bkg.startTime = data.startTime || bkg.startTime;
+        bkg.estimatedEndTime = data.estimatedEndTime || bkg.estimatedEndTime;
+        bkg.passengerCount = Number(data.passengerCount) || bkg.passengerCount || 1;
+        bkg.purpose = data.purpose || bkg.purpose;
+        bkg.tujuan = data.tujuan || data.purpose || bkg.tujuan;
+        bkg.notes = data.notes !== undefined ? data.notes : bkg.notes;
+        bkg.updatedAt = now;
+        bkg.updatedBy = currentUser ? currentUser.nama : 'Admin Sarpras';
+
+        if (data.status) {
+          bkg.status = data.status;
+        }
+
+        // Jika ganti kendaraan
+        if (oldVehicleId !== newVehicleId) {
+          const oldV = Store.data.vehicles.find(v => v.vehicleId === oldVehicleId);
+          if (oldV && (oldV.status === 'PENDING_APPROVAL' || oldV.status === 'APPROVED')) {
+            oldV.status = 'AVAILABLE';
+            delete oldV.pendingBooking;
+            delete oldV.approvedBooking;
+          }
+        }
+
+        if (targetV) {
+          bkg.vehicleId = targetV.vehicleId;
+          bkg.vehicleName = `${targetV.merk} ${targetV.model}`;
+          bkg.nomorPolisi = targetV.nomorPolisi;
+          bkg.jenis = targetV.jenis;
+
+          if (bkg.status === 'APPROVED') {
+            targetV.status = 'APPROVED';
+            targetV.approvedBooking = bkg;
+            delete targetV.pendingBooking;
+          } else if (bkg.status === 'PENDING') {
+            targetV.status = 'PENDING_APPROVAL';
+            targetV.pendingBooking = bkg;
+            delete targetV.approvedBooking;
+          } else {
+            targetV.status = 'AVAILABLE';
+            delete targetV.pendingBooking;
+            delete targetV.approvedBooking;
+          }
+        }
+
+        Store.save();
+        return {
+          success: true,
+          message: 'Jadwal reservasi berhasil diperbarui.',
+          data: bkg
+        };
+      }
+
+      case 'deleteBooking': {
+        const idx = Store.data.bookings.findIndex(b => b.bookingId === data.bookingId);
+        if (idx === -1) return { success: false, message: 'Data reservasi tidak ditemukan.' };
+
+        const bkg = Store.data.bookings[idx];
+        const targetV = Store.data.vehicles.find(v => v.vehicleId === bkg.vehicleId);
+        if (targetV) {
+          if (targetV.pendingBooking?.bookingId === bkg.bookingId || targetV.approvedBooking?.bookingId === bkg.bookingId) {
+            targetV.status = 'AVAILABLE';
+            delete targetV.pendingBooking;
+            delete targetV.approvedBooking;
+          }
+        }
+
+        Store.data.bookings.splice(idx, 1);
+        Store.save();
+        return {
+          success: true,
+          message: 'Jadwal reservasi berhasil dihapus.'
+        };
+      }
+
       // --- CHECK-IN & START TRIP (SERAH TERIMA AWAL & MULAI ARGO) ---
       case 'startTrip':
       case 'checkInTrip': {
@@ -707,10 +795,98 @@ const Api = {
         return { success: true, message: 'Tagihan berhasil dihapus.' };
       }
 
-      // --- RIWAYAT PERJALANAN ---
+      // --- RIWAYAT PERJALANAN & REKAP BIAYA (EDIT & HAPUS ADMIN) ---
       case 'getTrips':
       case 'getHistory': {
         return { success: true, data: Store.data.trips };
+      }
+
+      case 'updateTrip': {
+        const trip = Store.data.trips.find(t => t.tripId === data.tripId);
+        if (!trip) return { success: false, message: 'Data riwayat perjalanan tidak ditemukan.' };
+
+        const startKm = Number(data.startKm !== undefined ? data.startKm : trip.startKm) || 0;
+        const endKm = Number(data.endKm !== undefined ? data.endKm : trip.endKm) || 0;
+        const distanceKm = Math.max(0, endKm - startKm);
+        const ratePerKm = Number(data.ratePerKm !== undefined ? data.ratePerKm : trip.ratePerKm) || (trip.jenis === 'MOBIL' ? Store.getTariff('MOBIL') : Store.getTariff('MOTOR'));
+        const isBbmFilled = Boolean(data.isBbmFilled !== undefined ? data.isBbmFilled : (trip.checkOut?.isBbmFilled || false));
+        const totalCost = isBbmFilled ? 0 : (distanceKm * ratePerKm);
+
+        trip.userName = data.userName || trip.userName;
+        trip.divisi = data.divisi || trip.divisi;
+        trip.noHp = data.noHp !== undefined ? data.noHp : trip.noHp;
+        trip.purpose = data.purpose || trip.purpose;
+        trip.tujuan = data.tujuan || data.purpose || trip.tujuan;
+        trip.startKm = startKm;
+        trip.endKm = endKm;
+        trip.distanceKm = distanceKm;
+        trip.ratePerKm = ratePerKm;
+        trip.totalCost = totalCost;
+        trip.damageNotes = data.damageNotes !== undefined ? data.damageNotes : trip.damageNotes;
+        trip.status = data.status || trip.status;
+        if (data.isPaid !== undefined) trip.isPaid = Boolean(data.isPaid);
+        if (data.startTime) trip.startTime = data.startTime;
+        if (data.endTime) trip.endTime = data.endTime;
+
+        if (!trip.checkOut) trip.checkOut = {};
+        trip.checkOut.endKm = endKm;
+        trip.checkOut.isBbmFilled = isBbmFilled;
+        trip.checkOut.damageNotes = trip.damageNotes;
+
+        // Sinkronisasi status/odometer kendaraan jika trip ini adalah yang terbaru
+        const targetVeh = Store.data.vehicles.find(v => v.vehicleId === trip.vehicleId);
+        if (targetVeh && endKm > targetVeh.currentKm) {
+          targetVeh.currentKm = endKm;
+        }
+
+        // Jika trip terikat invoice, perbarui rincian invoice
+        if (trip.invoiceId && Store.data.invoices) {
+          const inv = Store.data.invoices.find(i => i.invoiceId === trip.invoiceId);
+          if (inv && inv.items) {
+            const item = inv.items.find(it => it.tripId === trip.tripId);
+            if (item) {
+              item.startKm = startKm;
+              item.endKm = endKm;
+              item.distanceKm = distanceKm;
+              item.ratePerKm = ratePerKm;
+              item.totalCost = totalCost;
+            }
+            inv.totalDistanceKm = inv.items.reduce((acc, it) => acc + (Number(it.distanceKm) || 0), 0);
+            inv.totalAmount = inv.items.reduce((acc, it) => acc + (Number(it.totalCost) || 0), 0);
+          }
+        }
+
+        Store.save();
+        return {
+          success: true,
+          message: 'Data riwayat perjalanan dan kalkulasi biaya berhasil diperbarui.',
+          data: trip
+        };
+      }
+
+      case 'deleteTrip': {
+        const idx = Store.data.trips.findIndex(t => t.tripId === data.tripId);
+        if (idx === -1) return { success: false, message: 'Data riwayat perjalanan tidak ditemukan.' };
+
+        const trip = Store.data.trips[idx];
+
+        // Jika terhubung ke invoice, hapus dari invoice terkait
+        if (trip.invoiceId && Store.data.invoices) {
+          const inv = Store.data.invoices.find(i => i.invoiceId === trip.invoiceId);
+          if (inv) {
+            inv.tripIds = (inv.tripIds || []).filter(id => id !== trip.tripId);
+            inv.items = (inv.items || []).filter(it => it.tripId !== trip.tripId);
+            inv.totalDistanceKm = inv.items.reduce((acc, it) => acc + (Number(it.distanceKm) || 0), 0);
+            inv.totalAmount = inv.items.reduce((acc, it) => acc + (Number(it.totalCost) || 0), 0);
+          }
+        }
+
+        Store.data.trips.splice(idx, 1);
+        Store.save();
+        return {
+          success: true,
+          message: 'Data riwayat perjalanan berhasil dihapus.'
+        };
       }
 
       // --- STATISTIK & EFISIENSI ARMADA ---

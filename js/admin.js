@@ -167,10 +167,16 @@ const AdminView = {
 
               <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
                 <button class="btn btn-primary btn-sm" onclick="AdminView.approveBooking('${b.bookingId}')" style="font-weight:700;">
-                  ✓ Setujui Permohonan
+                  ✓ Setujui
+                </button>
+                <button class="btn btn-outline btn-sm" onclick="BookingView.openEditModal('${b.bookingId}')" title="Edit Data Pengajuan">
+                  ✏️ Edit
                 </button>
                 <button class="btn btn-danger btn-sm" onclick="AdminView.rejectBooking('${b.bookingId}')">
                   ✕ Tolak
+                </button>
+                <button class="btn btn-outline btn-sm" onclick="BookingView.deleteBooking('${b.bookingId}')" style="color:#DC2626; border-color:#FCA5A5;" title="Hapus Pengajuan">
+                  🗑️ Hapus
                 </button>
                 <a href="https://wa.me/${(b.noHp || '').replace(/[^0-9]/g, '')}" target="_blank" class="btn btn-outline btn-sm" title="Chat WhatsApp">
                   📱 WA
