@@ -75,6 +75,11 @@ const Api = {
       const result = await response.json();
       if (showSpinner && typeof UI !== 'undefined' && UI.hideLoading) UI.hideLoading();
 
+      // Sinkronkan data asli dari remote Google Spreadsheet ke Local Store
+      if (result && result.success && result.data && typeof Store !== 'undefined' && Store.syncFromRemote) {
+        Store.syncFromRemote(action, result.data);
+      }
+
       // Jika remote GAS live merespon bahwa aksi belum dikenali (karena belum di-redeploy di Apps Script),
       // otomatis gunakan hasil eksekusi local Store yang sudah berhasil
       if (result && !result.success && result.message && (result.message.includes('tidak dikenali') || result.message.includes('Aksi POST') || result.message.includes('Aksi \'') || result.message.includes('unknown'))) {

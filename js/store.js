@@ -96,21 +96,69 @@ const Store = {
       if (!t.ratePerKm) t.ratePerKm = t.jenis === 'MOBIL' ? 1500 : 500;
     });
 
-    // Jika trips atau maintenance atau invoices kosong pada localStorage lama, seed agar tampilan lengkap
-    if (this.data.trips.length === 0) {
-      this.seedTrips();
-    }
-    if (this.data.invoices.length === 0) {
-      this.seedInvoices();
-    }
-    if (this.data.maintenance.length === 0) {
-      this.seedMaintenance();
-    }
-    if (this.data.notifications.length === 0) {
-      this.seedNotifications();
-    }
-
+    // Jika database sudah memiliki data (misalnya 1 armada dari spreadsheet), jangan paksakan re-seed dummy
+    this.cleanDummyData();
     this.save();
+  },
+
+  /**
+   * Membersihkan data dummy fiktif bawaan
+   */
+  cleanDummyData() {
+    // Jika data vehicles berisi dummy ganda (NMAX, Gran Max, Avanza lama) saat terhubung ke remote, bersihkan
+    if (this.data.vehicles && this.data.vehicles.length > 1) {
+      const dummyIds = ['VEH-MTR-02', 'VEH-MBL-02'];
+      this.data.vehicles = this.data.vehicles.filter(v => !dummyIds.includes(v.vehicleId));
+    }
+  },
+
+  /**
+   * Sinkronisasi data asli dari server Google Apps Script / Google Sheets
+   * Menimpa data dummy/cache lama secara bersih dan persisten
+   */
+  syncFromRemote(action, remoteData) {
+    if (!remoteData) return;
+
+    if (action === 'getDashboard') {
+      if (Array.isArray(remoteData.vehicles)) {
+        this.data.vehicles = remoteData.vehicles;
+      }
+      if (Array.isArray(remoteData.activeBookings)) {
+        this.data.bookings = remoteData.activeBookings;
+      }
+      if (Array.isArray(remoteData.recentTrips)) {
+        this.data.trips = remoteData.recentTrips;
+      }
+      if (Array.isArray(remoteData.notifications)) {
+        this.data.notifications = remoteData.notifications;
+      }
+      this.save();
+    } else if (action === 'getVehicles') {
+      if (Array.isArray(remoteData)) {
+        this.data.vehicles = remoteData;
+        this.save();
+      }
+    } else if (action === 'getTrips' || action === 'getHistory') {
+      if (Array.isArray(remoteData)) {
+        this.data.trips = remoteData;
+        this.save();
+      }
+    } else if (action === 'getBookings') {
+      if (Array.isArray(remoteData)) {
+        this.data.bookings = remoteData;
+        this.save();
+      }
+    } else if (action === 'getMaintenance') {
+      if (Array.isArray(remoteData)) {
+        this.data.maintenance = remoteData;
+        this.save();
+      }
+    } else if (action === 'getInvoices') {
+      if (Array.isArray(remoteData)) {
+        this.data.invoices = remoteData;
+        this.save();
+      }
+    }
   },
 
   /**
@@ -207,238 +255,15 @@ const Store = {
         status: 'IN_USE',
         notes: 'Motor operasional asrama putra. Kondisi mesin prima.',
         imageUrl: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=600&auto=format&fit=crop&q=80',
-        activeTrip: {
-          tripId: 'TRP-ACT-01',
-          bookingId: 'BKG-001',
-          userId: 'USR-GURU-01',
-          userName: 'Ustadz Ahmad Fauzi',
-          divisi: 'Pendidikan & Asrama',
-          noHp: '081298765432',
-          startTime: activeStartTime,
-          startKm: 12450,
-          purpose: 'Antar berkas ujian santri ke Kemenag Brebes',
-          tujuan: 'Kantor Kemenag Brebes',
-          passengerCount: 1,
-          fuelLevelStart: '75%',
-          cleanlinessStart: 'Bersih',
-          notes: 'Membawa dokumen penting pondok'
-        },
-        createdAt: nowIso
-      },
-      {
-        vehicleId: 'VEH-MTR-02',
-        jenis: 'MOTOR',
-        merk: 'Yamaha',
-        model: 'NMAX 155 VVA',
-        nomorPolisi: 'G 3912 BZ',
-        tahun: '2022',
-        warna: 'Abu-Abu Doff',
-        currentKm: 18850,
-        lastServiceKm: 17000,
-        lastServiceDate: '2026-08-20',
-        lastOilKm: 17000,
-        lastOilDate: '2026-08-20',
-        oilIntervalKm: 2000,
-        tuneupIntervalKm: 5000,
-        status: 'AVAILABLE',
-        notes: 'Motor dinas luar kota / koordinasi daerah.',
-        imageUrl: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=600&auto=format&fit=crop&q=80',
-        createdAt: nowIso
-      },
-      {
-        vehicleId: 'VEH-MBL-01',
-        jenis: 'MOBIL',
-        merk: 'Toyota',
-        model: 'Grand New Avanza 1.3 G',
-        nomorPolisi: 'G 1420 SY',
-        tahun: '2021',
-        warna: 'Putih Mutiara',
-        currentKm: 35200,
-        lastServiceKm: 30000,
-        lastServiceDate: '2026-07-10',
-        lastOilKm: 30000,
-        lastOilDate: '2026-07-10',
-        oilIntervalKm: 5000,
-        tuneupIntervalKm: 10000,
-        status: 'AVAILABLE',
-        notes: 'Mobil dinas pondok kapasitas 7 penumpang.',
-        imageUrl: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=600&auto=format&fit=crop&q=80',
-        createdAt: nowIso
-      },
-      {
-        vehicleId: 'VEH-MBL-02',
-        jenis: 'MOBIL',
-        merk: 'Daihatsu',
-        model: 'Gran Max Blind Van',
-        nomorPolisi: 'G 8192 ZA',
-        tahun: '2020',
-        warna: 'Silver',
-        currentKm: 62100,
-        lastServiceKm: 55000,
-        lastServiceDate: '2026-06-01',
-        lastOilKm: 60000,
-        lastOilDate: '2026-08-01',
-        oilIntervalKm: 5000,
-        tuneupIntervalKm: 10000,
-        status: 'MAINTENANCE',
-        notes: 'Sedang servis rem dan perawatan rutin di bengkel rekanan.',
-        imageUrl: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=600&auto=format&fit=crop&q=80',
         createdAt: nowIso
       }
     ];
 
     // 3. Bookings
-    this.data.bookings = [
-      {
-        bookingId: 'BKG-001',
-        userId: 'USR-GURU-01',
-        userName: 'Ustadz Ahmad Fauzi',
-        divisi: 'Pendidikan & Asrama',
-        noHp: '081298765432',
-        vehicleId: 'VEH-MTR-01',
-        vehicleName: 'Honda Vario 160 CBS',
-        nomorPolisi: 'G 2841 QX',
-        jenis: 'MOTOR',
-        tanggal: dateToday,
-        startTime: '08:00',
-        estimatedEndTime: '11:30',
-        purpose: 'Antar berkas ujian santri ke Kemenag Brebes',
-        tujuan: 'Kemenag Brebes',
-        passengerCount: 1,
-        notes: 'Membawa berkas santri',
-        status: 'IN_USE',
-        approvedBy: 'USR-ADMIN-01',
-        approvedAt: nowIso,
-        createdAt: nowIso
-      }
-    ];
+    this.data.bookings = [];
 
     // 4. Trips (Active & History)
-    this.data.trips = [
-      {
-        tripId: 'TRP-ACT-01',
-        bookingId: 'BKG-001',
-        userId: 'USR-GURU-01',
-        userName: 'Ustadz Ahmad Fauzi',
-        divisi: 'Pendidikan & Asrama',
-        noHp: '081298765432',
-        vehicleId: 'VEH-MTR-01',
-        vehicleName: 'Honda Vario 160 CBS',
-        nomorPolisi: 'G 2841 QX',
-        jenis: 'MOTOR',
-        startTime: activeStartTime,
-        endTime: '',
-        startKm: 12450,
-        endKm: 0,
-        distanceKm: 0,
-        ratePerKm: 1000,
-        totalCost: 0,
-        purpose: 'Antar berkas ujian santri ke Kemenag Brebes',
-        tujuan: 'Kantor Kemenag Brebes',
-        passengerCount: 1,
-        checkIn: {
-          startKm: 12450,
-          fuelLevel: '75%',
-          cleanliness: 'Bersih',
-          exteriorCondition: 'Bagus / Tidak ada lecet baru',
-          damageNotes: '',
-          photos: {
-            front: '',
-            side: '',
-            back: '',
-            odometer: ''
-          },
-          checkInTime: activeStartTime
-        },
-        status: 'ACTIVE',
-        createdAt: activeStartTime
-      },
-      {
-        tripId: 'TRP-HIST-01',
-        bookingId: 'BKG-HIST-01',
-        userId: 'USR-GURU-01',
-        userName: 'Ustadz Ahmad Fauzi',
-        divisi: 'Pendidikan & Asrama',
-        noHp: '081298765432',
-        vehicleId: 'VEH-MTR-01',
-        vehicleName: 'Honda Vario 160 CBS',
-        nomorPolisi: 'G 2841 QX',
-        jenis: 'MOTOR',
-        startTime: '2026-09-20T08:00:00.000Z',
-        endTime: '2026-09-20T10:15:00.000Z',
-        startKm: 12422,
-        endKm: 12450,
-        distanceKm: 28,
-        ratePerKm: 1000,
-        totalCost: 0,
-        purpose: 'Keperluan koordinasi dinas luar pondok',
-        tujuan: 'Dinas Pendidikan Brebes',
-        passengerCount: 1,
-        checkIn: {
-          startKm: 12422,
-          fuelLevel: '50%',
-          cleanliness: 'Bersih',
-          exteriorCondition: 'Baik'
-        },
-        checkOut: {
-          endKm: 12450,
-          fuelLevel: '75%',
-          cleanliness: 'Bersih',
-          isBbmFilled: true,
-          bbmCost: 35000,
-          bbmReceiptUrl: '',
-          paymentMethod: 'BBM_WAIVED',
-          isPaid: true
-        },
-        damageNotes: '',
-        status: 'FINISHED',
-        verifiedBy: 'USR-ADMIN-01',
-        verifiedAt: '2026-09-20T10:30:00.000Z',
-        createdAt: '2026-09-20T10:15:00.000Z'
-      },
-      {
-        tripId: 'TRP-HIST-02',
-        bookingId: 'BKG-HIST-02',
-        userId: 'USR-STAF-02',
-        userName: 'Ustadz Muhammad Rizqi',
-        divisi: 'Tata Usaha & Logistik',
-        noHp: '085712345678',
-        vehicleId: 'VEH-MBL-01',
-        vehicleName: 'Toyota Grand New Avanza 1.3 G',
-        nomorPolisi: 'G 1420 SY',
-        jenis: 'MOBIL',
-        startTime: '2026-09-19T09:00:00.000Z',
-        endTime: '2026-09-19T12:30:00.000Z',
-        startKm: 35140,
-        endKm: 35200,
-        distanceKm: 60,
-        ratePerKm: 1000,
-        totalCost: 60000,
-        purpose: 'Belanja logistik dapur santri di Pasar Induk Brebes',
-        tujuan: 'Pasar Induk Brebes',
-        passengerCount: 3,
-        checkIn: {
-          startKm: 35140,
-          fuelLevel: '50%',
-          cleanliness: 'Bersih',
-          exteriorCondition: 'Baik'
-        },
-        checkOut: {
-          endKm: 35200,
-          fuelLevel: '50%',
-          cleanliness: 'Bersih',
-          isBbmFilled: false,
-          paymentMethod: 'TRANSFER',
-          transferProofUrl: '',
-          isPaid: true
-        },
-        damageNotes: '',
-        status: 'FINISHED',
-        verifiedBy: 'USR-ADMIN-01',
-        verifiedAt: '2026-09-19T12:45:00.000Z',
-        createdAt: '2026-09-19T12:30:00.000Z'
-      }
-    ];
+    this.data.trips = [];
 
     // 5. Maintenance
     this.data.maintenance = [
