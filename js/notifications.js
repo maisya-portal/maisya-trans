@@ -62,6 +62,7 @@ const NotificationsView = {
     if (notif) notif.isRead = true;
     this.render();
     this.updateHeaderBadge();
+    UI.showToast('Pemberitahuan ditandai telah dibaca.', 'info');
   },
 
   updateHeaderBadge() {

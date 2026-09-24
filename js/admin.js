@@ -561,14 +561,25 @@ const AdminView = {
       return;
     }
 
-    const res = await Api.request('updateTariff', 'POST', {
-      tariffMotor: motorRate,
-      tariffMobil: mobilRate
-    });
+    try {
+      UI.showLoading('Menyimpan perubahan tarif...');
+      const res = await Api.request('updateTariff', 'POST', {
+        newRate: Number(mobilRate),
+        tariffMotor: Number(motorRate),
+        tariffMobil: Number(mobilRate)
+      });
+      UI.hideLoading();
 
-    if (res.success) {
-      UI.showToast(res.message || 'Tarif berhasil diperbarui!', 'success');
-      this.load();
+      if (res && res.success) {
+        UI.showToast(res.message || `Alhamdulillah! Tarif berhasil disimpan: Motor Rp${Number(motorRate).toLocaleString('id-ID')} & Mobil Rp${Number(mobilRate).toLocaleString('id-ID')}/KM.`, 'success');
+        this.load();
+        if (typeof DashboardView !== 'undefined') DashboardView.load();
+      } else {
+        UI.showToast((res && res.message) || 'Gagal menyimpan perubahan tarif.', 'error');
+      }
+    } catch (err) {
+      UI.hideLoading();
+      UI.showToast('Terjadi kesalahan koneksi saat menyimpan tarif.', 'error');
     }
   },
 
@@ -842,7 +853,10 @@ const AdminView = {
 
   shareInvoiceWhatsApp(invoiceId) {
     const inv = (Store.data.invoices || []).find(i => i.invoiceId === invoiceId);
-    if (!inv) return;
+    if (!inv) {
+      UI.showToast('Data tagihan tidak ditemukan.', 'error');
+      return;
+    }
 
     const phone = (inv.noHp || '').replace(/[^0-9]/g, '');
     const itemsText = (inv.items || []).map((it, i) => 
@@ -864,6 +878,7 @@ const AdminView = {
       `_Jazakumullahu Khairan Katsiran._`;
 
     const waUrl = phone ? `https://wa.me/${phone}?text=${msg}` : `https://wa.me/?text=${msg}`;
+    UI.showToast('Membuka WhatsApp untuk mengirim rincian tagihan...', 'info');
     window.open(waUrl, '_blank');
   },
 

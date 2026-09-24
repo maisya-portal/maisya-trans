@@ -90,10 +90,12 @@
   }
 
   .toast-container {
+    top: 12px;
     left: 12px;
     right: 12px;
-    bottom: calc(var(--bottom-nav-height) + 12px);
+    bottom: auto;
     max-width: none;
+    width: auto;
   }
 }
 
