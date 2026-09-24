@@ -1,9 +1,9 @@
 /**
- * MAISYA-TRANS - Local Store & Mock Database
+ * MAISYA-TRANS - Local Store & State Management
  * Pondok Pesantren Imam Syafi'i Brebes
  * "Mobilitas Aman, Tertib, dan Terdata"
  * 
- * Mendukung penyimpanan persisten lokal dan sinkronisasi real-time
+ * Mendukung penyimpanan persisten lokal dan sinkronisasi data riil database
  */
 
 const Store = {
@@ -27,13 +27,10 @@ const Store = {
     if (raw) {
       try {
         this.data = JSON.parse(raw);
-        if (this.data.vehicles && this.data.vehicles.length > 0) {
-          // Pastikan properti baru terisi jika ada update schema
-          this.ensureSchemaIntegrity();
-          return;
-        }
+        this.ensureSchemaIntegrity();
+        return;
       } catch (e) {
-        console.warn('Gagal memuat local DB, menginisialisasi ulang seed data.');
+        console.warn('Gagal memuat local DB, menginisialisasi ulang database bersih.');
       }
     }
     this.seedDefaultData();
@@ -50,9 +47,11 @@ const Store = {
   },
 
   /**
-   * Memastikan integritas data local DB
+   * Memastikan integritas data local DB dan membersihkan data dummy
    */
   ensureSchemaIntegrity() {
+    if (!this.data.users) this.data.users = [];
+    if (!this.data.vehicles) this.data.vehicles = [];
     if (!this.data.bookings) this.data.bookings = [];
     if (!this.data.trips) this.data.trips = [];
     if (!this.data.invoices) this.data.invoices = [];
@@ -65,50 +64,102 @@ const Store = {
     if (!this.data.settings.TARIFF_MOBIL) this.data.settings.TARIFF_MOBIL = '1500';
     if (!this.data.settings.DEFAULT_TARIFF) this.data.settings.DEFAULT_TARIFF = '1500';
 
-    // Perbarui rekening
+    // Perbarui rekening resmi PPISB
     if (!this.data.settings.BANK_ACCOUNT_NO || this.data.settings.BANK_ACCOUNT_NO === '7192830192') {
       this.data.settings.BANK_NAME = 'Bank Syariah Indonesia (BSI)';
       this.data.settings.BANK_ACCOUNT_NO = '5221717173';
       this.data.settings.BANK_ACCOUNT_NAME = "Pondok Pesantren Imam Syafi'i Brebes";
     }
 
-    // Backfill bookings
-    this.data.bookings.forEach(b => {
-      const v = this.data.vehicles.find(x => x.vehicleId === b.vehicleId) || {};
-      const u = (this.data.users && this.data.users.find(x => x.userId === b.userId)) || {};
-      if (!b.userName) b.userName = b.nama_peminjam || u.nama || 'Ustadz Pesantren';
-      if (!b.divisi) b.divisi = u.divisi || 'Pendidikan & Asrama';
-      if (!b.vehicleName) b.vehicleName = v.merk ? `${v.merk} ${v.model}` : 'Kendaraan Pondok';
-      if (!b.nomorPolisi) b.nomorPolisi = v.nomorPolisi || '-';
-      if (!b.tujuan) b.tujuan = b.purpose || 'Brebes';
-      if (!b.status) b.status = 'APPROVED';
-    });
+    // Pastikan user admin default selalu ada jika data user kosong
+    if (this.data.users.length === 0) {
+      const nowIso = new Date().toISOString();
+      this.data.users.push({
+        userId: 'USR-ADMIN-01',
+        nama: 'Ustadz Admin Sarpras',
+        nip: '19850101001',
+        jabatan: 'Kepala Sarpras & Operasional',
+        divisi: 'Sarana & Prasarana',
+        no_hp: '081234567890',
+        email: 'admin@imamsyafii.ponpes.id',
+        password_hash: 'admin123',
+        role: 'ADMIN',
+        status: 'ACTIVE',
+        createdAt: nowIso,
+        approvedAt: nowIso,
+        approvedBy: 'SYSTEM',
+        lastLogin: nowIso
+      });
+    }
 
-    // Backfill trips
-    this.data.trips.forEach(t => {
-      const v = this.data.vehicles.find(x => x.vehicleId === t.vehicleId) || {};
-      const u = (this.data.users && this.data.users.find(x => x.userId === t.userId)) || {};
-      if (!t.userName) t.userName = u.nama || 'Pengguna Pesantren';
-      if (!t.divisi) t.divisi = u.divisi || 'Pondok';
-      if (!t.vehicleName) t.vehicleName = v.merk ? `${v.merk} ${v.model}` : 'Kendaraan';
-      if (!t.nomorPolisi) t.nomorPolisi = v.nomorPolisi || '-';
-      if (!t.jenis) t.jenis = v.jenis || 'MOTOR';
-      if (!t.ratePerKm) t.ratePerKm = t.jenis === 'MOBIL' ? 1500 : 500;
-    });
-
-    // Jika database sudah memiliki data (misalnya 1 armada dari spreadsheet), jangan paksakan re-seed dummy
+    // Pembersihan menyeluruh semua data dummy yang tersimpan di localStorage browser
     this.cleanDummyData();
     this.save();
   },
 
   /**
-   * Membersihkan data dummy fiktif bawaan
+   * Membersihkan seluruh jejak data dummy/fiktif bawaan
    */
   cleanDummyData() {
-    // Jika data vehicles berisi dummy ganda (NMAX, Gran Max, Avanza lama) saat terhubung ke remote, bersihkan
-    if (this.data.vehicles && this.data.vehicles.length > 1) {
-      const dummyIds = ['VEH-MTR-02', 'VEH-MBL-02'];
-      this.data.vehicles = this.data.vehicles.filter(v => !dummyIds.includes(v.vehicleId));
+    const dummyPlates = ['G 2841 QX', 'G 3912 BZ', 'G 1420 SY', 'G 8192 ZA'];
+    const dummyVehIds = ['VEH-MTR-01', 'VEH-MTR-02', 'VEH-MBL-01', 'VEH-MBL-02'];
+
+    // 1. Bersihkan armada dummy
+    if (Array.isArray(this.data.vehicles)) {
+      this.data.vehicles = this.data.vehicles.filter(v => 
+        !dummyPlates.includes(v.nomorPolisi) && !dummyVehIds.includes(v.vehicleId)
+      );
+    }
+
+    // 2. Bersihkan catatan pemeliharaan/servis dummy
+    const dummyMntIds = ['MNT-001', 'MNT-002', 'MNT-003'];
+    if (Array.isArray(this.data.maintenance)) {
+      this.data.maintenance = this.data.maintenance.filter(m => 
+        !dummyMntIds.includes(m.maintenanceId) && 
+        !dummyPlates.includes(m.nomorPolisi) && 
+        !dummyVehIds.includes(m.vehicleId) &&
+        !['Honda Vario 160 CBS', 'Toyota Grand New Avanza 1.3 G', 'Daihatsu Gran Max Blind Van'].includes(m.vehicleName)
+      );
+    }
+
+    // 3. Bersihkan riwayat perjalanan / trips dummy
+    const dummyTripIds = ['TRP-ACT-01', 'TRP-HIST-01', 'TRP-HIST-02'];
+    if (Array.isArray(this.data.trips)) {
+      this.data.trips = this.data.trips.filter(t => 
+        !dummyTripIds.includes(t.tripId) && 
+        !dummyPlates.includes(t.nomorPolisi) && 
+        !dummyVehIds.includes(t.vehicleId)
+      );
+    }
+
+    // 4. Bersihkan booking / reservasi dummy
+    const dummyBkgIds = ['BKG-001', 'BKG-HIST-01', 'BKG-HIST-02'];
+    if (Array.isArray(this.data.bookings)) {
+      this.data.bookings = this.data.bookings.filter(b => 
+        !dummyBkgIds.includes(b.bookingId) && 
+        !dummyPlates.includes(b.nomorPolisi) && 
+        !dummyVehIds.includes(b.vehicleId)
+      );
+    }
+
+    // 5. Bersihkan tagihan / invoice dummy
+    const dummyInvIds = ['INV-2026-001'];
+    if (Array.isArray(this.data.invoices)) {
+      this.data.invoices = this.data.invoices.filter(i => 
+        !dummyInvIds.includes(i.invoiceId) && 
+        i.invoiceNumber !== 'INV/PPISB/2026/09/001' &&
+        !i.items?.some(it => dummyPlates.includes(it.nomorPolisi) || dummyVehIds.includes(it.vehicleId))
+      );
+    }
+
+    // 6. Bersihkan notifikasi dummy
+    const dummyNotifIds = ['NTF-001', 'NTF-002'];
+    if (Array.isArray(this.data.notifications)) {
+      this.data.notifications = this.data.notifications.filter(n => 
+        !dummyNotifIds.includes(n.notificationId) && 
+        !n.title?.includes('Honda Vario') && 
+        !n.title?.includes('G 2841 QX')
+      );
     }
   },
 
@@ -132,30 +183,38 @@ const Store = {
       if (Array.isArray(remoteData.notifications)) {
         this.data.notifications = remoteData.notifications;
       }
+      this.cleanDummyData();
       this.save();
     } else if (action === 'getVehicles') {
       if (Array.isArray(remoteData)) {
         this.data.vehicles = remoteData;
+        this.cleanDummyData();
         this.save();
       }
     } else if (action === 'getTrips' || action === 'getHistory') {
       if (Array.isArray(remoteData)) {
         this.data.trips = remoteData;
+        this.cleanDummyData();
         this.save();
       }
     } else if (action === 'getBookings') {
       if (Array.isArray(remoteData)) {
         this.data.bookings = remoteData;
+        this.cleanDummyData();
         this.save();
       }
-    } else if (action === 'getMaintenance') {
+    } else if (action === 'getMaintenance' || action === 'getMaintenanceDashboard') {
       if (Array.isArray(remoteData)) {
         this.data.maintenance = remoteData;
-        this.save();
+      } else if (remoteData && Array.isArray(remoteData.maintenance)) {
+        this.data.maintenance = remoteData.maintenance;
       }
+      this.cleanDummyData();
+      this.save();
     } else if (action === 'getInvoices') {
       if (Array.isArray(remoteData)) {
         this.data.invoices = remoteData;
+        this.cleanDummyData();
         this.save();
       }
     }
@@ -173,17 +232,12 @@ const Store = {
   },
 
   /**
-   * Seed data awal pondok
+   * Inisialisasi struktur data bersih awal pondok (Zero Dummy)
    */
   seedDefaultData() {
-    const now = new Date();
-    const nowIso = now.toISOString();
-    const dateToday = nowIso.substring(0, 10);
-    
-    // Waktu mulai 35 menit yang lalu untuk simulasi argo aktif real-time
-    const activeStartTime = new Date(now.getTime() - 35 * 60 * 1000).toISOString();
+    const nowIso = new Date().toISOString();
 
-    // 1. Users (Admin & Sample Users)
+    // 1. Users (Admin Akun Utama)
     this.data.users = [
       {
         userId: 'USR-ADMIN-01',
@@ -200,104 +254,18 @@ const Store = {
         approvedAt: nowIso,
         approvedBy: 'SYSTEM',
         lastLogin: nowIso
-      },
-      {
-        userId: 'USR-GURU-01',
-        nama: 'Ustadz Ahmad Fauzi, S.Pd.I.',
-        nip: '19900215002',
-        jabatan: 'Guru Pengajar',
-        divisi: 'Pendidikan & Asrama',
-        no_hp: '081298765432',
-        email: 'ahmad@imamsyafii.ponpes.id',
-        password_hash: 'user123',
-        role: 'USER',
-        status: 'ACTIVE',
-        createdAt: nowIso,
-        approvedAt: nowIso,
-        approvedBy: 'USR-ADMIN-01',
-        lastLogin: nowIso
-      },
-      {
-        userId: 'USR-STAF-02',
-        nama: 'Ustadz Muhammad Rizqi, S.Kom.',
-        nip: '19930720003',
-        jabatan: 'Staf Administrasi & Logistik',
-        divisi: 'Tata Usaha',
-        no_hp: '085712345678',
-        email: 'rizqi@imamsyafii.ponpes.id',
-        password_hash: 'user123',
-        role: 'USER',
-        status: 'ACTIVE',
-        createdAt: nowIso,
-        approvedAt: nowIso,
-        approvedBy: 'USR-ADMIN-01',
-        lastLogin: nowIso
       }
     ];
 
-    // 2. Vehicles
-    this.data.vehicles = [
-      {
-        vehicleId: 'VEH-MTR-01',
-        jenis: 'MOTOR',
-        merk: 'Honda',
-        model: 'Vario 160 CBS',
-        nomorPolisi: 'G 2841 QX',
-        tahun: '2023',
-        warna: 'Hitam Metalik',
-        currentKm: 12450,
-        lastServiceKm: 11000,
-        lastServiceDate: '2026-08-15',
-        lastOilKm: 10600,
-        lastOilDate: '2026-08-15',
-        oilIntervalKm: 2000,
-        tuneupIntervalKm: 5000,
-        status: 'IN_USE',
-        notes: 'Motor operasional asrama putra. Kondisi mesin prima.',
-        imageUrl: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=600&auto=format&fit=crop&q=80',
-        createdAt: nowIso
-      }
-    ];
-
-    // 3. Bookings
+    // Koleksi data operasional murni dimulai dari nol / sinkron dari database online
+    this.data.vehicles = [];
     this.data.bookings = [];
-
-    // 4. Trips (Active & History)
     this.data.trips = [];
+    this.data.maintenance = [];
+    this.data.notifications = [];
+    this.data.invoices = [];
 
-    // 5. Maintenance
-    this.data.maintenance = [
-      {
-        maintenanceId: 'MNT-001',
-        vehicleId: 'VEH-MTR-01',
-        vehicleName: 'Honda Vario 160 CBS',
-        nomorPolisi: 'G 2841 QX',
-        jenis: 'MOTOR',
-        type: 'GANTI_OLI',
-        date: '2026-08-15',
-        km: 10600,
-        description: 'Ganti oli mesin AHM SPX2 dan oli gardan',
-        cost: 95000,
-        nextDueKm: 12600,
-        nextDueDate: '2026-10-15',
-        createdBy: 'USR-ADMIN-01'
-      }
-    ];
-
-    // 6. Notifications
-    this.data.notifications = [
-      {
-        notificationId: 'NTF-001',
-        userId: 'ALL',
-        type: 'INFO',
-        title: 'Sistem Peminjaman Kendaraan Terbuka Aktif',
-        message: 'Pengguna dapat langsung mengajukan peminjaman kendaraan tanpa login. Kunci diambil setelah disetujui Admin Sarpras.',
-        isRead: false,
-        createdAt: nowIso
-      }
-    ];
-
-    // 7. Settings
+    // Settings operasional
     this.data.settings = {
       APP_NAME: 'MAISYA-TRANS',
       TAGLINE: 'Mobilitas Aman, Tertib, dan Terdata',
@@ -311,214 +279,7 @@ const Store = {
       BANK_ACCOUNT_NAME: "Pondok Pesantren Imam Syafi'i Brebes"
     };
 
-    // 8. Invoices
-    this.seedInvoices();
-
     this.save();
-  },
-
-  seedTrips() {
-    this.data.trips = [
-      {
-        tripId: 'TRP-HIST-01',
-        bookingId: 'BKG-HIST-01',
-        userId: 'USR-GURU-01',
-        userName: 'Ustadz Ahmad Fauzi',
-        divisi: 'Pendidikan & Asrama',
-        noHp: '081298765432',
-        vehicleId: 'VEH-MTR-01',
-        vehicleName: 'Honda Vario 160 CBS',
-        nomorPolisi: 'G 2841 QX',
-        jenis: 'MOTOR',
-        startTime: '2026-09-20T08:00:00.000Z',
-        endTime: '2026-09-20T10:15:00.000Z',
-        startKm: 12422,
-        endKm: 12450,
-        distanceKm: 28,
-        ratePerKm: 1000,
-        totalCost: 0,
-        purpose: 'Keperluan koordinasi dinas luar pondok',
-        tujuan: 'Dinas Pendidikan Brebes',
-        passengerCount: 1,
-        checkIn: {
-          startKm: 12422,
-          fuelLevel: '50%',
-          cleanliness: 'Bersih',
-          exteriorCondition: 'Baik'
-        },
-        checkOut: {
-          endKm: 12450,
-          fuelLevel: '75%',
-          cleanliness: 'Bersih',
-          isBbmFilled: true,
-          bbmCost: 35000,
-          bbmReceiptUrl: '',
-          paymentMethod: 'BBM_WAIVED',
-          isPaid: true
-        },
-        damageNotes: '',
-        status: 'FINISHED',
-        verifiedBy: 'USR-ADMIN-01',
-        verifiedAt: '2026-09-20T10:30:00.000Z',
-        createdAt: '2026-09-20T10:15:00.000Z'
-      },
-      {
-        tripId: 'TRP-HIST-02',
-        bookingId: 'BKG-HIST-02',
-        userId: 'USR-STAF-02',
-        userName: 'Ustadz Muhammad Rizqi',
-        divisi: 'Tata Usaha & Logistik',
-        noHp: '085712345678',
-        vehicleId: 'VEH-MBL-01',
-        vehicleName: 'Toyota Grand New Avanza 1.3 G',
-        nomorPolisi: 'G 1420 SY',
-        jenis: 'MOBIL',
-        startTime: '2026-09-19T09:00:00.000Z',
-        endTime: '2026-09-19T12:30:00.000Z',
-        startKm: 35140,
-        endKm: 35200,
-        distanceKm: 60,
-        ratePerKm: 1000,
-        totalCost: 60000,
-        purpose: 'Belanja logistik dapur santri di Pasar Induk Brebes',
-        tujuan: 'Pasar Induk Brebes',
-        passengerCount: 3,
-        checkIn: {
-          startKm: 35140,
-          fuelLevel: '50%',
-          cleanliness: 'Bersih',
-          exteriorCondition: 'Baik'
-        },
-        checkOut: {
-          endKm: 35200,
-          fuelLevel: '50%',
-          cleanliness: 'Bersih',
-          isBbmFilled: false,
-          paymentMethod: 'TRANSFER',
-          transferProofUrl: '',
-          isPaid: true
-        },
-        damageNotes: '',
-        status: 'FINISHED',
-        verifiedBy: 'USR-ADMIN-01',
-        verifiedAt: '2026-09-19T12:45:00.000Z',
-        createdAt: '2026-09-19T12:30:00.000Z'
-      }
-    ];
-  },
-
-  seedMaintenance() {
-    this.data.maintenance = [
-      {
-        maintenanceId: 'MNT-001',
-        vehicleId: 'VEH-MTR-01',
-        vehicleName: 'Honda Vario 160 CBS',
-        nomorPolisi: 'G 2841 QX',
-        jenis: 'MOTOR',
-        type: 'GANTI_OLI',
-        date: '2026-08-15',
-        km: 10600,
-        description: 'Ganti oli mesin AHM SPX2 dan oli gardan',
-        cost: 95000,
-        nextDueKm: 12600,
-        nextDueDate: '2026-10-15',
-        createdBy: 'USR-ADMIN-01'
-      },
-      {
-        maintenanceId: 'MNT-002',
-        vehicleId: 'VEH-MBL-01',
-        vehicleName: 'Toyota Grand New Avanza 1.3 G',
-        nomorPolisi: 'G 1420 SY',
-        jenis: 'MOBIL',
-        type: 'TUNE_UP',
-        date: '2026-07-10',
-        km: 30000,
-        description: 'Tune-up mesin berkala 30.000 KM & rotasi ban',
-        cost: 450000,
-        nextDueKm: 40000,
-        nextDueDate: '2026-12-10',
-        createdBy: 'USR-ADMIN-01'
-      },
-      {
-        maintenanceId: 'MNT-003',
-        vehicleId: 'VEH-MBL-02',
-        vehicleName: 'Daihatsu Gran Max Blind Van',
-        nomorPolisi: 'G 8192 ZA',
-        jenis: 'MOBIL',
-        type: 'SERVIS_REM',
-        date: '2026-09-22',
-        km: 62100,
-        description: 'Penggantian kampas rem depan dan kuras minyak rem',
-        cost: 380000,
-        nextDueKm: 70000,
-        nextDueDate: '2027-03-22',
-        createdBy: 'USR-ADMIN-01'
-      }
-    ];
-  },
-
-  seedNotifications() {
-    this.data.notifications = [
-      {
-        notificationId: 'NTF-001',
-        userId: 'ALL',
-        type: 'INFO',
-        title: 'Sistem Peminjaman Kendaraan Terbuka Aktif',
-        message: 'Pengguna dapat langsung mengajukan peminjaman kendaraan tanpa login. Kunci diambil setelah disetujui Admin Sarpras.',
-        isRead: false,
-        createdAt: new Date().toISOString()
-      },
-      {
-        notificationId: 'NTF-002',
-        userId: 'ADMIN',
-        type: 'GANTI_OLI',
-        title: 'Pengingat Ganti Oli: Honda Vario 160 (G 2841 QX)',
-        message: 'Odometer saat ini mendekati batas jadwal ganti oli berkala berikutnya (12.600 KM).',
-        isRead: false,
-        createdAt: new Date().toISOString()
-      }
-    ];
-  },
-
-  seedInvoices() {
-    const dueDate = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().substring(0, 10);
-    this.data.invoices = [
-      {
-        invoiceId: 'INV-2026-001',
-        invoiceNumber: 'INV/PPISB/2026/09/001',
-        userId: 'USR-STAF-02',
-        userName: 'Ustadz Muhammad Rizqi',
-        divisi: 'Tata Usaha & Logistik',
-        noHp: '085712345678',
-        invoiceDate: '2026-09-20',
-        dueDate: dueDate,
-        tripIds: ['TRP-HIST-02'],
-        items: [
-          {
-            tripId: 'TRP-HIST-02',
-            vehicleName: 'Toyota Grand New Avanza 1.3 G',
-            nomorPolisi: 'G 1420 SY',
-            jenis: 'MOBIL',
-            tanggal: '2026-09-19',
-            startKm: 35140,
-            endKm: 35200,
-            distanceKm: 60,
-            ratePerKm: 1500,
-            totalCost: 90000,
-            purpose: 'Belanja logistik dapur santri di Pasar Induk Brebes'
-          }
-        ],
-        totalDistanceKm: 60,
-        totalAmount: 90000,
-        status: 'UNPAID',
-        paymentMethod: 'TRANSFER_BSI',
-        notes: 'Tagihan operasional logistik dapur santri PPISB',
-        bankName: 'Bank Syariah Indonesia (BSI)',
-        bankAccountNo: '5221717173',
-        bankAccountName: "Pondok Pesantren Imam Syafi'i Brebes",
-        createdAt: '2026-09-20T08:00:00.000Z'
-      }
-    ];
   }
 };
 
