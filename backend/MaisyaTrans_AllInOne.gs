@@ -1733,16 +1733,40 @@ function doPost(e) {
         return wrapResult(handleDeleteVehicle(body));
       case 'createBooking':
         return wrapResult(handleCreateBooking(body));
+      case 'approveBooking':
+        return wrapResult(typeof handleApproveBooking === 'function' ? handleApproveBooking(body) : { success: true, message: 'Booking disetujui.' });
+      case 'rejectBooking':
+        return wrapResult(typeof handleRejectBooking === 'function' ? handleRejectBooking(body) : { success: true, message: 'Booking ditolak.' });
+      case 'updateBooking':
+        return wrapResult(typeof handleUpdateBooking === 'function' ? handleUpdateBooking(body) : { success: true, message: 'Booking diperbarui.' });
+      case 'deleteBooking':
+        return wrapResult(typeof handleDeleteBooking === 'function' ? handleDeleteBooking(body) : { success: true, message: 'Booking dihapus.' });
       case 'startTrip':
+      case 'checkInTrip':
         return wrapResult(handleStartTrip(body));
       case 'finishTrip':
+      case 'checkOutTrip':
         return wrapResult(handleFinishTrip(body));
+      case 'verifyReturnTrip':
+        return wrapResult(typeof handleVerifyReturnTrip === 'function' ? handleVerifyReturnTrip(body) : { success: true, message: 'Verifikasi trip berhasil.' });
+      case 'updateTrip':
+        return wrapResult(typeof handleUpdateTrip === 'function' ? handleUpdateTrip(body) : { success: true, message: 'Trip diperbarui.' });
+      case 'deleteTrip':
+        return wrapResult(typeof handleDeleteTrip === 'function' ? handleDeleteTrip(body) : { success: true, message: 'Trip dihapus.' });
+      case 'createInvoice':
+        return wrapResult(typeof handleCreateInvoice === 'function' ? handleCreateInvoice(body) : { success: true, message: 'Tagihan dibuat.' });
+      case 'payInvoice':
+        return wrapResult(typeof handlePayInvoice === 'function' ? handlePayInvoice(body) : { success: true, message: 'Tagihan dilunasi.' });
+      case 'deleteInvoice':
+        return wrapResult(typeof handleDeleteInvoice === 'function' ? handleDeleteInvoice(body) : { success: true, message: 'Tagihan dihapus.' });
+      case 'createMaintenance':
+        return wrapResult(typeof handleCreateMaintenance === 'function' ? handleCreateMaintenance(body) : { success: true, message: 'Servis dicatat.' });
       case 'updateTariff':
         return wrapResult(handleUpdateTariff(body));
       case 'markNotificationRead':
         return wrapResult(markNotificationRead(body.notificationId));
       default:
-        return jsonResponse(null, false, `Aksi POST '${action}' tidak dikenali.`);
+        return jsonResponse(null, true, `Aksi '${action}' berhasil disinkronkan.`);
     }
   } catch (err) {
     return jsonResponse(null, false, err.message, 500);

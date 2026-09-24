@@ -19,15 +19,18 @@ const UI = {
   },
 
   /**
-   * Status Sidebar Awal
+   * Status Sidebar Awal: Selalu dalam posisi tersembunyi (hide) secara default agar layar lega & elegan
    */
   initSidebarState() {
     const container = document.querySelector('.app-container');
-    const savedState = localStorage.getItem('maisya_sidebar_collapsed');
-    // Jika user sebelumnya sengaja menutup sidebar pada desktop, terapkan
-    if (savedState === 'true' && window.innerWidth > 900) {
-      container?.classList.add('sidebar-collapsed');
-    }
+    const sidebar = document.getElementById('appSidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+
+    // Default: Sembunyikan sidebar di desktop & mobile
+    container?.classList.add('sidebar-collapsed');
+    sidebar?.classList.remove('mobile-open');
+    backdrop?.classList.remove('active');
+    localStorage.setItem('maisya_sidebar_collapsed', 'true');
   },
 
   /**

@@ -113,6 +113,11 @@ const App = {
       clearInterval(this.splashIntervalId);
       this.splashIntervalId = null;
     }
+    
+    // Selalu tampilkan Beranda Monitoring dan sembunyikan sidebar (hide)
+    UI.switchView('dashboard', false);
+    UI.hideSidebar();
+
     const splash = document.getElementById('appSplashLoading');
     if (splash) {
       splash.classList.add('fade-out');

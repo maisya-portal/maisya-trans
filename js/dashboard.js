@@ -117,7 +117,10 @@ const DashboardView = {
         </div>
       </div>
 
-      <!-- 2. Live Argo Cards Section: Kendaraan Sedang Digunakan -->
+      <!-- 2. Menu Elegan di Tengah Halaman Aplikasi (Center App Menu Hub) -->
+      ${this.renderCenterMenuHub(isAdmin, overview.pendingBookingsCount || 0)}
+
+      <!-- 3. Live Argo Cards Section: Kendaraan Sedang Digunakan -->
       ${this.renderActiveArgoSection(vehicles)}
 
       <!-- 3. Katalog & Status Armada Real-time -->
@@ -151,6 +154,91 @@ const DashboardView = {
 
       <!-- 4. Antrean Pengajuan & Verifikasi Pengembalian (Untuk Admin & Publik) -->
       ${this.renderPendingQueues(activeBookings, isAdmin)}
+    `;
+  },
+
+  /**
+   * Render Menu Navigasi Elegan di Tengah Halaman Aplikasi
+   */
+  renderCenterMenuHub(isAdmin, pendingCount) {
+    return `
+      <div class="center-menu-section">
+        <div class="center-menu-header">
+          <div class="center-menu-header-title">
+            <span>✨</span>
+            <span>Menu Layanan &amp; Pengelolaan Terpadu</span>
+          </div>
+          <span style="font-size:0.75rem; color:var(--text-muted);">Akses Cepat</span>
+        </div>
+
+        <div class="center-menu-grid">
+          <!-- 1. Beranda Monitoring -->
+          <div class="center-menu-card active" onclick="UI.switchView('dashboard')">
+            <div class="center-menu-icon-wrap">🚗</div>
+            <div class="center-menu-card-title">Beranda Monitoring</div>
+            <div class="center-menu-card-desc">Pantau status &amp; live argo armada</div>
+          </div>
+
+          <!-- 2. Pinjam Kendaraan -->
+          <div class="center-menu-card" onclick="UI.switchView('booking')">
+            <div class="center-menu-icon-wrap" style="background:linear-gradient(135deg, rgba(217,119,6,0.12), rgba(245,158,11,0.2)); color:#D97706;">📝</div>
+            <div class="center-menu-card-title">Pinjam Kendaraan</div>
+            <div class="center-menu-card-desc">Pengajuan terbuka guru &amp; santri</div>
+          </div>
+
+          <!-- 3. Armada Kendaraan -->
+          <div class="center-menu-card" onclick="UI.switchView('vehicles')">
+            <div class="center-menu-icon-wrap" style="background:linear-gradient(135deg, rgba(16,185,129,0.12), rgba(5,150,105,0.2)); color:#059669;">🚘</div>
+            <div class="center-menu-card-title">Armada Kendaraan</div>
+            <div class="center-menu-card-desc">Katalog mobil &amp; motor pondok</div>
+          </div>
+
+          <!-- 4. Riwayat & Rekap Biaya -->
+          <div class="center-menu-card" onclick="UI.switchView('history')">
+            <div class="center-menu-icon-wrap" style="background:linear-gradient(135deg, rgba(59,130,246,0.12), rgba(37,99,235,0.2)); color:#2563EB;">📊</div>
+            <div class="center-menu-card-title">Riwayat &amp; Rekap Biaya</div>
+            <div class="center-menu-card-desc">Catatan odometer &amp; tagihan</div>
+          </div>
+
+          <!-- 5. Status Servis & Oli -->
+          <div class="center-menu-card" onclick="UI.switchView('maintenance')">
+            <div class="center-menu-icon-wrap" style="background:linear-gradient(135deg, rgba(139,92,246,0.12), rgba(124,58,237,0.2)); color:#7C3AED;">⚙️</div>
+            <div class="center-menu-card-title">Status Servis &amp; Oli</div>
+            <div class="center-menu-card-desc">Jadwal servis &amp; ganti oli berkala</div>
+          </div>
+
+          <!-- 6. Statistik Armada -->
+          <div class="center-menu-card" onclick="UI.switchView('statistics')">
+            <div class="center-menu-icon-wrap" style="background:linear-gradient(135deg, rgba(236,72,153,0.12), rgba(219,39,119,0.2)); color:#DB2777;">📈</div>
+            <div class="center-menu-card-title">Statistik Armada</div>
+            <div class="center-menu-card-desc">Analitik efisiensi pemakaian</div>
+          </div>
+
+          ${isAdmin ? `
+            <!-- 7. Daftar Pengajuan (Admin Only) -->
+            <div class="center-menu-card" onclick="UI.switchView('approvals')">
+              ${pendingCount > 0 ? `<span class="center-menu-badge">${pendingCount} Baru</span>` : ''}
+              <div class="center-menu-icon-wrap" style="background:linear-gradient(135deg, rgba(245,158,11,0.15), rgba(217,119,6,0.25)); color:#D97706;">⏳</div>
+              <div class="center-menu-card-title">Daftar Pengajuan</div>
+              <div class="center-menu-card-desc">Persetujuan, tolak &amp; chat WA</div>
+            </div>
+
+            <!-- 8. Panel Admin Sarpras (Admin Only) -->
+            <div class="center-menu-card" onclick="UI.switchView('admin')">
+              <div class="center-menu-icon-wrap" style="background:linear-gradient(135deg, rgba(13,92,58,0.15), rgba(212,175,55,0.25)); color:var(--primary-700);">🛡️</div>
+              <div class="center-menu-card-title">Panel Admin Sarpras</div>
+              <div class="center-menu-card-desc">Kontrol tarif &amp; tagihan resmi</div>
+            </div>
+          ` : `
+            <!-- 7. Masuk Admin Sarpras (Public) -->
+            <div class="center-menu-card" onclick="UI.switchView('login')" style="border-style:dashed;">
+              <div class="center-menu-icon-wrap" style="background:rgba(212,175,55,0.15); color:var(--gold-700);">🔐</div>
+              <div class="center-menu-card-title">Masuk Admin Sarpras</div>
+              <div class="center-menu-card-desc">Login pengelola sarana prasarana</div>
+            </div>
+          `}
+        </div>
+      </div>
     `;
   },
 

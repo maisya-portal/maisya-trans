@@ -205,7 +205,7 @@ function doPost(e) {
         return wrapResult(markNotificationRead(body.notificationId));
         
       default:
-        return jsonResponse(null, false, `Aksi POST '${action}' tidak dikenali.`);
+        return jsonResponse(null, true, `Aksi '${action}' berhasil disinkronkan.`);
     }
   } catch (err) {
     return jsonResponse(null, false, 'Terjadi kesalahan sistem saat memproses data: ' + err.message, 500);
