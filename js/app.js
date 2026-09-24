@@ -62,7 +62,7 @@ const App = {
 
   /**
    * Animasi Kendaraan Melaju pada Pembukaan Aplikasi
-   * Kemajuan progress bar berjalan bertahap hingga selesai (100%) dan berhenti
+   * Kemajuan progress bar berjalan 1 KALI SAJA dari awal sampai 100% lalu berhenti total
    */
   runSplashLoading() {
     const splash = document.getElementById('appSplashLoading');
@@ -72,42 +72,46 @@ const App = {
     const text = document.getElementById('splashStatusText');
 
     const steps = [
-      { progress: 25, label: 'Bismillah, memeriksa sistem...' },
+      { progress: 20, label: 'Bismillah, menyiapkan sistem...' },
       { progress: 50, label: 'Memeriksa Status Armada (Luxio & Supra X)...' },
-      { progress: 75, label: 'Sinkronisasi Live Argo & Jadwal Peminjaman...' },
+      { progress: 80, label: 'Sinkronisasi Live Argo & Jadwal Peminjaman...' },
       { progress: 100, label: 'Mobilitas Aman, Tertib, dan Terdata ✓' }
     ];
 
-    let currentStep = 0;
-    if (bar) bar.style.width = '25%';
+    if (bar) bar.style.width = '0%';
     if (text) text.textContent = steps[0].label;
 
-    if (this.splashIntervalId) clearInterval(this.splashIntervalId);
+    let stepIndex = 0;
 
-    // Jalankan kemajuan progress sampai 100% lalu berhenti (tidak looping ulang)
-    this.splashIntervalId = setInterval(() => {
-      currentStep++;
-      if (currentStep < steps.length) {
-        const item = steps[currentStep];
+    if (this.splashIntervalId) {
+      clearTimeout(this.splashIntervalId);
+      clearInterval(this.splashIntervalId);
+      this.splashIntervalId = null;
+    }
+
+    const nextStep = () => {
+      if (stepIndex < steps.length) {
+        const item = steps[stepIndex];
         if (bar) bar.style.width = `${item.progress}%`;
         if (text) {
           text.style.opacity = '0.3';
           setTimeout(() => {
             text.textContent = item.label;
             text.style.opacity = '1';
-          }, 150);
+          }, 120);
         }
-
-        // Ketika mencapai 100%, berhenti dan tetap di 100%
-        if (currentStep === steps.length - 1) {
-          clearInterval(this.splashIntervalId);
+        stepIndex++;
+        if (stepIndex < steps.length) {
+          this.splashIntervalId = setTimeout(nextStep, 700);
+        } else {
+          // Berhenti total di 100% (cukup 1 kali saja)
           this.splashIntervalId = null;
         }
-      } else {
-        clearInterval(this.splashIntervalId);
-        this.splashIntervalId = null;
       }
-    }, 900);
+    };
+
+    // Mulai progress bertahap setelah delay awal singkat
+    this.splashIntervalId = setTimeout(nextStep, 150);
 
     // Event listener keyboard shortcut (Enter / Space)
     const handleKey = (e) => {
@@ -121,6 +125,7 @@ const App = {
 
   dismissSplash() {
     if (this.splashIntervalId) {
+      clearTimeout(this.splashIntervalId);
       clearInterval(this.splashIntervalId);
       this.splashIntervalId = null;
     }
